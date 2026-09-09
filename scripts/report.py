@@ -131,20 +131,28 @@ def sec_speed(b, out):
                f"{b['n_members']} (what produces σ); `ensemble+residual` adds the "
                "fp64 PDE residual check. The uncertainty is not free and the "
                "table says how much it costs.\n")
-    out.append("| family | dev | batch | solver | surrogate (ens) | single | "
-               "ensemble | ens+resid | rel-L2 | solver converged to |")
-    out.append("|---|---|---:|---:|---:|---:|---:|---:|---:|---|")
+    out.append("Each speedup carries **its own variant's** rel-L2: a single "
+               "member is faster than the ensemble and also less accurate, so "
+               "one accuracy column next to three speedup columns would "
+               "advertise a ratio that accuracy never achieved.\n")
+    out.append("| family | dev | batch | solver | single (rel-L2) | "
+               "ensemble (rel-L2) | ens+resid | solver converged to |")
+    out.append("|---|---|---:|---:|---:|---:|---:|---|")
     for r in b["rows"]:
         s = r["surrogate"]
-        def sp(k):
-            return f"{s[k]['speedup']:.1f}×" if k in s else "—"
-        rl = r.get("surrogate_rel_l2")
+        def cell(k):
+            if k not in s:
+                return "—"
+            rl = s[k].get("rel_l2")
+            acc = f" ({rl:.4f})" if rl is not None else f" ({NM})"
+            v = s[k]["speedup"]
+            num = f"{v:.1f}" if v >= 1 else f"{v:.3g}"
+            return f"{num}×{acc if k != 'ensemble+residual' else ''}"
         out.append(
             f"| {r['task']}{'' if r['trained'] else ' *(untrained)*'} | "
             f"{r['device']} | {r['batch']} | {r['solver_s']*1e3:.2f} ms | "
-            f"{s['ensemble']['s']*1e3:.2f} ms | {sp('single')} | "
-            f"**{sp('ensemble')}** | {sp('ensemble+residual')} | "
-            f"{f'{rl:.4f}' if rl is not None else NM} | {r['solver_accuracy']} |")
+            f"{cell('single')} | **{cell('ensemble')}** | "
+            f"{cell('ensemble+residual')} | {r['solver_accuracy']} |")
 
 
 def sec_ood(o, out):
@@ -207,6 +215,124 @@ def sec_ood(o, out):
         out.append(f"| `{d}` | {cells} |")
 
 
+def sec_iso(i, out):
+    out.append("\n### Clause 2, the fairer version: iso-accuracy speedup\n")
+    if i is None:
+        out.append(f"{NM} — `runs/isoaccuracy.json` absent.\n")
+        return
+    out.append("The table above times the solver at the tolerance the *corpus* "
+               "was generated with. Nobody converges a solver to 1e-10 to get an "
+               "answer they will then accept at 4% error, so this sweeps the "
+               "solver's own accuracy knob and reports the ratio against the "
+               "cheapest setting that matches the surrogate's error.\n")
+    for fam, d in i["families"].items():
+        out.append(f"\n**{fam}** — knob: {d['knob']}"
+                   + ("" if d.get("trained", True) else " *(no surrogate trained)*")
+                   + "\n")
+        if fam == "darcy":
+            sur = d["surrogate"]
+            out.append(f"Surrogate ({sur['members']} members, {sur['precision']}): "
+                       f"rel-L2 **{sur['rel_l2_vs_reference']:.5f}** in "
+                       f"{sur['s']*1e3:.2f} ms at batch {i['batch']}.\n")
+        out.append("| setting | solver rel-L2 vs reference | solver time | ×surrogate |")
+        out.append("|---|---:|---:|---:|")
+        for r in d["sweep"]:
+            key = (f"tol {r['tol']:.0e}" if "tol" in r
+                   else f"dt {r['dt']:.1e} ({r['steps']} steps)")
+            if "error" in r:
+                out.append(f"| {key} | diverged | — | — |")
+                continue
+            sp = (f"{r['speedup_vs_surrogate']:.1f}×"
+                  if "speedup_vs_surrogate" in r else "—")
+            out.append(f"| {key} | {r['rel_l2_vs_reference']:.2e} | "
+                       f"{r['s']*1e3:.2f} ms | {sp} |")
+        if d.get("iso_accuracy"):
+            a = d["iso_accuracy"]
+            out.append(f"\n**Iso-accuracy speedup: {a['speedup']:.1f}×** — the "
+                       f"cheapest swept solver setting (tol {a['tol']:.0e}) still "
+                       f"reaches rel-L2 {a['solver_rel_l2']:.1e}, which is "
+                       "*better* than the surrogate by orders of magnitude. The "
+                       "sweep never got the solver down to the surrogate's own "
+                       "accuracy, so even this ratio is an upper bound.\n")
+        if d.get("note"):
+            out.append(f"\n{d['note']}\n")
+
+
+def sec_members(m, out):
+    out.append("\n## The knob the KPI turns on: ensemble size\n")
+    if m is None:
+        out.append(f"{NM} — `runs/members.json` absent.\n")
+        return
+    out.append(f"{m['note']}. Darcy, batch {m['batch']}, same device and "
+               "timing method as the speedup table. Coverage, spread–error "
+               "correlation and shift AUROC all require a spread, which does "
+               "not exist at M=1.\n")
+    out.append("| M | Darcy speedup | rel-L2 | coverage (field_max) | "
+               "corr(spread, err) | shift AUROC (`" + m["shift_task"] + "`) |")
+    out.append("|---:|---:|---:|---:|---:|---:|")
+    for r in m["rows"]:
+        def cell(k, fmt="{:.3f}", pctf=False):
+            v = r.get(k)
+            if not v:
+                return "— *(no spread)*"
+            base = (f"{100*v['mean']:.1f}%" if pctf else fmt.format(v["mean"]))
+            if v["n_subsets"] > 1:
+                rng = (f"{100*v['min']:.1f}–{100*v['max']:.1f}%" if pctf
+                       else f"{fmt.format(v['min'])}–{fmt.format(v['max'])}")
+                return f"{base} ({rng})"
+            return base
+        mark = " ✅" if r["darcy_speedup"] >= 100 else ""
+        out.append(f"| {r['M']} | {r['darcy_speedup']:.1f}×{mark} | "
+                   f"{cell('rel_l2', '{:.5f}')} | {cell('coverage', pctf=True)} | "
+                   f"{cell('spread_error_pearson', '{:+.3f}')} | "
+                   f"{cell('shift_auroc_spread')} |")
+    ok = [r for r in m["rows"] if r["darcy_speedup"] >= 100]
+    uq = [r for r in m["rows"] if r["has_uncertainty"]]
+    if ok and all(not r["has_uncertainty"] for r in ok):
+        out.append("\n**Every configuration that clears 100× has no uncertainty, "
+                   "and every configuration with uncertainty is below it.** The "
+                   "speedup clause and the coverage clause are contested by the "
+                   "same knob; this is a property of the design, not of the "
+                   "training. Timing noise between adjacent M is visible (M=3 "
+                   "measures faster than M=2), so read the trend, not the points.\n")
+
+
+def sec_probe(d, out):
+    out.append("\n## What it costs to detect what nothing unsupervised can\n")
+    if d is None:
+        out.append(f"{NM} — `runs/label_probe.json` absent.\n")
+        return
+    out.append("Every unsupervised detector is a function of the input and the "
+               "*configured* operator. An operator shift with a matched input "
+               "distribution changes neither, so those detectors are at chance "
+               "by identity, not by deficiency. The cheapest thing that does "
+               "work is a labelled probe: run k samples through the reference "
+               "solver and compare their errors to the calibrated distribution "
+               "with a conformal p-value and Fisher's method.\n")
+    out.append(f"Target: {100*d['target_power']:.0f}% power at a "
+               f"{100*d['alpha']:.0f}% false-alarm rate. The false-alarm rate is "
+               "**measured** on the held-out in-distribution test split, not "
+               "assumed:\n")
+    out.append("| family | " + " | ".join(f"k={k}" for k in d["ks"][:5]) + " |")
+    out.append("|---|" + "---:|" * 5)
+    for t, v in d["false_alarm_measured"].items():
+        out.append(f"| {t} | " + " | ".join(
+            f"{v[str(k)] if str(k) in v else v[k]:.3f}" for k in d["ks"][:5]) + " |")
+    out.append("\nSmallest k reaching the target, grouped by shift kind:\n")
+    out.append("| shift | kind | rel-L2 (in → shifted) | k for 95% power |")
+    out.append("|---|---|---|---:|")
+    for k, r in sorted(d["shifts"].items(), key=lambda kv: (kv[1]["kind"], kv[0])):
+        kk = r["k_for_95pct_power"]
+        out.append(f"| `{k.split('/')[1]}` @N{r['N']} | {r['kind']} | "
+                   f"{r['rel_l2_in_dist']:.4f} → {r['rel_l2_mean']:.4f} | "
+                   f"{kk if kk else '>' + str(d['ks'][-1])} |")
+    out.append("\n`>64` is not a failure: those are the shifts where the "
+               "surrogate's error did **not** move (resolution changes, and "
+               "smoother inputs, where the error goes down). A labelled probe "
+               "correctly declines to alarm on a shift that does no harm — which "
+               "is the difference between it and an input-space detector.\n")
+
+
 def sec_floor(f, out):
     out.append("\n## The residual detector's noise floor\n")
     if f is None:
@@ -229,7 +355,7 @@ def sec_floor(f, out):
                "Poisson, Helmholtz, Darcy. Not usable at fourth order and above.\n")
 
 
-def verdict(c, b, o, out):
+def verdict(c, b, o, out, i=None, m=None):
     """The KPI, clause by clause, with the JSON each verdict came from."""
     out.insert(0, "")
     lines = ["## KPI verdict\n",
@@ -262,17 +388,18 @@ def verdict(c, b, o, out):
     if b is None:
         lines.append(f"| inference speedup | ≥100× | {NM} | — | — |")
     else:
-        best = max((r for r in b["rows"] if r["device"] == "cuda"),
-                   key=lambda r: r["surrogate"]["ensemble"]["speedup"])
-        n_ge = sum(1 for r in b["rows"]
-                   if r["device"] == "cuda" and r["trained"]
-                   and r["surrogate"]["ensemble"]["speedup"] >= 100)
-        n_tot = sum(1 for r in b["rows"] if r["device"] == "cuda" and r["trained"])
+        gpu = [r for r in b["rows"] if r["device"] == "cuda" and r["trained"]]
+        sp = [r["surrogate"]["ensemble"]["speedup"] for r in gpu]
+        n_ge = sum(1 for x in sp if x >= 100)
+        worst = min(gpu, key=lambda r: r["surrogate"]["ensemble"]["speedup"])
+        # Range and count, not the maximum. Reporting the best row makes the
+        # clause a selection over families; the clause is about the surrogate.
         lines.append(
-            f"| inference speedup | ≥100× | best {best['surrogate']['ensemble']['speedup']:.0f}× "
-            f"({best['task']}, batch {best['batch']}, rel-L2 "
-            f"{best['surrogate_rel_l2']:.4f}); {n_ge}/{n_tot} trained rows ≥100× | "
-            f"`runs/bench.json` | {'✅' if n_ge == n_tot else '⚠️'} |")
+            f"| inference speedup, GPU, trained families | ≥100× | "
+            f"{min(sp):.3g}×–{max(sp):.0f}× across {len(sp)} rows, "
+            f"**{n_ge}/{len(sp)} ≥100×**; worst is {worst['task']} at batch "
+            f"{worst['batch']} | `runs/bench.json` | "
+            f"{'✅' if n_ge == len(sp) else '❌'} |")
     # clause 3
     if o is None:
         lines.append(f"| OOD AUROC | ≥0.9 | {NM} | — | — |")
@@ -295,6 +422,22 @@ def verdict(c, b, o, out):
                      f"[{ed[bd]['ci95'][0]:.3f}, {ed[bd]['ci95'][1]:.3f}] | "
                      f"`runs/ood.json` | "
                      f"{'✅' if ed[bd]['auroc'] >= 0.9 else '❌'} |")
+    if i and i["families"].get("darcy", {}).get("iso_accuracy"):
+        a = i["families"]["darcy"]["iso_accuracy"]
+        lines.append(f"| inference speedup, iso-accuracy | ≥100× | "
+                     f"{a['speedup']:.1f}× on Darcy against the cheapest solver "
+                     f"setting swept (which is still {a['solver_rel_l2']:.0e} "
+                     f"accurate) | `runs/isoaccuracy.json` | "
+                     f"{'✅' if a['speedup'] >= 100 else '❌'} |")
+    if m:
+        ok = [r for r in m["rows"] if r["darcy_speedup"] >= 100]
+        lines.append(f"| ≥100× *and* an interval | both | "
+                     + (f"only M={ok[0]['M']} clears 100× "
+                        f"({ok[0]['darcy_speedup']:.0f}×) and M=1 has no spread, "
+                        f"so no interval and no OOD score"
+                        if ok and not any(r["has_uncertainty"] for r in ok)
+                        else "see `runs/members.json`")
+                     + " | `runs/members.json` | ❌ |")
     lines.append("")
     return lines
 
@@ -305,16 +448,22 @@ def main():
     args = ap.parse_args()
     c, b, o, f = (load("conformal.json"), load("bench.json"),
                   load("ood.json"), load("residual_floor.json"))
+    i, m, lp = load("isoaccuracy.json"), load("members.json"), \
+        load("label_probe.json")
     body = []
     sec_conformal(c, body)
     sec_speed(b, body)
+    sec_iso(i, body)
     sec_ood(o, body)
+    sec_probe(lp, body)
+    sec_members(m, body)
     sec_floor(f, body)
     head = ["# Results", "",
             "Generated by `scripts/report.py` from `runs/*.json`. Do not edit by "
             "hand — every number here is regenerated from the JSON a run wrote.",
             ""]
-    Path(args.out).write_text("\n".join(head + verdict(c, b, o, body) + body) + "\n")
+    Path(args.out).write_text(
+        "\n".join(head + verdict(c, b, o, body, i, m) + body) + "\n")
     print(f"wrote {args.out}")
 
 

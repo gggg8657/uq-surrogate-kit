@@ -1,0 +1,1566 @@
+{
+  "n_members": 5,
+  "ckpts": [
+    "runs/m0/best.pt",
+    "runs/m1/best.pt",
+    "runs/m2/best.pt",
+    "runs/m3/best.pt",
+    "runs/m4/best.pt"
+  ],
+  "in_dist": {
+    "poisson": {
+      "rel_l2_mean": 0.0017586639150977135,
+      "rel_l2_p90": 0.0023207932244986296,
+      "residual_mean": 0.8341399431228638,
+      "n": 1024
+    },
+    "helmholtz": {
+      "rel_l2_mean": 0.0019029087852686644,
+      "rel_l2_p90": 0.0021692467853426933,
+      "residual_mean": 0.2154519259929657,
+      "n": 1024
+    },
+    "diffusion": {
+      "rel_l2_mean": 0.001377516076900065,
+      "rel_l2_p90": 0.0015806659357622266,
+      "residual_mean": null,
+      "n": 1024
+    },
+    "advdiff": {
+      "rel_l2_mean": 0.0013302396982908249,
+      "rel_l2_p90": 0.0015460229478776455,
+      "residual_mean": null,
+      "n": 1024
+    },
+    "darcy": {
+      "rel_l2_mean": 0.04297760874032974,
+      "rel_l2_p90": 0.06998539716005325,
+      "residual_mean": 6.007487773895264,
+      "n": 1024
+    }
+  },
+  "shift_detection": {
+    "input_shift/poisson_rough/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.02374199964106083,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "auroc": {
+        "spread": {
+          "auroc": 0.9998207092285156,
+          "ci95": [
+            0.9995819955832086,
+            0.9999741476580862
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    "input_shift/poisson_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.0013550585135817528,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "auroc": {
+        "spread": {
+          "auroc": 0.09276771545410156,
+          "ci95": [
+            0.07770476352352579,
+            0.11047004465654733
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 0.1317291259765625,
+          "ci95": [
+            0.11512623395222212,
+            0.14942398278485433
+          ]
+        }
+      }
+    },
+    "input_shift/poisson_tau/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.006071886047720909,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "auroc": {
+        "spread": {
+          "auroc": 0.9933681488037109,
+          "ci95": [
+            0.9906517798867784,
+            0.9957542508361529
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 0.9981155395507812,
+          "ci95": [
+            0.9971265301363532,
+            0.9989565745925544
+          ]
+        },
+        "residual": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    "input_shift/poisson_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.42767223715782166,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "auroc": {
+        "spread": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 0.0034160614013671875,
+          "ci95": [
+            0.0013302382132626064,
+            0.006089976206307202
+          ]
+        }
+      }
+    },
+    "input_shift/helmholtz_rough/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.00810912810266018,
+      "rel_l2_in_dist": 0.0019029087852686644,
+      "auroc": {
+        "spread": {
+          "auroc": 0.9968738555908203,
+          "ci95": [
+            0.9938506812965033,
+            0.9993287110895522
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 0.9987430572509766,
+          "ci95": [
+            0.9973643078479505,
+            0.9997311210891299
+          ]
+        }
+      }
+    },
+    "input_shift/helmholtz_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.0023285462521016598,
+      "rel_l2_in_dist": 0.0019029087852686644,
+      "auroc": {
+        "spread": {
+          "auroc": 0.9587230682373047,
+          "ci95": [
+            0.9483506631026017,
+            0.9684845812346103
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 0.009593963623046875,
+          "ci95": [
+            0.0057255061570199075,
+            0.013950252055204
+          ]
+        }
+      }
+    },
+    "input_shift/helmholtz_tau/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.008236058987677097,
+      "rel_l2_in_dist": 0.0019029087852686644,
+      "auroc": {
+        "spread": {
+          "auroc": 0.9884033203125,
+          "ci95": [
+            0.9840281301865694,
+            0.992609549080591
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 0.9991798400878906,
+          "ci95": [
+            0.998541199951425,
+            0.9996490170575584
+          ]
+        },
+        "residual": {
+          "auroc": 0.9599628448486328,
+          "ci95": [
+            0.9505552633894332,
+            0.9689638848037164
+          ]
+        }
+      }
+    },
+    "input_shift/helmholtz_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.35902416706085205,
+      "rel_l2_in_dist": 0.0019029087852686644,
+      "auroc": {
+        "spread": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 0.9832973480224609,
+          "ci95": [
+            0.9771626283574713,
+            0.9893603647279484
+          ]
+        }
+      }
+    },
+    "input_shift/diffusion_rough/N64": {
+      "kind": "input_shift",
+      "parent": "diffusion",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.053851038217544556,
+      "rel_l2_in_dist": 0.001377516076900065,
+      "auroc": {
+        "spread": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": null
+      }
+    },
+    "input_shift/diffusion_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "diffusion",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.0012426066678017378,
+      "rel_l2_in_dist": 0.001377516076900065,
+      "auroc": {
+        "spread": {
+          "auroc": 0.1570291519165039,
+          "ci95": [
+            0.13777369173728085,
+            0.17593396451548496
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": null
+      }
+    },
+    "input_shift/diffusion_tau/N64": {
+      "kind": "input_shift",
+      "parent": "diffusion",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.009997445158660412,
+      "rel_l2_in_dist": 0.001377516076900065,
+      "auroc": {
+        "spread": {
+          "auroc": 0.9999504089355469,
+          "ci95": [
+            0.9998330428512532,
+            1.0
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": null
+      }
+    },
+    "input_shift/diffusion_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "diffusion",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.4358547329902649,
+      "rel_l2_in_dist": 0.001377516076900065,
+      "auroc": {
+        "spread": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": null
+      }
+    },
+    "input_shift/advdiff_rough/N64": {
+      "kind": "input_shift",
+      "parent": "advdiff",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.05795229971408844,
+      "rel_l2_in_dist": 0.0013302396982908249,
+      "auroc": {
+        "spread": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": null
+      }
+    },
+    "input_shift/advdiff_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "advdiff",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.001230316935107112,
+      "rel_l2_in_dist": 0.0013302396982908249,
+      "auroc": {
+        "spread": {
+          "auroc": 0.14274024963378906,
+          "ci95": [
+            0.12342162528739019,
+            0.16295111950326557
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": null
+      }
+    },
+    "input_shift/advdiff_tau/N64": {
+      "kind": "input_shift",
+      "parent": "advdiff",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.013159257359802723,
+      "rel_l2_in_dist": 0.0013302396982908249,
+      "auroc": {
+        "spread": {
+          "auroc": 0.9999866485595703,
+          "ci95": [
+            0.9999577714675856,
+            1.0
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 0.9999980926513672,
+          "ci95": [
+            0.9999884992035698,
+            1.0
+          ]
+        },
+        "residual": null
+      }
+    },
+    "input_shift/advdiff_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "advdiff",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.4722467064857483,
+      "rel_l2_in_dist": 0.0013302396982908249,
+      "auroc": {
+        "spread": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": null
+      }
+    },
+    "input_shift/darcy_rough/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.06835277378559113,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "auroc": {
+        "spread": {
+          "auroc": 0.8592700958251953,
+          "ci95": [
+            0.8401220785051903,
+            0.8773797437414154
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 0.9645938873291016,
+          "ci95": [
+            0.9564078542280501,
+            0.9715702182129617
+          ]
+        }
+      }
+    },
+    "input_shift/darcy_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.02220580168068409,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "auroc": {
+        "spread": {
+          "auroc": 0.1402587890625,
+          "ci95": [
+            0.11941351961229482,
+            0.1603104482962303
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 0.07440376281738281,
+          "ci95": [
+            0.06152892465993896,
+            0.09025952931059282
+          ]
+        }
+      }
+    },
+    "input_shift/darcy_tau/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.0946241170167923,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "auroc": {
+        "spread": {
+          "auroc": 0.9747390747070312,
+          "ci95": [
+            0.9680095873035875,
+            0.9801937183767245
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 0.9968147277832031,
+          "ci95": [
+            0.9951637757474646,
+            0.9982582700254299
+          ]
+        },
+        "residual": {
+          "auroc": 0.9815959930419922,
+          "ci95": [
+            0.9759263521810787,
+            0.9867714956585623
+          ]
+        }
+      }
+    },
+    "input_shift/darcy_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.7448678612709045,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "auroc": {
+        "spread": {
+          "auroc": 0.9999790191650391,
+          "ci95": [
+            0.9999365233317159,
+            1.0
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 0.9999752044677734,
+          "ci95": [
+            0.9999215555342192,
+            1.0
+          ]
+        }
+      }
+    },
+    "param_oor/darcy_c3/N64": {
+      "kind": "param_oor",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.7666267156600952,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "auroc": {
+        "spread": {
+          "auroc": 0.9999752044677734,
+          "ci95": [
+            0.9999234778372498,
+            1.0
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 0.9999732971191406,
+          "ci95": [
+            0.9999244573051705,
+            1.0
+          ]
+        }
+      }
+    },
+    "param_oor/frac_s3/N64": {
+      "kind": "param_oor",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 1702.5052490234375,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "auroc": {
+        "spread": {
+          "auroc": 0.499237060546875,
+          "ci95": [
+            0.47007329586709956,
+            0.5318268883730447
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 0.49231529235839844,
+          "ci95": [
+            0.4613618123381932,
+            0.5256558186813456
+          ]
+        },
+        "residual": {
+          "auroc": 0.5016794204711914,
+          "ci95": [
+            0.47042594567610546,
+            0.5316935533734996
+          ]
+        }
+      }
+    },
+    "param_oor/frac_s0p25/N64": {
+      "kind": "param_oor",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.9491320252418518,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "auroc": {
+        "spread": {
+          "auroc": 0.4959125518798828,
+          "ci95": [
+            0.4646694362091035,
+            0.5256522793746659
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 0.49733924865722656,
+          "ci95": [
+            0.4659391995617463,
+            0.5256440126568509
+          ]
+        },
+        "residual": {
+          "auroc": 0.49639415740966797,
+          "ci95": [
+            0.46663300466029334,
+            0.526717413407794
+          ]
+        }
+      }
+    },
+    "param_oor/frac_s0p5/N64": {
+      "kind": "param_oor",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.8574415445327759,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "auroc": {
+        "spread": {
+          "auroc": 0.4989461898803711,
+          "ci95": [
+            0.4682032502961657,
+            0.5311746080002515
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 0.5025062561035156,
+          "ci95": [
+            0.47121142908840646,
+            0.5320466666945509
+          ]
+        },
+        "residual": {
+          "auroc": 0.49402618408203125,
+          "ci95": [
+            0.4637094568635753,
+            0.525180152661515
+          ]
+        }
+      }
+    },
+    "unseen_operator/biharmonic/N64": {
+      "kind": "unseen_operator",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 41.25311279296875,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "auroc": {
+        "spread": {
+          "auroc": 0.486328125,
+          "ci95": [
+            0.45722051477106945,
+            0.5154753326882088
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 0.4971179962158203,
+          "ci95": [
+            0.467230158460839,
+            0.5267183230295126
+          ]
+        },
+        "residual": {
+          "auroc": 0.4946908950805664,
+          "ci95": [
+            0.4646509890382349,
+            0.5232888739212621
+          ]
+        }
+      }
+    },
+    "unseen_operator/navier_stokes/N64": {
+      "kind": "unseen_operator",
+      "parent": "diffusion",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.8932962417602539,
+      "rel_l2_in_dist": 0.001377516076900065,
+      "auroc": {
+        "spread": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": null
+      }
+    },
+    "unseen_operator/ns_T0p25/N64": {
+      "kind": "unseen_operator",
+      "parent": "diffusion",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.869482159614563,
+      "rel_l2_in_dist": 0.001377516076900065,
+      "auroc": {
+        "spread": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": null
+      }
+    },
+    "graded_rough/poisson_dam0p1/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.002004786627367139,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "auroc": {
+        "spread": {
+          "auroc": 0.5661735534667969,
+          "ci95": [
+            0.5374155996979434,
+            0.5949585085107363
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 0.8999099731445312,
+          "ci95": [
+            0.8837829853841886,
+            0.9144581794763176
+          ]
+        },
+        "residual": {
+          "auroc": 0.8814144134521484,
+          "ci95": [
+            0.8635838950539587,
+            0.8985444660847578
+          ]
+        }
+      }
+    },
+    "graded_rough/poisson_dam0p2/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.0024093645624816418,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "auroc": {
+        "spread": {
+          "auroc": 0.6660594940185547,
+          "ci95": [
+            0.6386278401624172,
+            0.6948174846573757
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 0.9994621276855469,
+          "ci95": [
+            0.9990477955366598,
+            0.9997807882324641
+          ]
+        },
+        "residual": {
+          "auroc": 0.9931221008300781,
+          "ci95": [
+            0.9902177319488698,
+            0.995547310194212
+          ]
+        }
+      }
+    },
+    "graded_rough/poisson_dam0p3/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.0029605752788484097,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "auroc": {
+        "spread": {
+          "auroc": 0.7531461715698242,
+          "ci95": [
+            0.7274630342574985,
+            0.7769102032281647
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 0.9998035430908203,
+          "ci95": [
+            0.9995741481455178,
+            0.9999605481723606
+          ]
+        }
+      }
+    },
+    "graded_rough/poisson_dam0p5/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.005027309060096741,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "auroc": {
+        "spread": {
+          "auroc": 0.9094753265380859,
+          "ci95": [
+            0.8946535216338477,
+            0.9233951015038894
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    "graded_rough/poisson_dam0p7/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.009092193096876144,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "auroc": {
+        "spread": {
+          "auroc": 0.9830474853515625,
+          "ci95": [
+            0.9784272693826916,
+            0.9876006758626428
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    "graded_rough/poisson_dam1/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.02416357956826687,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "auroc": {
+        "spread": {
+          "auroc": 0.999786376953125,
+          "ci95": [
+            0.9995802091655274,
+            0.9999356020657446
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    "graded_rough/darcy_dam0p1/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.04593094438314438,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "auroc": {
+        "spread": {
+          "auroc": 0.5600528717041016,
+          "ci95": [
+            0.529692099940116,
+            0.5897819238722195
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 0.8762798309326172,
+          "ci95": [
+            0.8588277534402249,
+            0.8935835044742357
+          ]
+        },
+        "residual": {
+          "auroc": 0.6235389709472656,
+          "ci95": [
+            0.5938100312105618,
+            0.652457938511802
+          ]
+        }
+      }
+    },
+    "graded_rough/darcy_dam0p2/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.049708765000104904,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "auroc": {
+        "spread": {
+          "auroc": 0.6378211975097656,
+          "ci95": [
+            0.6079779082401793,
+            0.665070915602013
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 0.9994411468505859,
+          "ci95": [
+            0.9990029926963205,
+            0.999781026528477
+          ]
+        },
+        "residual": {
+          "auroc": 0.7360134124755859,
+          "ci95": [
+            0.7101294683175772,
+            0.7599827364174047
+          ]
+        }
+      }
+    },
+    "graded_rough/darcy_dam0p3/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.05690034106373787,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "auroc": {
+        "spread": {
+          "auroc": 0.7311992645263672,
+          "ci95": [
+            0.7046079689605405,
+            0.7557224615567454
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 0.8466835021972656,
+          "ci95": [
+            0.8261305586179893,
+            0.8649856528797931
+          ]
+        }
+      }
+    },
+    "graded_rough/darcy_dam0p5/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.06721600890159607,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "auroc": {
+        "spread": {
+          "auroc": 0.8594150543212891,
+          "ci95": [
+            0.8396356847571417,
+            0.87642055982099
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 0.9614429473876953,
+          "ci95": [
+            0.952516940060253,
+            0.9693872644871002
+          ]
+        }
+      }
+    },
+    "graded_rough/darcy_dam0p7/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.09144929051399231,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "auroc": {
+        "spread": {
+          "auroc": 0.9604549407958984,
+          "ci95": [
+            0.9522831660908223,
+            0.9687091993197688
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 0.9948825836181641,
+          "ci95": [
+            0.9919099148621027,
+            0.9973642437788947
+          ]
+        }
+      }
+    },
+    "graded_rough/darcy_dam1/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.15970978140830994,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "auroc": {
+        "spread": {
+          "auroc": 0.9935436248779297,
+          "ci95": [
+            0.9904460164552839,
+            0.9963111978640703
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 0.9999217987060547,
+          "ci95": [
+            0.9997799636744777,
+            0.9999961431771948
+          ]
+        }
+      }
+    },
+    "resolution_128/poisson/N128": {
+      "kind": "resolution_128",
+      "parent": "poisson",
+      "N": 128,
+      "n": 256,
+      "rel_l2_mean": 0.0018924319883808494,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "auroc": {
+        "spread": {
+          "auroc": 0.5396041870117188,
+          "ci95": [
+            0.49805502091694337,
+            0.5804733405403271
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    "resolution_128/helmholtz/N128": {
+      "kind": "resolution_128",
+      "parent": "helmholtz",
+      "N": 128,
+      "n": 256,
+      "rel_l2_mean": 0.0017506431322544813,
+      "rel_l2_in_dist": 0.0019029087852686644,
+      "auroc": {
+        "spread": {
+          "auroc": 0.4617881774902344,
+          "ci95": [
+            0.4241623460231497,
+            0.5028011281553729
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 0.9998321533203125,
+          "ci95": [
+            0.9994324712240273,
+            1.0
+          ]
+        }
+      }
+    },
+    "resolution_128/diffusion/N128": {
+      "kind": "resolution_128",
+      "parent": "diffusion",
+      "N": 128,
+      "n": 256,
+      "rel_l2_mean": 0.0013904323568567634,
+      "rel_l2_in_dist": 0.001377516076900065,
+      "auroc": {
+        "spread": {
+          "auroc": 0.5596351623535156,
+          "ci95": [
+            0.5236395761809011,
+            0.5978490843108396
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": null
+      }
+    },
+    "resolution_128/advdiff/N128": {
+      "kind": "resolution_128",
+      "parent": "advdiff",
+      "N": 128,
+      "n": 256,
+      "rel_l2_mean": 0.001333372900262475,
+      "rel_l2_in_dist": 0.0013302396982908249,
+      "auroc": {
+        "spread": {
+          "auroc": 0.5056610107421875,
+          "ci95": [
+            0.4687567486175019,
+            0.5449308853422491
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": null
+      }
+    },
+    "resolution_128/darcy/N128": {
+      "kind": "resolution_128",
+      "parent": "darcy",
+      "N": 128,
+      "n": 256,
+      "rel_l2_mean": 0.04555065929889679,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "auroc": {
+        "spread": {
+          "auroc": 0.5126457214355469,
+          "ci95": [
+            0.47403701904577955,
+            0.5500858005715937
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 0.9392890930175781,
+          "ci95": [
+            0.926739381238942,
+            0.950606140013664
+          ]
+        }
+      }
+    },
+    "resolution_256/poisson/N256": {
+      "kind": "resolution_256",
+      "parent": "poisson",
+      "N": 256,
+      "n": 256,
+      "rel_l2_mean": 0.0018825035076588392,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "auroc": {
+        "spread": {
+          "auroc": 0.5167312622070312,
+          "ci95": [
+            0.47677794350813435,
+            0.5549037763842622
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    "resolution_256/helmholtz/N256": {
+      "kind": "resolution_256",
+      "parent": "helmholtz",
+      "N": 256,
+      "n": 256,
+      "rel_l2_mean": 0.0017193257808685303,
+      "rel_l2_in_dist": 0.0019029087852686644,
+      "auroc": {
+        "spread": {
+          "auroc": 0.46887969970703125,
+          "ci95": [
+            0.42691318687240504,
+            0.5102601052848703
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    "resolution_256/diffusion/N256": {
+      "kind": "resolution_256",
+      "parent": "diffusion",
+      "N": 256,
+      "n": 256,
+      "rel_l2_mean": 0.0014131141360849142,
+      "rel_l2_in_dist": 0.001377516076900065,
+      "auroc": {
+        "spread": {
+          "auroc": 0.568695068359375,
+          "ci95": [
+            0.5300141371992997,
+            0.609628086715937
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": null
+      }
+    },
+    "resolution_256/advdiff/N256": {
+      "kind": "resolution_256",
+      "parent": "advdiff",
+      "N": 256,
+      "n": 256,
+      "rel_l2_mean": 0.0013442639028653502,
+      "rel_l2_in_dist": 0.0013302396982908249,
+      "auroc": {
+        "spread": {
+          "auroc": 0.5347671508789062,
+          "ci95": [
+            0.494525111143828,
+            0.5730520706877261
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": null
+      }
+    },
+    "resolution_256/darcy/N256": {
+      "kind": "resolution_256",
+      "parent": "darcy",
+      "N": 256,
+      "n": 256,
+      "rel_l2_mean": 0.04538640379905701,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "auroc": {
+        "spread": {
+          "auroc": 0.4560699462890625,
+          "ci95": [
+            0.4183652374747091,
+            0.4904849685248136
+          ]
+        },
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "residual": {
+          "auroc": 0.9984207153320312,
+          "ci95": [
+            0.9969715123399588,
+            0.9994976361735807
+          ]
+        }
+      }
+    }
+  },
+  "error_detection": {
+    "tau": 0.03743593394756317,
+    "tau_definition": "90th percentile of rel-L2 on the CALIBRATION split, pooled over the five trained families. The calibration split is scored nowhere else in this file, so the threshold is independent of every sample the AUROC is computed over.",
+    "positive_rate": 0.4137369791666667,
+    "n": 27648,
+    "common_population": [
+      "poisson",
+      "helmholtz",
+      "darcy"
+    ],
+    "detectors": {
+      "spread": {
+        "auroc": 0.8660836159686129,
+        "ci95": [
+          0.8613530038630879,
+          0.8711671613913321
+        ],
+        "n": 27648,
+        "population": "all five families",
+        "per_parent": {
+          "poisson": 0.44326153725360223,
+          "helmholtz": 0.9999944222989052,
+          "diffusion": 0.998133427827153,
+          "advdiff": 0.9964167984454043,
+          "darcy": 0.9358069470213586
+        }
+      },
+      "mahalanobis": {
+        "auroc": 0.6281267287088718,
+        "ci95": [
+          0.6217115181371173,
+          0.6354373563704997
+        ],
+        "n": 27648,
+        "population": "all five families",
+        "per_parent": {
+          "poisson": 0.26820251352652635,
+          "helmholtz": 0.8211832411153419,
+          "diffusion": 0.9951892430278885,
+          "advdiff": 0.9870192042924465,
+          "darcy": 0.5471959034291314
+        }
+      },
+      "residual": {
+        "auroc": 0.7127583367974276,
+        "ci95": [
+          0.7050385728149637,
+          0.7204472375963752
+        ],
+        "n": 19456,
+        "population": "families with a cheap residual",
+        "per_parent": {
+          "poisson": 0.1505762642169217,
+          "helmholtz": 0.5908688075122958,
+          "diffusion": NaN,
+          "advdiff": NaN,
+          "darcy": 0.8688028352231156
+        }
+      }
+    },
+    "detectors_common_population": {
+      "spread": {
+        "auroc": 0.7955735395683418,
+        "ci95": [
+          0.7878548227224059,
+          0.8028805592153054
+        ],
+        "n": 19456
+      },
+      "mahalanobis": {
+        "auroc": 0.490364163197009,
+        "ci95": [
+          0.48176340383184496,
+          0.49848101709182874
+        ],
+        "n": 19456
+      },
+      "residual": {
+        "auroc": 0.7127583367974276,
+        "ci95": [
+          0.7050385728149637,
+          0.7204472375963752
+        ],
+        "n": 19456
+      }
+    }
+  }
+}

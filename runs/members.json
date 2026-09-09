@@ -1,0 +1,163 @@
+{
+  "env": {
+    "torch": "2.8.0+cu128",
+    "python": "3.11.16",
+    "platform": "Linux-6.8.0-58-generic-x86_64-with-glibc2.39",
+    "torch_num_threads": 96,
+    "torch_interop_threads": 96,
+    "OMP_NUM_THREADS": "<unset>",
+    "MKL_NUM_THREADS": "<unset>",
+    "cpu_count": 192,
+    "cuda": "12.8",
+    "gpu": "NVIDIA H100 NVL",
+    "visible_devices": "3",
+    "tf32_matmul": false
+  },
+  "batch": 1,
+  "shift_task": "poisson_dam1",
+  "solver_s": 0.3738353196531534,
+  "n_members_available": 5,
+  "note": "screen, not verdict: 5 checkpoints cannot give 8 seeds per arm, so every row also reports the spread over the C(5,M) member subsets",
+  "rows": [
+    {
+      "M": 1,
+      "n_subsets_scored": 5,
+      "surrogate_s": 0.003336271271109581,
+      "darcy_speedup": 112.05183549982218,
+      "rel_l2": {
+        "mean": 0.003072359738871455,
+        "min": 0.002844953676685691,
+        "max": 0.0033960826694965363,
+        "n_subsets": 5
+      },
+      "coverage": null,
+      "spread_error_pearson": null,
+      "shift_auroc_spread": null,
+      "has_uncertainty": false
+    },
+    {
+      "M": 2,
+      "n_subsets_scored": 10,
+      "surrogate_s": 0.006440695375204086,
+      "darcy_speedup": 58.04269537298334,
+      "rel_l2": {
+        "mean": 0.0023395845433697104,
+        "min": 0.0022015031427145004,
+        "max": 0.002512565581128001,
+        "n_subsets": 10
+      },
+      "coverage": {
+        "mean": 0.9169921875,
+        "min": 0.8974609375,
+        "max": 0.9326171875,
+        "n_subsets": 10
+      },
+      "spread_error_pearson": {
+        "mean": 0.9510693931655615,
+        "min": 0.9440109635645942,
+        "max": 0.9582233597419012,
+        "n_subsets": 10
+      },
+      "shift_auroc_spread": {
+        "mean": 0.9996210098266601,
+        "min": 0.9989509582519531,
+        "max": 0.9998703002929688,
+        "n_subsets": 10
+      },
+      "has_uncertainty": true
+    },
+    {
+      "M": 3,
+      "n_subsets_scored": 10,
+      "surrogate_s": 0.0054264795035123825,
+      "darcy_speedup": 68.89094843372798,
+      "rel_l2": {
+        "mean": 0.0020373654318973423,
+        "min": 0.0019152292516082525,
+        "max": 0.002169352024793625,
+        "n_subsets": 10
+      },
+      "coverage": {
+        "mean": 0.91015625,
+        "min": 0.89453125,
+        "max": 0.919921875,
+        "n_subsets": 10
+      },
+      "spread_error_pearson": {
+        "mean": 0.9587637356570617,
+        "min": 0.9539873707959797,
+        "max": 0.9632086704611533,
+        "n_subsets": 10
+      },
+      "shift_auroc_spread": {
+        "mean": 0.9997398376464843,
+        "min": 0.9993476867675781,
+        "max": 0.9998741149902344,
+        "n_subsets": 10
+      },
+      "has_uncertainty": true
+    },
+    {
+      "M": 4,
+      "n_subsets_scored": 5,
+      "surrogate_s": 0.00712088868021965,
+      "darcy_speedup": 52.498408055667305,
+      "rel_l2": {
+        "mean": 0.0018680316163226963,
+        "min": 0.001782574225217104,
+        "max": 0.001923644682392478,
+        "n_subsets": 5
+      },
+      "coverage": {
+        "mean": 0.8974609375,
+        "min": 0.892578125,
+        "max": 0.90234375,
+        "n_subsets": 5
+      },
+      "spread_error_pearson": {
+        "mean": 0.9601290642902282,
+        "min": 0.956712180933553,
+        "max": 0.9641652970666882,
+        "n_subsets": 5
+      },
+      "shift_auroc_spread": {
+        "mean": 0.9997737884521485,
+        "min": 0.9996757507324219,
+        "max": 0.9998378753662109,
+        "n_subsets": 5
+      },
+      "has_uncertainty": true
+    },
+    {
+      "M": 5,
+      "n_subsets_scored": 1,
+      "surrogate_s": 0.008845504373311996,
+      "darcy_speedup": 42.26274770504458,
+      "rel_l2": {
+        "mean": 0.0017586637986823916,
+        "min": 0.0017586637986823916,
+        "max": 0.0017586637986823916,
+        "n_subsets": 1
+      },
+      "coverage": {
+        "mean": 0.90234375,
+        "min": 0.90234375,
+        "max": 0.90234375,
+        "n_subsets": 1
+      },
+      "spread_error_pearson": {
+        "mean": 0.9600786720975053,
+        "min": 0.9600786720975053,
+        "max": 0.9600786720975053,
+        "n_subsets": 1
+      },
+      "shift_auroc_spread": {
+        "mean": 0.999786376953125,
+        "min": 0.999786376953125,
+        "max": 0.999786376953125,
+        "n_subsets": 1
+      },
+      "has_uncertainty": true
+    }
+  ]
+}

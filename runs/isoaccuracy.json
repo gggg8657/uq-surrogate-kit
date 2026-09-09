@@ -1,0 +1,213 @@
+{
+  "env": {
+    "torch": "2.8.0+cu128",
+    "python": "3.11.16",
+    "platform": "Linux-6.8.0-58-generic-x86_64-with-glibc2.39",
+    "torch_num_threads": 96,
+    "torch_interop_threads": 96,
+    "OMP_NUM_THREADS": "<unset>",
+    "MKL_NUM_THREADS": "<unset>",
+    "cpu_count": 192,
+    "cuda": "12.8",
+    "gpu": "NVIDIA H100 NVL",
+    "visible_devices": "3",
+    "tf32_matmul": false
+  },
+  "n_members": 5,
+  "batch": 64,
+  "families": {
+    "darcy": {
+      "knob": "PCG relative-residual tolerance",
+      "reference": {
+        "tol": 1e-12,
+        "max_iter": 5000,
+        "achieved_residual": 8.405655485342044e-12
+      },
+      "surrogate": {
+        "rel_l2_vs_reference": 0.04146492853760719,
+        "s": 0.022449584677815437,
+        "members": 5,
+        "precision": "bf16 autocast",
+        "timing": {
+          "median_s": 0.022449584677815437,
+          "min_s": 0.022415034472942352,
+          "p25_s": 0.022417988628149033,
+          "p75_s": 0.022469360381364822,
+          "n_iter": 10
+        }
+      },
+      "sweep": [
+        {
+          "tol": 1e-10,
+          "rel_l2_vs_reference": 0.0,
+          "s": 0.4564077463001013,
+          "timing": {
+            "median_s": 0.4564077463001013,
+            "min_s": 0.4536924287676811,
+            "p25_s": 0.45482495054602623,
+            "p75_s": 0.45780446380376816,
+            "n_iter": 10
+          },
+          "speedup_vs_surrogate": 20.33034253640875
+        },
+        {
+          "tol": 1e-08,
+          "rel_l2_vs_reference": 5.168852845738314e-11,
+          "s": 0.36749725602567196,
+          "timing": {
+            "median_s": 0.36749725602567196,
+            "min_s": 0.36446547135710716,
+            "p25_s": 0.36479006707668304,
+            "p75_s": 0.3700847402215004,
+            "n_iter": 10
+          },
+          "speedup_vs_surrogate": 16.36989108261013
+        },
+        {
+          "tol": 1e-06,
+          "rel_l2_vs_reference": 1.2768710533350713e-09,
+          "s": 0.2881723679602146,
+          "timing": {
+            "median_s": 0.2881723679602146,
+            "min_s": 0.2860644906759262,
+            "p25_s": 0.28672849759459496,
+            "p75_s": 0.2884228676557541,
+            "n_iter": 10
+          },
+          "speedup_vs_surrogate": 12.836423127461465
+        },
+        {
+          "tol": 0.0001,
+          "rel_l2_vs_reference": 6.8608073888754e-08,
+          "s": 0.19838795065879822,
+          "timing": {
+            "median_s": 0.19838795065879822,
+            "min_s": 0.1965462528169155,
+            "p25_s": 0.1971263773739338,
+            "p75_s": 0.19895929843187332,
+            "n_iter": 10
+          },
+          "speedup_vs_surrogate": 8.837043246276362
+        },
+        {
+          "tol": 0.001,
+          "rel_l2_vs_reference": 6.894231319165556e-07,
+          "s": 0.15480160899460316,
+          "timing": {
+            "median_s": 0.15480160899460316,
+            "min_s": 0.15422389656305313,
+            "p25_s": 0.15451887995004654,
+            "p75_s": 0.155393548309803,
+            "n_iter": 10
+          },
+          "speedup_vs_surrogate": 6.895522176300094
+        },
+        {
+          "tol": 0.003,
+          "rel_l2_vs_reference": 2.157794597223983e-06,
+          "s": 0.13545640371739864,
+          "timing": {
+            "median_s": 0.13545640371739864,
+            "min_s": 0.13486848026514053,
+            "p25_s": 0.13494952395558357,
+            "p75_s": 0.13648617640137672,
+            "n_iter": 10
+          },
+          "speedup_vs_surrogate": 6.033804440545216
+        },
+        {
+          "tol": 0.01,
+          "rel_l2_vs_reference": 9.314959243056364e-06,
+          "s": 0.11166969873011112,
+          "timing": {
+            "median_s": 0.11166969873011112,
+            "min_s": 0.10751640796661377,
+            "p25_s": 0.11068446561694145,
+            "p75_s": 0.11251997575163841,
+            "n_iter": 10
+          },
+          "speedup_vs_surrogate": 4.974243413975606
+        },
+        {
+          "tol": 0.03,
+          "rel_l2_vs_reference": 3.0830422474537045e-05,
+          "s": 0.09172345325350761,
+          "timing": {
+            "median_s": 0.09172345325350761,
+            "min_s": 0.09075742587447166,
+            "p25_s": 0.09098421782255173,
+            "p75_s": 0.09332836791872978,
+            "n_iter": 10
+          },
+          "speedup_vs_surrogate": 4.08575279097026
+        },
+        {
+          "tol": 0.1,
+          "rel_l2_vs_reference": 8.512529893778265e-05,
+          "s": 0.07537570409476757,
+          "timing": {
+            "median_s": 0.07537570409476757,
+            "min_s": 0.07472267746925354,
+            "p25_s": 0.07494772598147392,
+            "p75_s": 0.07580867037177086,
+            "n_iter": 10
+          },
+          "speedup_vs_surrogate": 3.357554501631981
+        }
+      ],
+      "iso_accuracy": {
+        "tol": 0.1,
+        "solver_rel_l2": 8.512529893778265e-05,
+        "solver_s": 0.07537570409476757,
+        "speedup": 3.357554501631981
+      },
+      "headline_speedup_at_1e-10": 20.33034253640875
+    },
+    "navier_stokes": {
+      "knob": "RK4 step size",
+      "trained": false,
+      "reference": {
+        "dt": 0.00025
+      },
+      "sweep": [
+        {
+          "dt": 0.001,
+          "steps": 1000,
+          "rel_l2_vs_reference": 3.045588528038934e-06,
+          "s": 0.6880168654024601
+        },
+        {
+          "dt": 0.002,
+          "steps": 500,
+          "rel_l2_vs_reference": 2.9439265745168086e-06,
+          "s": 0.34222130849957466
+        },
+        {
+          "dt": 0.004,
+          "steps": 250,
+          "rel_l2_vs_reference": 2.8094045774196275e-06,
+          "s": 0.17152030020952225
+        },
+        {
+          "dt": 0.008,
+          "steps": 125,
+          "rel_l2_vs_reference": 4.587754119711462e-06,
+          "s": 0.08603813126683235
+        },
+        {
+          "dt": 0.016,
+          "steps": 62,
+          "rel_l2_vs_reference": 0.014482835307717323,
+          "s": 0.042548615485429764
+        },
+        {
+          "dt": 0.032,
+          "steps": 31,
+          "rel_l2_vs_reference": NaN,
+          "s": 0.02144864946603775
+        }
+      ],
+      "note": "no surrogate is trained on this family -- it is held out as an unseen operator for the OOD clause -- so no speedup is claimed here. The sweep says how much of the 1,000-step reference cost is actually required for a given accuracy."
+    }
+  }
+}

@@ -150,3 +150,208 @@ is in the suite for that reason. Prediction, recorded before the numbers exist:
 3. Which families clear 100×? Darcy (PCG) and Navier–Stokes (1,000 RK4 steps)
    should; the four exact-propagator families should not. Untrained-family rows
    are timed for the solver only and marked as such.
+
+---
+
+## Turn 2 — 2026-09-09 — every clause measured, every clause missed, one cause
+
+Five members trained (26.25M params each, 60 epochs, ~5 min/member on GPU 3),
+in-distribution rel-L2 0.0013–0.0430 across the five families. All three KPI
+clauses now have numbers. All three fail, and the failures are more informative
+than a pass would have been.
+
+### Clause 1 — coverage 90±2%
+
+**In distribution: met, on all four scores.** Pooled, per-family quantile:
+`field_max` 88.6% [87.7, 89.5], `norm_ratio` 88.8%, `rel_l2` 89.7%,
+`pixel` 89.8%. Per family, `field_max` runs 86.5% (diffusion) to 90.2%
+(poisson). This is the easy half and the brief said so.
+
+**Under shift: missed, and the failure is the opposite of the expected one.**
+Of 32 shards where weighted conformal's covariate-shift assumption actually
+holds, **0 are in band under plain split conformal and 2 under weighted**. But
+the dominant failure is **over**-coverage, not under-coverage: 24 of 32 shards
+sit at 99–100%.
+
+The mechanism is the locally adaptive score. `field_max` is
+`|resid| / (σ + floor)`, and under an input shift both the residual *and* the
+ensemble spread grow. σ grows fast enough to keep the ratio bounded, so the
+interval covers — by being far too wide. A 100% coverage is a failed
+calibration in the same way 60% is; the KPI band is two-sided for a reason.
+
+Where it does under-cover, it under-covers hard, and the pattern is specific:
+`advdiff_tau` 4.5%, `diffusion_tau` 26.4%, `advdiff_rough` 55.7%,
+`diffusion_rough` 62.7%. The two time-evolution families, and only them. Their
+spread does *not* track the error under a correlation-length shift, while the
+elliptic families' does.
+
+**Weighted conformal has a working window, and it is narrow.** This is what the
+graded ladder was added for, and it paid for itself:
+
+| shift | probe AUC | split | weighted |
+|---|---|---|---|
+| `poisson_dam0p1` | 0.99 | 100.0% | 84.0% |
+| `darcy_dam0p1` | 0.98 | 100.0% | **90.8%** ✅ |
+| `poisson_dam0p2` | 1.00 | 100.0% | **91.8%** ✅ |
+| `poisson_dam0p3` | 1.00 | 100.0% | 97.7% |
+| `poisson_dam1` | 1.00 | 100.0% | 100.0% (512/512 quantiles = ∞) |
+
+Beyond Δα ≈ 0.2 the probe saturates at AUC 1.00, the density ratio has no
+overlap left to exploit, and the **exact** weighted quantile correctly returns
++infinity for most test points — 512 of 512 at Δα = 1.0. The 100% coverage in
+those rows is vacuous, which is visible only because the fix from turn 1 made
+the quantile exact and the infinity count is reported. The old median-weight
+shortcut would have returned a finite quantile and a clean-looking 100%.
+
+**A methodological correction I am recording against my own table.**
+`field_max` coverage is *not comparable across resolutions*: it is a maximum
+over pixels, and 256² has 16× more of them, so the score rises mechanically. The
+resolution rows (advdiff 20.7% at 256²) partly measure that, not miscalibration.
+`norm_ratio` and `rel_l2` are resolution-comparable and should be read instead.
+
+### Clause 2 — speedup ≥100×: missed, in four independent ways
+
+| measurement | result |
+|---|---|
+| GPU, trained families, ensemble | **0/10 rows ≥100×**; range 0.007×–41× |
+| four exact-propagator families | surrogate is **15–140× slower** than the solver |
+| Darcy, best row (batch 1, 5 members) | 40.8× at rel-L2 0.0430 |
+| Darcy, iso-accuracy | **3.4×** |
+| ≥100× reachable at all? | only at M=1 (112×), which has no spread |
+
+Four separate points, each of which alone sinks the clause:
+
+1. **For four of the five families the reference solver is two FFTs.** Poisson
+   takes 0.20 ms for a batch of 64; the 5-member surrogate takes 15 ms. A
+   surrogate is the wrong tool for a problem with an exact spectral propagator,
+   and the rows are kept in the table so that is visible rather than curated
+   away. Only Darcy — an iterative solve — is a candidate at all.
+
+2. **The uncertainty costs 4.6×.** Single member on Darcy at batch 1: 187.7×.
+   Five members: 40.8×. The thing that makes this a *UQ* kit is exactly the
+   thing that takes it below 100×.
+
+3. **The headline denominator was over-converged.** The corpus was generated at
+   PCG tol 1e-10. Sweeping the tolerance: at tol 1e-1 the solver still reaches
+   rel-L2 8.5e-5 against a 1e-12 reference, in 75 ms against the surrogate's
+   22 ms — **3.4×**. And that is an *upper bound on the honest ratio*, because
+   the sweep never made the solver as inaccurate as the surrogate: the
+   surrogate's 4.3% error is worse than a PCG stopped at a 10% residual
+   tolerance. The preconditioner is too good for a surrogate to beat on
+   accuracy-per-second. The same holds for Navier–Stokes: dt can be relaxed
+   from 1e-3 to 8e-3 (694 ms → 86 ms) for rel-L2 < 1e-5, so its 76× headline is
+   also ~8× over-converged.
+
+4. **Batching favours the solver, not the surrogate.** Darcy PCG costs 370 ms
+   for one sample and 283 ms for sixty-four — the batched solve is *cheaper per
+   sample by 84×*. The surrogate scales linearly. So the speedup is a latency
+   win (40.8× at B=1) that collapses to 12.7× at B=64. Quoting only batch-1
+   would have been the flattering choice.
+
+The ensemble-size ablation makes the structure explicit — 112.1× at M=1,
+58.0× at M=2, 42.3× at M=5, and coverage/spread-correlation/shift-AUROC are all
+`—` at M=1 because there is no spread to compute. **Every configuration that
+clears 100× has no uncertainty; every configuration with uncertainty is below
+it.** Timing noise between adjacent M is visible (M=3 measures faster than
+M=2), so that is a trend on 5 checkpoints — a screen, not a verdict.
+
+### Clause 3 — OOD AUROC ≥0.9: missed, and the miss is an identity
+
+Best single detector on shift detection is `mahalanobis` at **43/49 shards
+≥0.9**. The six misses are two mild shards (Δα = 0.1, AUROC 0.876 and 0.900,
+where rel-L2 moves 0.0018→0.0020 — arguably not OOD at all) and four shards
+that are at chance:
+
+| shard | rel-L2 | spread | mahalanobis | residual |
+|---|---:|---:|---:|---:|
+| `biharmonic` | **41.25** | 0.486 | 0.497 | 0.495 |
+| `frac_s3` | **1702.5** | 0.499 | 0.492 | 0.502 |
+| `frac_s0p25` | 0.949 | 0.496 | 0.497 | 0.496 |
+| `frac_s0p5` | 0.857 | 0.499 | 0.503 | 0.494 |
+
+The surrogate is wrong by a factor of 40 to 1,700 and **nothing notices**.
+
+**This is not a tuning gap, and the distinction matters.** All three detectors
+are functions of the input and the *configured* operator. These four shards
+inherit their parent's input distribution exactly by construction, and the
+configured operator does not change when the process does. A model configured
+as Poisson, handed `f`, returns the Poisson solution: its ensemble spread is
+in-distribution because the input is, and its Poisson residual is *small and
+correct*, because it is a good answer to a question nobody asked. Any statistic
+of (input, configured operator) must sit at 0.5 here. Predicted in turn 1 before
+the data existed; measured at 0.486–0.503 on three independent detectors.
+
+The obvious alternative explanation — "the ensemble is too small / too
+correlated" — is ruled out by the same table: those detectors reach 1.000 on
+`darcy_c3` (rel-L2 0.77) and on `navier_stokes` (0.89), shifts of comparable
+severity whose *inputs* do move. The blindness is specific to matched inputs.
+
+Error detection is also short: `spread` 0.866 pooled, 0.796 on the population
+where all three detectors are defined. Stratified by family it is 0.936–1.000
+for helmholtz/diffusion/advdiff/darcy and **0.443 — below chance — for
+poisson**, because the poisson stratum is where the four blind shards live.
+
+### The constructive half: what does work, and what it costs
+
+Since no unsupervised statistic can see an operator shift, the question becomes
+how expensive the cheapest thing that can is. `scripts/eval_label_probe.py`:
+run k samples through the reference solver, compare their errors to the
+calibration distribution with a conformal p-value, combine with Fisher.
+False-alarm rate verified on held-out in-distribution data at 0.046–0.059 for
+k=1 (drifting to 0.089–0.105 at k=64 for helmholtz and darcy — the discreteness
+of a 1,024-point conformal p-value, and stated rather than smoothed).
+
+**k = 1 for every shard the unsupervised detectors could not see** —
+`biharmonic`, `frac_s3`, `frac_s0p25`, `frac_s0p5`, and also `darcy_c3` and both
+Navier–Stokes shards. One labelled probe, at 95% power and 5% false alarms.
+
+And where k > 64 — every resolution shard, and the three `*_smooth` shards —
+the surrogate's error did not move (0.0019 vs 0.0018; smoother inputs are
+*easier*). The probe declines to alarm on a shift that does no harm, which is
+precisely what separates it from `mahalanobis`, which fires at AUROC 1.000 on
+all ten resolution shards where there is nothing wrong.
+
+### Verdict
+
+**A4 is UNREACHABLE as specified**, and the three reasons are structural rather
+than budgetary:
+
+1. `≥100×` and `a calibrated interval` are contested by one knob. M=1 gives
+   112× and no interval; M=2 gives 58×.
+2. Against a well-preconditioned iterative solver the honest iso-accuracy ratio
+   is 3.4×, and the surrogate is less accurate than the solver's loosest
+   setting. Against an exact spectral propagator it is 0.007–0.06×.
+3. `AUROC ≥0.9` on operator shift with matched inputs is unachievable by any
+   function of (input, configured operator), which is what an unsupervised
+   detector is.
+
+What would change each: (1) a surrogate with an intrinsic variance head rather
+than an ensemble — one forward pass, one σ; (2) a problem whose solver is
+genuinely expensive at the accuracy anyone needs (3D, fine meshes, stiff
+chemistry) rather than a 64² periodic box; (3) a labelled-probe budget, which
+this repo now measures at k=1.
+
+### Second opinions
+
+- **codex** (`logs/critic_codex.log`) reviewed the calibration and OOD code
+  before any result existed and found seven real defects, all fixed in commit
+  2 and all pinned by tests: the σ floor recomputed per shard in
+  `eval_conformal.py` (the same bug turn 1 fixed in the API and I had wrongly
+  recorded as fixed in both); weighted conformal clamping an unreachable
+  quantile to the max score instead of +∞; the median-weight approximation
+  (now exact and per-test-point); the probe standardizing before its own
+  holdout split; `interval()` returning the pooled quantile in group mode;
+  pixel coverage treated as 2.1M independent observations; and the
+  error-detection threshold taken from the test errors it then scored. Two of
+  these — the σ floor and the vacuous weighted quantile — would each have
+  produced a *better-looking* clause-1 number.
+- **agy** (`logs/critic_agy.log`) attacked the benchmark. Its live findings:
+  the verdict line selected the maximum speedup across families (now a range
+  and a count); the ensemble's rel-L2 was printed beside the single-member
+  speedup (now per-variant, per-device); CPU rows carried a CUDA bf16 accuracy
+  (now measured in fp32 on CPU). Its normalization/de-normalization findings
+  were against a file already patched. Its point that the Darcy PCG does a
+  synchronous device-to-host copy per iteration is correct and **not yet
+  addressed** — it makes the solver slower than it needs to be and is a
+  subsidy to the surrogate, on top of the 3.4× iso-accuracy figure.
+- **cursor-agent** could not run: `Authentication required`. Not used.

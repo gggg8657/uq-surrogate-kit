@@ -444,7 +444,19 @@ PARENT.update({f"{p}_{s}": p for p in SHIFT_PARENTS for s in SHIFT_SPECS})
 # the sweep families are operator shifts of their own base
 PARENT.update({t: "poisson" for t in FRAC_TASKS})
 PARENT.update({t: "darcy" for t in DARCY_TASKS})
-PARENT.update({t: "navier_stokes" for t in NS_TASKS})
+# An unseen operator has to be presented under a task the surrogate actually
+# has, because that is the deployment failure being modelled: the process
+# changed and nobody reconfigured the model. The parent is chosen by *problem
+# shape*, not by similarity of the answer --
+#   biharmonic -> poisson    (both f -> u elliptic, identical input distribution)
+#   frac_s*    -> poisson    (same)
+#   NS         -> diffusion  (both u(0) -> u(T) initial-value problems; NS is
+#                             diffusion plus a nonlinear advective term)
+# Picking the *nearest* trained family is the charitable choice: it is the one a
+# deployment would plausibly have configured, and it gives the detectors their
+# best chance rather than a straw man.
+PARENT.update({t: "diffusion" for t in NS_TASKS})
+PARENT["navier_stokes"] = "diffusion"
 PARENT["biharmonic"] = "poisson"
 
 for _p in SHIFT_PARENTS:

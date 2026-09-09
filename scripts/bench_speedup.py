@@ -82,6 +82,8 @@ def main():
                     help="families the surrogate was NOT trained on, timed for "
                          "the solver cost only")
     ap.add_argument("--no-cpu", action="store_true")
+    ap.add_argument("--cpu-acc-n", type=int, default=128,
+                    help="samples used for the CPU accuracy check")
     args = ap.parse_args()
 
     tasks = args.tasks.split(",")
@@ -100,16 +102,32 @@ def main():
                     "cheapest solver setting that matches the surrogate's own "
                     "accuracy, which is the smaller and more honest number.")}
 
-    # accuracy first: a speedup row without it is not emitted
+    # Accuracy first: a speedup row without it is not emitted -- and it is
+    # measured **per variant and per device**, not once. A single member is
+    # ~M times faster than the ensemble and also less accurate, so pinning the
+    # ensemble's rel-L2 next to the single-member speedup (which an earlier
+    # version did) advertises a ratio the quoted accuracy never achieved. The
+    # CPU rows run fp32 without autocast, so they get their own number too.
     acc = {}
     for t in tasks:
         blob = load_shard(args.root, t, "test", 64)
-        mean, _, truth, _ = predict_shard(models, blob, stats, "cuda")
-        acc[t] = float(rel_l2(mean, truth).mean())
-        del mean, truth
-    torch.cuda.empty_cache()
+        for dev_, ac_ in (("cuda", True), ("cpu", False)):
+            if dev_ == "cpu" and args.no_cpu:
+                continue
+            n = len(blob["a"]) if dev_ == "cuda" else args.cpu_acc_n
+            sub = {"a": blob["a"][:n], "u": blob["u"][:n], "task": t}
+            ms = [m.to(dev_).eval() for m in models]
+            for k, name in ((1, "single"), (M, "ensemble")):
+                mean, _, truth, _ = predict_shard(ms[:k], sub, stats, dev_,
+                                                  autocast=ac_)
+                acc[f"{t}|{dev_}|{name}"] = float(rel_l2(mean, truth).mean())
+                del mean, truth
+        [m.to("cuda") for m in models]
+        torch.cuda.empty_cache()
     res["accuracy"] = acc
-    print("ensemble rel-L2:", {k: round(v, 5) for k, v in acc.items()}, flush=True)
+    res["accuracy_key"] = "task|device|variant; cuda = bf16 autocast, cpu = fp32"
+    print("rel-L2:", {k: round(v, 5) for k, v in acc.items()
+                      if k.endswith("|cuda|ensemble")}, flush=True)
 
     for device in (["cuda"] if args.no_cpu else ["cuda", "cpu"]):
         if device == "cpu":
@@ -137,7 +155,6 @@ def main():
                        "solver_s": sol["median_s"],
                        "solver_s_per_sample": sol["median_s"] / B,
                        "solver_accuracy": sim.solver_accuracy(),
-                       "surrogate_rel_l2": acc.get(t),
                        "threads": torch.get_num_threads(),
                        "solver_timing": sol, "surrogate": {}}
                 has_res = sim.residual(a_raw, sim.solve(a_raw)) is not None
@@ -149,10 +166,12 @@ def main():
                         models_d, a_raw, st, tid, k,
                         residual=(sim.residual if use_res else None))
                     tm = timeit(fn, 3, n_iter, device)
+                    variant_acc = acc.get(
+                        f"{t}|{device}|{'single' if k == 1 else 'ensemble'}")
                     row["surrogate"][name] = {
                         "s": tm["median_s"], "s_per_sample": tm["median_s"] / B,
                         "speedup": sol["median_s"] / max(tm["median_s"], 1e-12),
-                        "timing": tm}
+                        "rel_l2": variant_acc, "timing": tm}
                 res["rows"].append(row)
                 sp = {k: round(v["speedup"], 1) for k, v in row["surrogate"].items()}
                 print(f"{t:14s} {device:4s} B={B:<3d} solver "

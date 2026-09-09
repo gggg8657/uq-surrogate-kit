@@ -1,0 +1,1073 @@
+{
+  "alpha": 0.05,
+  "target_power": 0.95,
+  "ks": [
+    1,
+    2,
+    3,
+    5,
+    8,
+    12,
+    20,
+    32,
+    64
+  ],
+  "n_cal": {
+    "poisson": 1024,
+    "helmholtz": 1024,
+    "diffusion": 1024,
+    "advdiff": 1024,
+    "darcy": 1024
+  },
+  "trials": 2000,
+  "critical_values": {
+    "1": 6.040849772288725,
+    "2": 9.801014253365599,
+    "3": 12.965386717062543,
+    "5": 18.655221233855134,
+    "8": 26.551470506478136,
+    "12": 37.31404021746502,
+    "20": 56.67845483065301,
+    "32": 85.88691550232691,
+    "64": 158.70368989980352
+  },
+  "false_alarm_measured": {
+    "poisson": {
+      "1": 0.051,
+      "2": 0.033,
+      "3": 0.0205,
+      "5": 0.024,
+      "8": 0.032,
+      "12": 0.02,
+      "20": 0.0185,
+      "32": 0.0145,
+      "64": 0.0095
+    },
+    "helmholtz": {
+      "1": 0.0595,
+      "2": 0.0545,
+      "3": 0.0645,
+      "5": 0.073,
+      "8": 0.072,
+      "12": 0.074,
+      "20": 0.0875,
+      "32": 0.0785,
+      "64": 0.105
+    },
+    "diffusion": {
+      "1": 0.052,
+      "2": 0.042,
+      "3": 0.0435,
+      "5": 0.044,
+      "8": 0.0375,
+      "12": 0.0325,
+      "20": 0.0315,
+      "32": 0.03,
+      "64": 0.0285
+    },
+    "advdiff": {
+      "1": 0.0485,
+      "2": 0.046,
+      "3": 0.0485,
+      "5": 0.0395,
+      "8": 0.0495,
+      "12": 0.0445,
+      "20": 0.0425,
+      "32": 0.046,
+      "64": 0.028
+    },
+    "darcy": {
+      "1": 0.046,
+      "2": 0.0615,
+      "3": 0.069,
+      "5": 0.074,
+      "8": 0.0755,
+      "12": 0.0785,
+      "20": 0.0745,
+      "32": 0.0845,
+      "64": 0.0895
+    }
+  },
+  "shifts": {
+    "input_shift/poisson_rough/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "N": 64,
+      "rel_l2_mean": 0.02374199964106083,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 1.0
+    },
+    "input_shift/poisson_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "N": 64,
+      "rel_l2_mean": 0.0013550585135817528,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "power": {
+        "1": 0.0,
+        "2": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0,
+        "12": 0.0,
+        "20": 0.0,
+        "32": 0.0,
+        "64": 0.0
+      },
+      "k_for_95pct_power": null,
+      "frac_probes_above_cal_max": 0.0
+    },
+    "input_shift/poisson_tau/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "N": 64,
+      "rel_l2_mean": 0.006071886047720909,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 0.580078125
+    },
+    "input_shift/poisson_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "N": 64,
+      "rel_l2_mean": 0.42767223715782166,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 1.0
+    },
+    "input_shift/helmholtz_rough/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "N": 64,
+      "rel_l2_mean": 0.00810912810266018,
+      "rel_l2_in_dist": 0.0019029087852686644,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 0.025390625
+    },
+    "input_shift/helmholtz_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "N": 64,
+      "rel_l2_mean": 0.0023285462521016598,
+      "rel_l2_in_dist": 0.0019029087852686644,
+      "power": {
+        "1": 0.4045,
+        "2": 0.6745,
+        "3": 0.8425,
+        "5": 0.9805,
+        "8": 0.999,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 5,
+      "frac_probes_above_cal_max": 0.0
+    },
+    "input_shift/helmholtz_tau/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "N": 64,
+      "rel_l2_mean": 0.008236058987677097,
+      "rel_l2_in_dist": 0.0019029087852686644,
+      "power": {
+        "1": 0.9845,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 0.11328125
+    },
+    "input_shift/helmholtz_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "N": 64,
+      "rel_l2_mean": 0.35902416706085205,
+      "rel_l2_in_dist": 0.0019029087852686644,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 1.0
+    },
+    "input_shift/diffusion_rough/N64": {
+      "kind": "input_shift",
+      "parent": "diffusion",
+      "N": 64,
+      "rel_l2_mean": 0.053851038217544556,
+      "rel_l2_in_dist": 0.001377516076900065,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 1.0
+    },
+    "input_shift/diffusion_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "diffusion",
+      "N": 64,
+      "rel_l2_mean": 0.0012426066678017378,
+      "rel_l2_in_dist": 0.001377516076900065,
+      "power": {
+        "1": 0.0,
+        "2": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0,
+        "12": 0.0,
+        "20": 0.0,
+        "32": 0.0,
+        "64": 0.0
+      },
+      "k_for_95pct_power": null,
+      "frac_probes_above_cal_max": 0.0
+    },
+    "input_shift/diffusion_tau/N64": {
+      "kind": "input_shift",
+      "parent": "diffusion",
+      "N": 64,
+      "rel_l2_mean": 0.009997445158660412,
+      "rel_l2_in_dist": 0.001377516076900065,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 0.998046875
+    },
+    "input_shift/diffusion_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "diffusion",
+      "N": 64,
+      "rel_l2_mean": 0.4358547329902649,
+      "rel_l2_in_dist": 0.001377516076900065,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 1.0
+    },
+    "input_shift/advdiff_rough/N64": {
+      "kind": "input_shift",
+      "parent": "advdiff",
+      "N": 64,
+      "rel_l2_mean": 0.05795229971408844,
+      "rel_l2_in_dist": 0.0013302396982908249,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 1.0
+    },
+    "input_shift/advdiff_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "advdiff",
+      "N": 64,
+      "rel_l2_mean": 0.001230316935107112,
+      "rel_l2_in_dist": 0.0013302396982908249,
+      "power": {
+        "1": 0.0015,
+        "2": 0.0015,
+        "3": 0.001,
+        "5": 0.0,
+        "8": 0.0,
+        "12": 0.0,
+        "20": 0.0,
+        "32": 0.0,
+        "64": 0.0
+      },
+      "k_for_95pct_power": null,
+      "frac_probes_above_cal_max": 0.0
+    },
+    "input_shift/advdiff_tau/N64": {
+      "kind": "input_shift",
+      "parent": "advdiff",
+      "N": 64,
+      "rel_l2_mean": 0.013159257359802723,
+      "rel_l2_in_dist": 0.0013302396982908249,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 0.998046875
+    },
+    "input_shift/advdiff_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "advdiff",
+      "N": 64,
+      "rel_l2_mean": 0.4722467064857483,
+      "rel_l2_in_dist": 0.0013302396982908249,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 1.0
+    },
+    "input_shift/darcy_rough/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "N": 64,
+      "rel_l2_mean": 0.06835277378559113,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "power": {
+        "1": 0.179,
+        "2": 0.359,
+        "3": 0.535,
+        "5": 0.771,
+        "8": 0.9335,
+        "12": 0.9905,
+        "20": 0.9995,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 12,
+      "frac_probes_above_cal_max": 0.01953125
+    },
+    "input_shift/darcy_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "N": 64,
+      "rel_l2_mean": 0.02220580168068409,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "power": {
+        "1": 0.008,
+        "2": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0,
+        "12": 0.0,
+        "20": 0.0,
+        "32": 0.0,
+        "64": 0.0
+      },
+      "k_for_95pct_power": null,
+      "frac_probes_above_cal_max": 0.0
+    },
+    "input_shift/darcy_tau/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "N": 64,
+      "rel_l2_mean": 0.0946241170167923,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "power": {
+        "1": 0.5775,
+        "2": 0.883,
+        "3": 0.9745,
+        "5": 0.9995,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 3,
+      "frac_probes_above_cal_max": 0.06640625
+    },
+    "input_shift/darcy_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "N": 64,
+      "rel_l2_mean": 0.7448678612709045,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 1.0
+    },
+    "param_oor/darcy_c3/N64": {
+      "kind": "param_oor",
+      "parent": "darcy",
+      "N": 64,
+      "rel_l2_mean": 0.7666267156600952,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 1.0
+    },
+    "param_oor/frac_s3/N64": {
+      "kind": "param_oor",
+      "parent": "poisson",
+      "N": 64,
+      "rel_l2_mean": 1702.5052490234375,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 1.0
+    },
+    "param_oor/frac_s0p25/N64": {
+      "kind": "param_oor",
+      "parent": "poisson",
+      "N": 64,
+      "rel_l2_mean": 0.9491320252418518,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 1.0
+    },
+    "param_oor/frac_s0p5/N64": {
+      "kind": "param_oor",
+      "parent": "poisson",
+      "N": 64,
+      "rel_l2_mean": 0.8574415445327759,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 1.0
+    },
+    "unseen_operator/biharmonic/N64": {
+      "kind": "unseen_operator",
+      "parent": "poisson",
+      "N": 64,
+      "rel_l2_mean": 41.25311279296875,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 1.0
+    },
+    "unseen_operator/navier_stokes/N64": {
+      "kind": "unseen_operator",
+      "parent": "diffusion",
+      "N": 64,
+      "rel_l2_mean": 0.8932962417602539,
+      "rel_l2_in_dist": 0.001377516076900065,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 1.0
+    },
+    "unseen_operator/ns_T0p25/N64": {
+      "kind": "unseen_operator",
+      "parent": "diffusion",
+      "N": 64,
+      "rel_l2_mean": 0.869482159614563,
+      "rel_l2_in_dist": 0.001377516076900065,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 1.0
+    },
+    "graded_rough/poisson_dam0p1/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "rel_l2_mean": 0.002004786627367139,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "power": {
+        "1": 0.092,
+        "2": 0.122,
+        "3": 0.144,
+        "5": 0.21,
+        "8": 0.2775,
+        "12": 0.365,
+        "20": 0.5565,
+        "32": 0.732,
+        "64": 0.951
+      },
+      "k_for_95pct_power": 64,
+      "frac_probes_above_cal_max": 0.001953125
+    },
+    "graded_rough/poisson_dam0p2/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "rel_l2_mean": 0.0024093645624816418,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "power": {
+        "1": 0.247,
+        "2": 0.385,
+        "3": 0.523,
+        "5": 0.743,
+        "8": 0.912,
+        "12": 0.9825,
+        "20": 0.999,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 12,
+      "frac_probes_above_cal_max": 0.005859375
+    },
+    "graded_rough/poisson_dam0p3/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "rel_l2_mean": 0.0029605752788484097,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "power": {
+        "1": 0.5265,
+        "2": 0.776,
+        "3": 0.9115,
+        "5": 0.994,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 5,
+      "frac_probes_above_cal_max": 0.013671875
+    },
+    "graded_rough/poisson_dam0p5/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "rel_l2_mean": 0.005027309060096741,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "power": {
+        "1": 0.9845,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 0.333984375
+    },
+    "graded_rough/poisson_dam0p7/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "rel_l2_mean": 0.009092193096876144,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 0.9453125
+    },
+    "graded_rough/poisson_dam1/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "rel_l2_mean": 0.02416357956826687,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "power": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 1.0
+    },
+    "graded_rough/darcy_dam0p1/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "rel_l2_mean": 0.04593094438314438,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "power": {
+        "1": 0.0695,
+        "2": 0.066,
+        "3": 0.0945,
+        "5": 0.0885,
+        "8": 0.1345,
+        "12": 0.141,
+        "20": 0.182,
+        "32": 0.2005,
+        "64": 0.3395
+      },
+      "k_for_95pct_power": null,
+      "frac_probes_above_cal_max": 0.001953125
+    },
+    "graded_rough/darcy_dam0p2/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "rel_l2_mean": 0.049708765000104904,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "power": {
+        "1": 0.075,
+        "2": 0.092,
+        "3": 0.1075,
+        "5": 0.1505,
+        "8": 0.219,
+        "12": 0.2575,
+        "20": 0.386,
+        "32": 0.507,
+        "64": 0.791
+      },
+      "k_for_95pct_power": null,
+      "frac_probes_above_cal_max": 0.00390625
+    },
+    "graded_rough/darcy_dam0p3/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "rel_l2_mean": 0.05690034106373787,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "power": {
+        "1": 0.124,
+        "2": 0.179,
+        "3": 0.23,
+        "5": 0.363,
+        "8": 0.503,
+        "12": 0.6705,
+        "20": 0.8655,
+        "32": 0.9615,
+        "64": 0.9985
+      },
+      "k_for_95pct_power": 32,
+      "frac_probes_above_cal_max": 0.009765625
+    },
+    "graded_rough/darcy_dam0p5/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "rel_l2_mean": 0.06721600890159607,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "power": {
+        "1": 0.2085,
+        "2": 0.3545,
+        "3": 0.513,
+        "5": 0.751,
+        "8": 0.9175,
+        "12": 0.981,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 12,
+      "frac_probes_above_cal_max": 0.015625
+    },
+    "graded_rough/darcy_dam0p7/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "rel_l2_mean": 0.09144929051399231,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "power": {
+        "1": 0.5305,
+        "2": 0.8805,
+        "3": 0.978,
+        "5": 0.999,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 3,
+      "frac_probes_above_cal_max": 0.04296875
+    },
+    "graded_rough/darcy_dam1/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "rel_l2_mean": 0.15970978140830994,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "power": {
+        "1": 0.991,
+        "2": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0,
+        "12": 1.0,
+        "20": 1.0,
+        "32": 1.0,
+        "64": 1.0
+      },
+      "k_for_95pct_power": 1,
+      "frac_probes_above_cal_max": 0.68359375
+    },
+    "resolution_128/poisson/N128": {
+      "kind": "resolution_128",
+      "parent": "poisson",
+      "N": 128,
+      "rel_l2_mean": 0.0018924319883808494,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "power": {
+        "1": 0.0695,
+        "2": 0.055,
+        "3": 0.083,
+        "5": 0.089,
+        "8": 0.129,
+        "12": 0.1565,
+        "20": 0.218,
+        "32": 0.291,
+        "64": 0.5355
+      },
+      "k_for_95pct_power": null,
+      "frac_probes_above_cal_max": 0.0
+    },
+    "resolution_128/helmholtz/N128": {
+      "kind": "resolution_128",
+      "parent": "helmholtz",
+      "N": 128,
+      "rel_l2_mean": 0.0017506431322544813,
+      "rel_l2_in_dist": 0.0019029087852686644,
+      "power": {
+        "1": 0.0415,
+        "2": 0.02,
+        "3": 0.02,
+        "5": 0.0175,
+        "8": 0.0095,
+        "12": 0.0085,
+        "20": 0.0025,
+        "32": 0.001,
+        "64": 0.0
+      },
+      "k_for_95pct_power": null,
+      "frac_probes_above_cal_max": 0.00390625
+    },
+    "resolution_128/diffusion/N128": {
+      "kind": "resolution_128",
+      "parent": "diffusion",
+      "N": 128,
+      "rel_l2_mean": 0.0013904323568567634,
+      "rel_l2_in_dist": 0.001377516076900065,
+      "power": {
+        "1": 0.0345,
+        "2": 0.0325,
+        "3": 0.039,
+        "5": 0.0365,
+        "8": 0.04,
+        "12": 0.042,
+        "20": 0.0525,
+        "32": 0.0565,
+        "64": 0.093
+      },
+      "k_for_95pct_power": null,
+      "frac_probes_above_cal_max": 0.0
+    },
+    "resolution_128/advdiff/N128": {
+      "kind": "resolution_128",
+      "parent": "advdiff",
+      "N": 128,
+      "rel_l2_mean": 0.001333372900262475,
+      "rel_l2_in_dist": 0.0013302396982908249,
+      "power": {
+        "1": 0.044,
+        "2": 0.048,
+        "3": 0.0505,
+        "5": 0.0555,
+        "8": 0.048,
+        "12": 0.049,
+        "20": 0.043,
+        "32": 0.033,
+        "64": 0.0345
+      },
+      "k_for_95pct_power": null,
+      "frac_probes_above_cal_max": 0.0
+    },
+    "resolution_128/darcy/N128": {
+      "kind": "resolution_128",
+      "parent": "darcy",
+      "N": 128,
+      "rel_l2_mean": 0.04555065929889679,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "power": {
+        "1": 0.075,
+        "2": 0.106,
+        "3": 0.102,
+        "5": 0.1325,
+        "8": 0.153,
+        "12": 0.159,
+        "20": 0.204,
+        "32": 0.2065,
+        "64": 0.3065
+      },
+      "k_for_95pct_power": null,
+      "frac_probes_above_cal_max": 0.01171875
+    },
+    "resolution_256/poisson/N256": {
+      "kind": "resolution_256",
+      "parent": "poisson",
+      "N": 256,
+      "rel_l2_mean": 0.0018825035076588392,
+      "rel_l2_in_dist": 0.0017586639150977135,
+      "power": {
+        "1": 0.08,
+        "2": 0.07,
+        "3": 0.0815,
+        "5": 0.095,
+        "8": 0.1135,
+        "12": 0.122,
+        "20": 0.178,
+        "32": 0.209,
+        "64": 0.3875
+      },
+      "k_for_95pct_power": null,
+      "frac_probes_above_cal_max": 0.00390625
+    },
+    "resolution_256/helmholtz/N256": {
+      "kind": "resolution_256",
+      "parent": "helmholtz",
+      "N": 256,
+      "rel_l2_mean": 0.0017193257808685303,
+      "rel_l2_in_dist": 0.0019029087852686644,
+      "power": {
+        "1": 0.038,
+        "2": 0.0545,
+        "3": 0.0375,
+        "5": 0.026,
+        "8": 0.012,
+        "12": 0.01,
+        "20": 0.004,
+        "32": 0.001,
+        "64": 0.0
+      },
+      "k_for_95pct_power": null,
+      "frac_probes_above_cal_max": 0.0
+    },
+    "resolution_256/diffusion/N256": {
+      "kind": "resolution_256",
+      "parent": "diffusion",
+      "N": 256,
+      "rel_l2_mean": 0.0014131141360849142,
+      "rel_l2_in_dist": 0.001377516076900065,
+      "power": {
+        "1": 0.0495,
+        "2": 0.0585,
+        "3": 0.064,
+        "5": 0.076,
+        "8": 0.0975,
+        "12": 0.112,
+        "20": 0.1575,
+        "32": 0.185,
+        "64": 0.367
+      },
+      "k_for_95pct_power": null,
+      "frac_probes_above_cal_max": 0.0
+    },
+    "resolution_256/advdiff/N256": {
+      "kind": "resolution_256",
+      "parent": "advdiff",
+      "N": 256,
+      "rel_l2_mean": 0.0013442639028653502,
+      "rel_l2_in_dist": 0.0013302396982908249,
+      "power": {
+        "1": 0.0705,
+        "2": 0.057,
+        "3": 0.063,
+        "5": 0.0595,
+        "8": 0.0665,
+        "12": 0.0705,
+        "20": 0.0785,
+        "32": 0.086,
+        "64": 0.113
+      },
+      "k_for_95pct_power": null,
+      "frac_probes_above_cal_max": 0.0
+    },
+    "resolution_256/darcy/N256": {
+      "kind": "resolution_256",
+      "parent": "darcy",
+      "N": 256,
+      "rel_l2_mean": 0.04538640379905701,
+      "rel_l2_in_dist": 0.04297760874032974,
+      "power": {
+        "1": 0.0785,
+        "2": 0.0915,
+        "3": 0.097,
+        "5": 0.1145,
+        "8": 0.12,
+        "12": 0.1285,
+        "20": 0.1555,
+        "32": 0.17,
+        "64": 0.2655
+      },
+      "k_for_95pct_power": null,
+      "frac_probes_above_cal_max": 0.01171875
+    }
+  }
+}
