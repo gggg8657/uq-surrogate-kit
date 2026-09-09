@@ -17,6 +17,18 @@ is scored against:
 Every shifted shard gets its own AUROC against its parent's in-distribution
 test split, with a bootstrap 95% interval, because averaging an easy shift with
 a hard one produces a number that describes neither.
+
+Two things an adversarial review (codex, 2026-09-09) got right about an earlier
+version of the error-detection number, both fixed here:
+
+* the failure threshold tau was the 90th percentile of the **test** errors that
+  were then scored against it, which makes the label retrospective. It is now
+  taken from the `cal` split, which nothing else in this script touches.
+* the three detectors were compared on different populations, because
+  `residual` is undefined for the time-evolution families and those rows were
+  simply dropped from its AUROC. The headline comparison is now restricted to
+  the families where all three exist, and the wider per-detector number is kept
+  beside it and labelled with its own population.
 """
 from __future__ import annotations
 
@@ -83,6 +95,9 @@ def main():
     ind = {t: scored(t, "test") for t in in_tasks}
     for t in in_tasks:
         ind[t]["mahalanobis"] = maha[t].score(ind[t]["feat"]).numpy()
+    # the failure threshold comes from the calibration split, which is used
+    # nowhere else in this script and is never scored
+    cal_err = np.concatenate([scored(t, "cal")["err"] for t in in_tasks])
 
     ood_specs = []
     for kind, tasks in man["ood_suite"].items():
@@ -149,24 +164,44 @@ def main():
     err = np.concatenate(pool["err"])
     kinds = np.array(pool["kind"])
     parents = np.array(pool["parent"])
-    tau = float(np.quantile(err[kinds == "in_dist"], 0.90))
+    tau = float(np.quantile(cal_err, 0.90))
     y = err > tau
+    # the families where all three detectors are defined -- the only population
+    # on which they can be ranked against each other
+    common = np.isin(parents, [t for t in in_tasks
+                               if ind[t]["residual"] is not None])
     ed = {"tau": tau, "tau_definition":
-          "90th percentile of in-distribution test rel-L2, pooled over the "
-          "five trained families; fixed before any OOD shard was scored",
-          "positive_rate": float(y.mean()), "n": int(len(y)), "detectors": {}}
+          "90th percentile of rel-L2 on the CALIBRATION split, pooled over the "
+          "five trained families. The calibration split is scored nowhere else "
+          "in this file, so the threshold is independent of every sample the "
+          "AUROC is computed over.",
+          "positive_rate": float(y.mean()), "n": int(len(y)),
+          "common_population": [t for t in in_tasks
+                                if ind[t]["residual"] is not None],
+          "detectors": {}, "detectors_common_population": {}}
     for det in DETECTORS:
-        s = np.concatenate(pool[det])
-        m = ~np.isnan(s)
-        lo, hi = auroc_ci(s[m], y[m])
+        sc = np.concatenate(pool[det])
+        m = ~np.isnan(sc)
+        lo, hi = auroc_ci(sc[m], y[m])
         ed["detectors"][det] = {
-            "auroc": auroc(s[m], y[m]), "ci95": [lo, hi], "n": int(m.sum()),
-            "per_parent": {p: auroc(s[m & (parents == p)], y[m & (parents == p)])
+            "auroc": auroc(sc[m], y[m]), "ci95": [lo, hi], "n": int(m.sum()),
+            "population": ("families with a cheap residual"
+                           if det == "residual" else "all five families"),
+            # stratified by parent family: a pooled AUROC can be driven by one
+            # family being harder than another rather than by ranking failures
+            # within a family, so both are reported
+            "per_parent": {p: auroc(sc[m & (parents == p)], y[m & (parents == p)])
                            for p in in_tasks}}
+        mc = m & common
+        lo, hi = auroc_ci(sc[mc], y[mc])
+        ed["detectors_common_population"][det] = {
+            "auroc": auroc(sc[mc], y[mc]), "ci95": [lo, hi], "n": int(mc.sum())}
     res["error_detection"] = ed
     for det, v in ed["detectors"].items():
-        print(f"error-detection AUROC  {det:12s} {v['auroc']:.3f} "
-              f"[{v['ci95'][0]:.3f}, {v['ci95'][1]:.3f}]  n={v['n']}", flush=True)
+        c = ed["detectors_common_population"][det]
+        print(f"error-detection AUROC  {det:12s} all {v['auroc']:.3f} "
+              f"[{v['ci95'][0]:.3f}, {v['ci95'][1]:.3f}] n={v['n']}   "
+              f"common {c['auroc']:.3f} n={c['n']}", flush=True)
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(res, indent=2))

@@ -38,20 +38,29 @@ from uqkit.sims.pde2d_sim import PDE2DSimulator  # noqa: E402
 from uqkit.sims.predict import load_members, load_shard, predict_shard  # noqa: E402
 
 
-def make_surrogate_fn(models, a_norm, tid, k, residual=None, a_raw=None,
-                      autocast=True):
-    """Closure timing the first `k` members, optionally plus the residual check."""
+def make_surrogate_fn(models, a_raw, st, tid, k, residual=None, autocast=True):
+    """Closure timing the first `k` members, optionally plus the residual check.
+
+    **Normalization and de-normalization are inside the timed region.** They are
+    part of what a deployment runs, and the reference solver has no equivalent
+    preprocessing step, so hoisting them out of the loop is a small subsidy to
+    the surrogate. They are cheap; the point is that the comparison should not
+    need the reader to check whether they were counted.
+    """
     ms = models[:k]
+    a_mean, a_std = st["a_mean"].to(a_raw.device), st["a_std"].to(a_raw.device)
+    u_mean, u_std = st["u_mean"].to(a_raw.device), st["u_std"].to(a_raw.device)
 
     def fn():
+        a_norm = (a_raw - a_mean) / a_std
         preds = []
         for m in ms:
-            if autocast and a_norm.is_cuda:
+            if autocast and a_raw.is_cuda:
                 with torch.autocast("cuda", dtype=torch.bfloat16):
                     preds.append(m(a_norm, tid).float())
             else:
                 preds.append(m(a_norm, tid))
-        p = torch.stack(preds)
+        p = torch.stack(preds) * u_std + u_mean
         mean = p.mean(0)
         _ = p.std(0, unbiased=True)
         if residual is not None:
@@ -82,7 +91,14 @@ def main():
     res = {"env": env_report("cuda"), "n_members": M, "rows": [],
            "note": ("rel_l2 is the ensemble mean's error on that family's test "
                     "split, measured in the same bf16-autocast configuration "
-                    "the GPU rows are timed in.")}
+                    "the GPU rows are timed in. Normalization and "
+                    "de-normalization are inside the timed surrogate region; "
+                    "host-device transfer is outside it on both sides, since "
+                    "both operate on tensors already resident on the device. "
+                    "The solver here is the one the corpus was generated with; "
+                    "`bench_isoaccuracy.py` reports the ratio against the "
+                    "cheapest solver setting that matches the surrogate's own "
+                    "accuracy, which is the smaller and more honest number.")}
 
     # accuracy first: a speedup row without it is not emitted
     acc = {}
@@ -113,8 +129,6 @@ def main():
                 if a_raw.shape[0] < B:
                     continue
                 st = stats[PARENT.get(t, t)]
-                a_norm = ((a_raw - st["a_mean"].to(device))
-                          / st["a_std"].to(device))
                 tid = torch.full((B,), TASK_ID[PARENT.get(t, t)],
                                  device=device, dtype=torch.long)
                 sol = timeit(lambda: sim.solve(a_raw), 3, n_iter, device)
@@ -132,9 +146,8 @@ def main():
                     variants["ensemble+residual"] = (M, True)
                 for name, (k, use_res) in variants.items():
                     fn = make_surrogate_fn(
-                        models_d, a_norm, tid, k,
-                        residual=(sim.residual if use_res else None),
-                        a_raw=a_raw)
+                        models_d, a_raw, st, tid, k,
+                        residual=(sim.residual if use_res else None))
                     tm = timeit(fn, 3, n_iter, device)
                     row["surrogate"][name] = {
                         "s": tm["median_s"], "s_per_sample": tm["median_s"] / B,
@@ -144,7 +157,7 @@ def main():
                 sp = {k: round(v["speedup"], 1) for k, v in row["surrogate"].items()}
                 print(f"{t:14s} {device:4s} B={B:<3d} solver "
                       f"{sol['median_s']*1e3:9.3f} ms  speedup {sp}", flush=True)
-                del a_raw, a_norm
+                del a_raw
                 torch.cuda.empty_cache()
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)

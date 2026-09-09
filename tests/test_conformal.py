@@ -91,6 +91,47 @@ def test_weighted_conformal_recovers_coverage_under_shift():
           f"(ess {wc.ess:.0f}/{wc.n_cal})")
 
 
+def test_weighted_conformal_returns_infinity_when_it_must():
+    """Too little calibration mass to reach 1-alpha => +inf, not the max score.
+
+    Found by an adversarial review (codex, 2026-09-09): the previous
+    implementation clamped to the largest calibration score, which for 5 uniform
+    points at alpha=0.1 is a band with true coverage 5/6 = 83.3% presented as
+    90%.
+    """
+    s_cal = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+    w = np.ones(5)
+    wc = WeightedConformal(0.1).fit(s_cal, w, np.ones(3))
+    assert np.all(np.isinf(wc.q_per_test)), wc.q_per_test
+    assert wc.n_inf == 3
+    # with enough calibration mass it is finite again and matches the
+    # unweighted order statistic when all weights are equal
+    n = 100
+    s_big = np.arange(1.0, n + 1)
+    wc2 = WeightedConformal(0.1).fit(s_big, np.ones(n), np.ones(1))
+    assert wc2.q_per_test[0] == conformal_quantile(s_big, 0.1), (
+        wc2.q_per_test[0], conformal_quantile(s_big, 0.1))
+    print(f"ok  weighted conformal: inf when unreachable, and equals the "
+          f"unweighted quantile ({wc2.q_per_test[0]:.0f}) at uniform weights")
+
+
+def test_weighted_conformal_is_per_test_point():
+    """A heavy test point must get a wider band than a light one.
+
+    The median-weight shortcut gave every test point the same quantile, so a
+    point whose own weight dominates the denominator was undercovered without
+    anything in the diagnostics moving.
+    """
+    rng = np.random.default_rng(7)
+    s_cal = np.abs(rng.standard_normal(200))
+    v = np.array([1.0, 50.0])                      # one light, one very heavy
+    wc = WeightedConformal(0.1).fit(s_cal, np.ones(200), v)
+    assert wc.q_per_test[1] > wc.q_per_test[0], wc.q_per_test
+    assert wc.test_w_ratio > 1.0
+    print(f"ok  per-test-point quantiles differ with weight: "
+          f"{wc.q_per_test[0]:.3f} (w=1) vs {wc.q_per_test[1]:.3f} (w=50)")
+
+
 def test_probe_auc_is_honest():
     """No shift -> the probe reports ~0.5 and its weights are near 1."""
     rng = np.random.default_rng(3)
@@ -144,6 +185,8 @@ if __name__ == "__main__":
     for f in [test_quantile_index, test_marginal_coverage,
               test_group_conformal_protects_the_hard_group,
               test_weighted_conformal_recovers_coverage_under_shift,
+              test_weighted_conformal_returns_infinity_when_it_must,
+              test_weighted_conformal_is_per_test_point,
               test_probe_auc_is_honest, test_scores_shapes_and_scaling,
               test_binom_ci, test_auroc_matches_brute_force]:
         f()

@@ -64,3 +64,24 @@ def binom_ci(k, n, z=1.959963985):
     c = (p + z * z / (2 * n)) / d
     h = z * np.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
     return (float(c - h), float(c + h))
+
+
+def cluster_bootstrap_ci(covered_by_unit, n_boot=2000, seed=0, alpha=0.05):
+    """CI for a mean over *clustered* observations, resampling whole clusters.
+
+    Pixel coverage is the case this exists for. A 64x64 field contributes 4,096
+    pixel outcomes, but they are strongly spatially dependent -- a field whose
+    prediction is bad is bad over a whole region -- so treating them as 4,096
+    independent Bernoulli draws makes the Wilson interval roughly sqrt(4096) =
+    64x too narrow. Resampling fields, not pixels, gives an interval that
+    reflects how many independent things were actually observed.
+
+    `covered_by_unit` is (n_units, n_per_unit) boolean.
+    """
+    x = np.asarray(covered_by_unit, dtype=np.float64)
+    per_unit = x.mean(1) if x.ndim > 1 else x
+    rng = np.random.default_rng(seed)
+    n = len(per_unit)
+    draws = per_unit[rng.integers(0, n, (n_boot, n))].mean(1)
+    return (float(np.percentile(draws, 100 * alpha / 2)),
+            float(np.percentile(draws, 100 * (1 - alpha / 2))))

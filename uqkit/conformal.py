@@ -191,48 +191,72 @@ class GroupConformal:
 
 
 class WeightedConformal:
-    """Split conformal under covariate shift (Tibshirani et al., 2019).
+    """Split conformal under covariate shift (Tibshirani et al., 2019), exactly.
 
     Exchangeability fails the moment the input distribution moves, and the
     coverage guarantee fails quietly with it. Given the density ratio
     w(x) = p_test(x) / p_cal(x), reweighting the empirical distribution of the
     calibration scores restores it.
 
-    **The approximation, stated rather than hidden.** Exact weighted conformal
-    recomputes the quantile per test point, because that point's own weight
-    enters the denominator. This computes one quantile against
-    `sum(w_cal) + median(w_test)`, following the same shortcut taken in
-    `wafer-tool-shift/wts/metrics.py`. It is accurate when the calibration set
-    is large relative to a single weight; with n_cal = 1,024 and weights of
-    order 1 the induced error in the effective alpha is O(1/n_cal) ~ 0.1pp,
-    an order of magnitude inside the KPI band. It is *not* accurate when a
-    handful of calibration points carry most of the weight, which is why
-    `fit` records the effective sample size and `report.py` prints it: an ESS
-    that has collapsed means the guarantee is being carried by a few points and
-    the interval should not be believed however good the coverage looks.
+    **The test point's own weight is in the denominator, and it is kept here.**
+    The construction places mass w_j / (W + v_i) on each calibration score and
+    w_i / (W + v_i) on +infinity, so the quantile is *per test point*. An
+    earlier version of this class used one quantile computed against
+    `W + median(v)`, following the shortcut in `wafer-tool-shift/wts/metrics.py`,
+    and justified it by a large calibration set. That justification is wrong in
+    the case that matters: calibration weights can be perfectly uniform while a
+    few test points carry enormous weight, and those are exactly the points a
+    shift produces. The exact version is one vectorized `searchsorted` over the
+    test set, so there was never much to buy.
+
+    When the calibration mass cannot reach 1 - alpha even with all of it, the
+    quantile is **+infinity** -- the interval is uninformative and says so.
+    Clamping to the largest calibration score instead, which the shortcut did,
+    silently undercovers: with 5 uniform calibration points at alpha = 0.1 it
+    returns a band whose true coverage is 5/6 = 83.3%.
+
+    Validity still assumes p(y|x) is unchanged. Under an *operator* shift it is
+    not, and no reweighting of x repairs that; `eval_conformal.py` marks those
+    shards rather than reporting a number that looks like a fix.
     """
 
     def __init__(self, alpha=0.1):
         self.alpha = alpha
-        self.q = None
+        self.q = None                 # median per-test-point quantile, for reporting
+        self.q_per_test = None
         self.ess = None
         self.n_cal = 0
+        self.n_inf = 0
+        self.test_w_ratio = None
 
     def fit(self, cal_scores, cal_w, test_w):
         s = _np(cal_scores)
         w = np.asarray(cal_w, dtype=np.float64)
-        w_extra = float(np.median(np.asarray(test_w, dtype=np.float64)))
+        v = np.asarray(test_w, dtype=np.float64)
         order = np.argsort(s)
-        s_sorted, w_sorted = s[order], w[order]
-        cum = np.cumsum(w_sorted) / (w_sorted.sum() + w_extra)
-        j = int(np.searchsorted(cum, 1 - self.alpha))
-        self.q = float(s_sorted[min(j, len(s_sorted) - 1)])
-        self.ess = float(w.sum() ** 2 / np.square(w).sum())
+        self._s_sorted = s[order]
+        self._cum = np.cumsum(w[order])
+        W = float(w.sum())
+        thresh = (1 - self.alpha) * (W + v)
+        j = np.searchsorted(self._cum, thresh, side="left")
+        q = np.where(j < len(s), self._s_sorted[np.minimum(j, len(s) - 1)],
+                     np.inf)
+        self.q_per_test = q
+        self.n_inf = int(np.isinf(q).sum())
+        self.q = float(np.median(q[np.isfinite(q)])) if np.isfinite(q).any() \
+            else float("inf")
+        self.ess = float(W ** 2 / np.square(w).sum())
         self.n_cal = len(s)
+        self.test_w_ratio = float(v.max() / max(np.median(v), 1e-12))
         return self
 
     def covered(self, test_scores):
-        return _np(test_scores) <= self.q
+        s = _np(test_scores)
+        if len(s) != len(self.q_per_test):
+            raise ValueError("weighted conformal is per test point: `covered` "
+                             "must be called on the same set `fit` was given "
+                             f"({len(self.q_per_test)} points, got {len(s)})")
+        return s <= self.q_per_test
 
     def coverage(self, test_scores):
         return float(self.covered(test_scores).mean())
@@ -265,12 +289,17 @@ class LikelihoodRatioProbe:
         from .metrics import auroc
         X = np.concatenate([_np(feat_cal), _np(feat_test)]).astype(np.float64)
         y = np.concatenate([np.zeros(len(feat_cal)), np.ones(len(feat_test))])
-        self.mu, self.sd = X.mean(0), X.std(0).clip(1e-8)
-        Xs = (X - self.mu) / self.sd
         rng = np.random.default_rng(self.seed)
-        idx = rng.permutation(len(Xs))
-        cut = int(0.7 * len(Xs))
+        idx = rng.permutation(len(X))
+        cut = int(0.7 * len(X))
         tr, te = idx[:cut], idx[cut:]
+        # standardization is fitted on the training half only. Fitting it on
+        # everything leaks the held-out half's marginals into the number that
+        # is then quoted as the probe's held-out AUC -- small, but the AUC is
+        # the diagnostic a reader uses to decide whether to trust the weights,
+        # so it must not be the one statistic with a thumb on it.
+        self.mu, self.sd = X[tr].mean(0), X[tr].std(0).clip(1e-8)
+        Xs = (X - self.mu) / self.sd
         w = np.zeros(Xs.shape[1])
         b = 0.0
         for _ in range(self.steps):

@@ -453,3 +453,38 @@ for _p in SHIFT_PARENTS:
         FAMILY_BASE[f"{_p}_{_s}"] = FAMILY_BASE[_p]
 
 ALL_TASKS = TASKS + SHIFT_TASKS
+
+
+# --------------------------------------------------------------------------- #
+# A graded roughness ladder, added after turn 1.
+#
+# The first shift set jumped straight from alpha 2.5 to 1.5, and the result was
+# a cliff: the shift probe separated calibration from test at AUC 1.00, and
+# weighted conformal recovered nothing, because with disjoint supports there is
+# no calibration point resembling a test point to up-weight. "Weighted conformal
+# does not help" is a much weaker statement than "it holds to a shift of size X
+# and fails beyond it", and only the second one tells a user anything.
+#
+# So: the same axis, in small steps, relative to each parent's own alpha. The
+# quantity to plot against is the shift probe's AUC -- a monotone, protocol-free
+# measure of how far the input distribution actually moved -- not the nominal
+# delta, which means different things for different parents.
+# --------------------------------------------------------------------------- #
+GRADED_DALPHA = (-0.1, -0.2, -0.3, -0.5, -0.7, -1.0)
+GRADED_PARENTS = ("poisson", "darcy")
+
+
+def _dtag(d):
+    return f"m{abs(d):g}".replace(".", "p")
+
+
+GRADED_TASKS = tuple(f"{p}_da{_dtag(d)}"
+                     for p in GRADED_PARENTS for d in GRADED_DALPHA)
+for _p in GRADED_PARENTS:
+    for _d in GRADED_DALPHA:
+        _t = f"{_p}_da{_dtag(_d)}"
+        CFG[_t] = CFG[_p] | dict(alpha=CFG[_p]["alpha"] + _d)
+        FAMILY_BASE[_t] = FAMILY_BASE[_p]
+        PARENT[_t] = _p
+
+ALL_TASKS = ALL_TASKS + GRADED_TASKS

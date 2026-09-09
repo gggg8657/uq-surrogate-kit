@@ -30,7 +30,8 @@ def pct(x):
 def cov_cell(e):
     if e is None:
         return NM
-    return f"{pct(e['coverage'])} [{pct(e['ci95'][0])}, {pct(e['ci95'][1])}]"
+    star = "†" if e.get("ci_kind") == "cluster_bootstrap_over_fields" else ""
+    return f"{pct(e['coverage'])} [{pct(e['ci95'][0])}, {pct(e['ci95'][1])}]{star}"
 
 
 def band(e, lo=0.88, hi=0.92):
@@ -54,6 +55,12 @@ def sec_conformal(c, out):
                "shard decides a clause.\n")
 
     out.append("\n### In distribution\n")
+    out.append("`†` = interval from a cluster bootstrap over fields, not a "
+               "Wilson interval on the pixel count. Pixels within a field are "
+               "not independent observations, so a binomial interval on 2.1M "
+               "pixels is roughly 64× too narrow, and the `pixel` row is "
+               "descriptive rather than a conformal guarantee: exchangeability "
+               "holds over fields, not over pixels.\n")
     out.append("| score | what it certifies | pooled, marginal | pooled, per-family q |")
     out.append("|---|---|---|---|")
     meaning = {
@@ -85,19 +92,25 @@ def sec_conformal(c, out):
                "from the shifted *inputs only*, which is what a deployment has. "
                "`probe AUC` is that estimator's own held-out AUC — at 0.5 it "
                "found no shift and the weights are noise.\n")
-    out.append("| shift | kind | rel-L2 | split | weighted | probe AUC | ESS |")
-    out.append("|---|---|---|---|---|---|---|")
+    out.append("`‡` marks a shard where the **governing equation** changed, so "
+               "p(y|x) changed too and weighted conformal's covariate-shift "
+               "assumption does not hold. Its number is a diagnostic, not a "
+               "repair.\n")
+    out.append("| shift | kind | rel-L2 | split | weighted | probe AUC | cal ESS | q=∞ |")
+    out.append("|---|---|---|---|---|---|---|---|")
     if head:
         for k, r in sorted(head["ood"].items(),
                            key=lambda kv: (kv[1]["kind"], kv[0])):
             w = r.get("weighted")
             d = r.get("weighted_diag", {})
+            vio = "‡" if r.get("assumption_violated") else ""
             out.append(
-                f"| `{k.split('/')[1]}` @N{r['N']} | {r['kind']} | "
+                f"| `{k.split('/')[1]}` @N{r['N']} | {r['kind']}{vio} | "
                 f"{r['rel_l2_mean']:.4f} | {cov_cell(r['split'])} {band(r['split'])} | "
                 f"{cov_cell(w) if w else NM} {band(w) if w else ''} | "
                 f"{d.get('probe_auc', float('nan')):.3f} | "
-                f"{d.get('ess', float('nan')):.0f}/{d.get('n_cal', 0)} |")
+                f"{d.get('ess', float('nan')):.0f}/{d.get('n_cal', 0)} | "
+                f"{d.get('n_infinite_quantiles', '—')} |")
     return c
 
 
@@ -162,12 +175,36 @@ def sec_ood(o, out):
     out.append(f"{ed['tau_definition']}. Pooled over in-distribution test and "
                f"every shifted shard: n = {ed['n']}, positive rate "
                f"{pct(ed['positive_rate'])}.\n")
-    out.append("| detector | AUROC | 95% CI | n scored |")
-    out.append("|---|---|---|---|")
+    common = ed.get("detectors_common_population", {})
+    out.append("`residual` is undefined for the time-evolution families, so on "
+               "the full pool it is scored on a *different population* from the "
+               "other two and the three cannot be ranked against each other "
+               "there. The right-hand column restricts all three to "
+               f"{', '.join(ed.get('common_population', []))}, where all are "
+               "defined.\n")
+    out.append("| detector | AUROC (own population) | 95% CI | n | "
+               "AUROC (common population) | n |")
+    out.append("|---|---|---|---|---|---|")
     for d, v in ed["detectors"].items():
+        c2 = common.get(d, {})
         mark = " ✅" if v["auroc"] >= 0.9 else ""
+        cm = " ✅" if c2 and c2["auroc"] >= 0.9 else ""
         out.append(f"| `{d}` | {v['auroc']:.3f}{mark} | "
-                   f"[{v['ci95'][0]:.3f}, {v['ci95'][1]:.3f}] | {v['n']} |")
+                   f"[{v['ci95'][0]:.3f}, {v['ci95'][1]:.3f}] | {v['n']} | "
+                   f"{c2['auroc']:.3f}{cm} | {c2['n']} |" if c2 else
+                   f"| `{d}` | {v['auroc']:.3f}{mark} | "
+                   f"[{v['ci95'][0]:.3f}, {v['ci95'][1]:.3f}] | {v['n']} | — | — |")
+    out.append("\nStratified by family, since a pooled AUROC can be driven by "
+               "one family being harder than another rather than by ranking "
+               "failures within a family:\n")
+    fams = list(next(iter(ed["detectors"].values()))["per_parent"])
+    out.append("| detector | " + " | ".join(fams) + " |")
+    out.append("|---|" + "---|" * len(fams))
+    for d, v in ed["detectors"].items():
+        cells = " | ".join(
+            "—" if v["per_parent"][f] != v["per_parent"][f]
+            else f"{v['per_parent'][f]:.3f}" for f in fams)
+        out.append(f"| `{d}` | {cells} |")
 
 
 def sec_floor(f, out):
@@ -206,14 +243,18 @@ def verdict(c, b, o, out):
     else:
         h = c["scores"]["field_max"]
         ind = h["in_dist"]["pooled_group"]
-        oods = [r for r in h["ood"].values() if "weighted" in r]
+        # only shards where weighted conformal's assumption actually holds can
+        # count toward the clause; the operator-shift shards are reported but
+        # are not evidence for or against a covariate-shift method
+        oods = [r for r in h["ood"].values()
+                if "weighted" in r and not r.get("assumption_violated")]
         n_in_band = sum(1 for r in oods
                         if 0.88 <= r["weighted"]["coverage"] <= 0.92)
         n_in_band_split = sum(1 for r in oods
                               if 0.88 <= r["split"]["coverage"] <= 0.92)
         lines.append(f"| coverage, in distribution | 90±2% | {cov_cell(ind)} | "
                      f"`runs/conformal.json` | {band(ind)} |")
-        lines.append(f"| coverage, under shift | 90±2% | split: "
+        lines.append(f"| coverage, under covariate shift | 90±2% | split: "
                      f"{n_in_band_split}/{len(oods)} shards in band; weighted: "
                      f"{n_in_band}/{len(oods)} | `runs/conformal.json` | "
                      f"{'✅' if n_in_band == len(oods) else '❌'} |")
@@ -246,10 +287,11 @@ def verdict(c, b, o, out):
         lines.append(f"| OOD shift AUROC | ≥0.9 on every shard | best single "
                      f"detector `{best_det}`: {best_n}/{len(rows)} shards ≥0.9 | "
                      f"`runs/ood.json` | {'✅' if best_n == len(rows) else '❌'} |")
-        ed = o["error_detection"]["detectors"]
+        ed = (o["error_detection"].get("detectors_common_population")
+              or o["error_detection"]["detectors"])
         bd = max(ed, key=lambda d: ed[d]["auroc"])
-        lines.append(f"| OOD error-detection AUROC | ≥0.9 | `{bd}` "
-                     f"{ed[bd]['auroc']:.3f} "
+        lines.append(f"| OOD error-detection AUROC | ≥0.9 | `{bd}` (common "
+                     f"population) {ed[bd]['auroc']:.3f} "
                      f"[{ed[bd]['ci95'][0]:.3f}, {ed[bd]['ci95'][1]:.3f}] | "
                      f"`runs/ood.json` | "
                      f"{'✅' if ed[bd]['auroc'] >= 0.9 else '❌'} |")

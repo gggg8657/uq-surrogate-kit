@@ -42,6 +42,9 @@ OOD_SUITE = {
     # under a task id it does have (`PARENT`) -- the deployment failure where
     # the process changed and nobody told the model
     "unseen_operator": ["biharmonic", "navier_stokes", "ns_T0p25"],
+    # a graded version of the roughness axis, so the weighted-conformal result
+    # is a threshold rather than a cliff -- see pde2d.GRADED_DALPHA
+    "graded_rough": list(P.GRADED_TASKS),
 }
 RES_TASKS = IN_TASKS                                    # resolution shift
 

@@ -95,20 +95,32 @@ class UQSurrogate:
         return self
 
     # -- use ---------------------------------------------------------------- #
-    def interval(self, mean, sigma):
-        """Prediction band. Only meaningful for the sigma-scaled scores."""
+    def interval(self, mean, sigma, groups=None):
+        """Prediction band. Only meaningful for the sigma-scaled scores.
+
+        In `group` mode `groups` is required. Returning the pooled quantile
+        instead -- which this method did until an adversarial review caught it
+        -- means `evaluate` reports per-group coverage while `interval` hands
+        back a band with different coverage, so the reported number describes a
+        procedure the user never runs.
+        """
         if self.score_name not in ("field_max", "pixel"):
             raise ValueError(f"score {self.score_name!r} certifies a scalar, "
                              "not a pointwise band; use `certify`")
-        q = self._q()
+        q = self._q(groups)
+        if isinstance(q, torch.Tensor):
+            q = q.to(sigma.device)
         half = q * (sigma + self.frac * self._sigma_med)
         return mean - half, mean + half
 
-    def certify(self, mean, sigma):
+    def certify(self, mean, sigma, groups=None):
         """The calibrated bound on this sample's error, in the score's units."""
-        q = self._q()
+        q = self._q(groups)
+        if isinstance(q, torch.Tensor):
+            q = q.reshape(-1).to(mean.device)
         if self.score_name == "rel_l2":
-            return torch.full((mean.shape[0],), q, device=mean.device)
+            return (q if isinstance(q, torch.Tensor)
+                    else torch.full((mean.shape[0],), q, device=mean.device))
         if self.score_name == "norm_ratio":
             return q * sigma.flatten(1).norm(dim=1)
         return q * (sigma.flatten(1).max(dim=1).values + self.frac * self._sigma_med)
@@ -148,8 +160,15 @@ class UQSurrogate:
             return self.detector.score(self.feature_fn(inputs).cpu())
         raise KeyError(kind)
 
-    def _q(self):
+    def _q(self, groups=None):
         if self.cal is None:
             raise RuntimeError("calibrate() first (weighted mode: use evaluate())")
-        return self.cal.q if hasattr(self.cal, "q") and not isinstance(self.cal.q, dict) \
-            else self.cal.q_pooled
+        if self.mode != "group":
+            return self.cal.q
+        if groups is None:
+            raise ValueError("mode='group': pass `groups` so the per-group "
+                             "quantile is used; the pooled one is a different "
+                             "procedure from the one `evaluate` reports")
+        qs = np.array([self.cal.q.get(u, self.cal.q_pooled) for u in groups],
+                      dtype=np.float64)
+        return torch.as_tensor(qs, dtype=torch.float32)[:, None, None, None]
