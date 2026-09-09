@@ -46,7 +46,40 @@ def env_report(device="cuda"):
     return out
 
 
-def timeit(fn, n_warmup=5, n_iter=20, device="cuda"):
+def warmup_device(device="cuda", seconds=6.0, n=4096):
+    """Drive the GPU to steady clocks before anything is timed.
+
+    An idle H100 boosts over the first few seconds of load. Measured by
+    `scripts/bench_noise.py`: the same Darcy solve took 376 ms on the first two
+    repeats and 218 ms from the third on, and the 5-member surrogate went
+    15.6 ms to 8.9 ms over the same transition -- a 42% drift on both sides.
+    Per-call warmup does not fix it, because each configuration is warmed
+    separately and the ramp spans several configurations. The damage is not the
+    absolute times, which cancel in a ratio, but the *transition*: a
+    configuration timed cold against one timed hot produced a 41.6x reading of
+    a comparison whose steady-state value is 24.4x, and that inflated reading is
+    what an earlier version of `RESULTS.md` reported as the headline speedup.
+
+    Called once at the top of every benchmark script, before any measurement.
+    """
+    if device != "cuda" or not torch.cuda.is_available():
+        return {"ramped": False, "reason": "not cuda"}
+    a = torch.randn(n, n, device="cuda")
+    b = torch.randn(n, n, device="cuda")
+    t0 = time.perf_counter()
+    k = 0
+    while time.perf_counter() - t0 < seconds:
+        a @ b
+        k += 1
+        if k % 20 == 0:
+            torch.cuda.synchronize()
+    torch.cuda.synchronize()
+    del a, b
+    torch.cuda.empty_cache()
+    return {"ramped": True, "seconds": seconds, "matmuls": k}
+
+
+def timeit(fn, n_warmup=15, n_iter=20, device="cuda"):
     """Median wall-clock seconds per call, with the spread kept.
 
     Median rather than mean: a single stray 40 ms from a driver hiccup moves a

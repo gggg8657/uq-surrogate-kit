@@ -31,7 +31,7 @@ from pathlib import Path
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from uqkit.bench import env_report, timeit  # noqa: E402
+from uqkit.bench import env_report, timeit, warmup_device  # noqa: E402
 from uqkit.metrics import rel_l2  # noqa: E402
 from uqkit.sims import pde2d as P  # noqa: E402
 from uqkit.sims.pde2d import PARENT, TASK_ID  # noqa: E402
@@ -50,12 +50,14 @@ def main():
     ap.add_argument("--iters", type=int, default=10)
     args = ap.parse_args()
 
+    ramp = warmup_device("cuda")
+    print(f"clock ramp: {ramp}", flush=True)
     dev = "cuda"
     models, ck = load_members(args.ckpts, dev)
     stats = ck["stats"]
     M = len(models)
     B = args.batch
-    res = {"env": env_report(dev), "n_members": M, "batch": B, "families": {}}
+    res = {"env": env_report(dev), "clock_ramp": ramp, "n_members": M, "batch": B, "families": {}}
 
     # ---------------- Darcy: tolerance sweep --------------------------------
     blob = load_shard(args.root, "darcy", "test", 64)
@@ -90,6 +92,19 @@ def main():
                      "speedup_vs_surrogate": t["median_s"] / t_sur["median_s"]})
         print(f"darcy tol={tol:.0e}  err {err:.5f}  {t['median_s']*1e3:8.2f} ms  "
               f"{t['median_s']/t_sur['median_s']:8.1f}x", flush=True)
+    # How much of the reference solver's cost is the per-iteration
+    # device-to-host synchronization of its convergence test? Timed, not argued.
+    sync_rows = []
+    for ce in (1, 5, 10, 25):
+        t = timeit(lambda ce=ce: P.solve_darcy(coef, f, tol=1e-10,
+                                               max_iter=2000, check_every=ce),
+                   2, args.iters, dev)
+        u, _ = P.solve_darcy(coef, f, tol=1e-10, max_iter=2000, check_every=ce)
+        sync_rows.append({"check_every": ce, "s": t["median_s"],
+                          "rel_l2_vs_reference":
+                              float(rel_l2(u.unsqueeze(1), u_ref.unsqueeze(1)).mean())})
+        print(f"darcy check_every={ce:3d}  {t['median_s']*1e3:8.2f} ms", flush=True)
+
     matched = [r for r in rows if r["rel_l2_vs_reference"] <= sur_err]
     iso = min(matched, key=lambda r: r["s"]) if matched else None
     res["families"]["darcy"] = {
@@ -100,6 +115,13 @@ def main():
                       "members": M, "precision": "bf16 autocast",
                       "timing": t_sur},
         "sweep": rows,
+        "convergence_check_cost": {
+            "rows": sync_rows,
+            "note": ("the convergence test calls .max() and compares in Python, "
+                     "forcing a device-to-host sync per iteration. Amortizing it "
+                     "makes the reference solver faster, which lowers every "
+                     "speedup quoted against it. check_every=1 is what generated "
+                     "the corpus and what bench_speedup.py times.")},
         "iso_accuracy": (None if iso is None else
                          {"tol": iso["tol"],
                           "solver_rel_l2": iso["rel_l2_vs_reference"],

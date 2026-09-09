@@ -13,17 +13,22 @@
     "visible_devices": "3",
     "tf32_matmul": false
   },
+  "clock_ramp": {
+    "ramped": true,
+    "seconds": 6.0,
+    "matmuls": 1780
+  },
   "batch": 1,
   "shift_task": "poisson_dam1",
-  "solver_s": 0.3738353196531534,
+  "solver_s": 0.2132706418633461,
   "n_members_available": 5,
   "note": "screen, not verdict: 5 checkpoints cannot give 8 seeds per arm, so every row also reports the spread over the C(5,M) member subsets",
   "rows": [
     {
       "M": 1,
       "n_subsets_scored": 5,
-      "surrogate_s": 0.003336271271109581,
-      "darcy_speedup": 112.05183549982218,
+      "surrogate_s": 0.0019656457006931305,
+      "darcy_speedup": 108.49902491997521,
       "rel_l2": {
         "mean": 0.003072359738871455,
         "min": 0.002844953676685691,
@@ -38,8 +43,8 @@
     {
       "M": 2,
       "n_subsets_scored": 10,
-      "surrogate_s": 0.006440695375204086,
-      "darcy_speedup": 58.04269537298334,
+      "surrogate_s": 0.0036435741931200027,
+      "darcy_speedup": 58.5333605299037,
       "rel_l2": {
         "mean": 0.0023395845433697104,
         "min": 0.0022015031427145004,
@@ -69,8 +74,8 @@
     {
       "M": 3,
       "n_subsets_scored": 10,
-      "surrogate_s": 0.0054264795035123825,
-      "darcy_speedup": 68.89094843372798,
+      "surrogate_s": 0.005380252376198769,
+      "darcy_speedup": 39.63952375297776,
       "rel_l2": {
         "mean": 0.0020373654318973423,
         "min": 0.0019152292516082525,
@@ -100,8 +105,8 @@
     {
       "M": 4,
       "n_subsets_scored": 5,
-      "surrogate_s": 0.00712088868021965,
-      "darcy_speedup": 52.498408055667305,
+      "surrogate_s": 0.007139597088098526,
+      "darcy_speedup": 29.871523453173747,
       "rel_l2": {
         "mean": 0.0018680316163226963,
         "min": 0.001782574225217104,
@@ -131,8 +136,8 @@
     {
       "M": 5,
       "n_subsets_scored": 1,
-      "surrogate_s": 0.008845504373311996,
-      "darcy_speedup": 42.26274770504458,
+      "surrogate_s": 0.009213056415319443,
+      "darcy_speedup": 23.148739381289396,
       "rel_l2": {
         "mean": 0.0017586637986823916,
         "min": 0.0017586637986823916,

@@ -31,7 +31,7 @@ import numpy as np
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from uqkit.bench import env_report, timeit  # noqa: E402
+from uqkit.bench import env_report, timeit, warmup_device  # noqa: E402
 from uqkit.conformal import SplitConformal, get_score  # noqa: E402
 from uqkit.metrics import binom_ci, pearson, rel_l2  # noqa: E402
 from uqkit.ood import shift_auroc, spread_score  # noqa: E402
@@ -52,6 +52,8 @@ def main():
     ap.add_argument("--device", default="cuda")
     args = ap.parse_args()
 
+    ramp = warmup_device(args.device)
+    print(f"clock ramp: {ramp}", flush=True)
     models, ck = load_members(args.ckpts, args.device)
     stats = ck["stats"]
     M = len(models)
@@ -71,7 +73,8 @@ def main():
                        dtype=torch.long)
     t_solver = timeit(lambda: P.solve_darcy(coef, f), 3, args.iters, args.device)
 
-    res = {"env": env_report(args.device), "batch": B, "shift_task": SHIFT_TASK,
+    res = {"env": env_report(args.device), "clock_ramp": ramp,
+           "batch": B, "shift_task": SHIFT_TASK,
            "solver_s": t_solver["median_s"], "n_members_available": M,
            "note": ("screen, not verdict: 5 checkpoints cannot give 8 seeds per "
                     "arm, so every row also reports the spread over the C(5,M) "

@@ -355,3 +355,62 @@ this repo now measures at k=1.
   addressed** — it makes the solver slower than it needs to be and is a
   subsidy to the surrogate, on top of the 3.4× iso-accuracy figure.
 - **cursor-agent** could not run: `Authentication required`. Not used.
+
+---
+
+## Turn 3 — 2026-09-09 — my own headline speedup was a measurement artefact
+
+Following the weekend rule that says to measure run-to-run spread before
+reporting a comparison, I repeated one timing configuration eight times
+(`scripts/bench_noise.py`, `runs/bench_noise.json`). I had applied that rule to
+seeds and not to wall-clock, and wall-clock was where it mattered.
+
+| repeat | Darcy PCG tol 1e-10 | PCG tol 1e-1 | 5-member surrogate |
+|---:|---:|---:|---:|
+| 0 | 375.00 ms | 45.57 ms | 15.57 ms |
+| 1 | 376.69 ms | 45.91 ms | 15.65 ms |
+| 2 | 376.36 ms | 26.55 ms | **9.05 ms** |
+| 3 | 219.10 ms | 26.44 ms | 8.85 ms |
+| 4–7 | 217–218 ms | 26.5 ms | 8.9 ms |
+
+An idle H100 boosts over the first several seconds of load. Everything drops by
+~42% between repeat 1 and repeat 3 — both sides, so in steady state the ratio is
+unaffected. The damage is the **transition**: at repeat 2 the surrogate had
+already ramped and the solver had not, giving 376/9.05 = 41.6× for a comparison
+whose steady-state value is 23.5×.
+
+`bench_speedup.py` times each configuration in sequence with its own five-call
+warmup. That warms the *kernel*, not the *clock*, and the whole table was
+measured across the ramp. The 40.8× Darcy headline in the previous
+`RESULTS.md` was measured in exactly the transition regime above.
+
+Measured spread of the two ratios, before and after adding a 6-second dense
+matmul ramp at the top of every benchmark script:
+
+| ratio | before | after |
+|---|---|---|
+| Darcy headline (B=1, 5 members) | 24.08–41.61× (**±36%**) | 23.04–23.75× (**±1%**) |
+| Darcy iso-accuracy | 2.12× and 3.36× on two invocations | 2.83–2.89× (**±1%**) |
+
+So the corrected numbers are **23.5× headline and 2.85× iso-accuracy**, and
+every timing table has been regenerated. Both are further below the 100× clause
+than the figures I recorded in turn 2, so the verdict does not change — but the
+turn-2 entry overstated the surrogate's case by 74% on its own best row, and
+that is exactly the direction of error the weekend rules exist to catch. The
+36% swing was larger than several of the differences turn 2 discussed as if
+they were findings; on the old numbers, the M=1 reading of 112.1× that the
+ensemble ablation used to argue "100× is reachable without uncertainty" is
+itself inside the ramp regime and had to be re-measured.
+
+The remaining `agy` finding is also now closed with a number rather than an
+argument: amortizing the PCG's per-iteration device-to-host convergence sync
+(`check_every`) takes the solver from 290.2 ms to 257.1 ms, an **11.4%**
+subsidy to any surrogate timed against the default. `check_every=1` is what
+generated the corpus and remains what `bench_speedup.py` times, so the headline
+is unchanged and the size of the subsidy is now in `runs/isoaccuracy.json`.
+
+**What I should have done first.** The brief's seed-count lesson is written
+about seeds, and I read it as being about seeds. It is about *any* comparison
+whose noise floor is unmeasured. A timing harness is a measurement instrument
+and its repeatability is a property to be measured, not assumed, particularly
+when the instrument reports a ratio of two quantities that drift together.

@@ -16,3 +16,5 @@ jobs:
         run: PYTHONPATH=. python tests/test_sims.py
       - name: report regenerates without run JSONs present
         run: PYTHONPATH=. python scripts/report.py --out /tmp/RESULTS.md
+      - name: prose numbers still match the run JSONs
+        run: PYTHONPATH=. python scripts/check_prose_numbers.py

@@ -215,6 +215,36 @@ def sec_ood(o, out):
         out.append(f"| `{d}` | {cells} |")
 
 
+def sec_noise(n, out):
+    out.append("\n### How repeatable are these timings?\n")
+    if n is None:
+        out.append(f"{NM} — `runs/bench_noise.json` absent.\n")
+        return
+    out.append(f"One configuration repeated {n['repeats']}× "
+               "(`scripts/bench_noise.py`). This exists because an earlier "
+               "version of this table reported **40.8×** for the Darcy headline: "
+               "an idle H100 boosts over the first seconds of load, and a "
+               "configuration timed cold against one timed hot inflated the "
+               "ratio by 74%. Every benchmark script now drives the GPU to "
+               "steady clocks before measuring.\n")
+    out.append("| ratio | median | range | spread |")
+    out.append("|---|---:|---:|---:|")
+    for k in ("headline_speedup", "isoaccuracy_speedup"):
+        if k not in n:
+            continue
+        v = n[k]
+        out.append(f"| {k.replace('_', ' ')} (Darcy, batch {n['batch']}, "
+                   f"{len(n['timings'])-1}-tol) | {v['median']:.2f}× | "
+                   f"{v['min']:.2f}–{v['max']:.2f}× | ±{100*v['rel_range']/2:.0f}% |")
+    out.append("\nThe repeated measurement is the authoritative one for the "
+               "Darcy batch-1 ratio. The single-pass table above times each "
+               "family once inside a longer script and still carries some "
+               "drift — it reads 26.8× where the 8-repeat measurement reads "
+               f"{n.get('headline_speedup', {}).get('median', float('nan')):.1f}×. "
+               "Neither is near 100×, so the clause is unaffected, but no ratio "
+               "in this file should be read to better than ±15%.\n")
+
+
 def sec_iso(i, out):
     out.append("\n### Clause 2, the fairer version: iso-accuracy speedup\n")
     if i is None:
@@ -422,6 +452,13 @@ def verdict(c, b, o, out, i=None, m=None):
                      f"[{ed[bd]['ci95'][0]:.3f}, {ed[bd]['ci95'][1]:.3f}] | "
                      f"`runs/ood.json` | "
                      f"{'✅' if ed[bd]['auroc'] >= 0.9 else '❌'} |")
+    nz = load("bench_noise.json")
+    if nz and "headline_speedup" in nz:
+        v = nz["headline_speedup"]
+        lines.append(f"| inference speedup, repeated 8× | ≥100× | "
+                     f"{v['median']:.1f}× median, {v['min']:.1f}–{v['max']:.1f}× "
+                     f"(Darcy, batch 1, 5 members) | `runs/bench_noise.json` | "
+                     f"{'✅' if v['median'] >= 100 else '❌'} |")
     if i and i["families"].get("darcy", {}).get("iso_accuracy"):
         a = i["families"]["darcy"]["iso_accuracy"]
         lines.append(f"| inference speedup, iso-accuracy | ≥100× | "
@@ -453,6 +490,7 @@ def main():
     body = []
     sec_conformal(c, body)
     sec_speed(b, body)
+    sec_noise(load("bench_noise.json"), body)
     sec_iso(i, body)
     sec_ood(o, body)
     sec_probe(lp, body)

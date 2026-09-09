@@ -31,7 +31,7 @@ from pathlib import Path
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from uqkit.bench import env_report, timeit  # noqa: E402
+from uqkit.bench import env_report, timeit, warmup_device  # noqa: E402
 from uqkit.metrics import rel_l2  # noqa: E402
 from uqkit.sims.pde2d import PARENT, TASK_ID  # noqa: E402
 from uqkit.sims.pde2d_sim import PDE2DSimulator  # noqa: E402
@@ -86,11 +86,14 @@ def main():
                     help="samples used for the CPU accuracy check")
     args = ap.parse_args()
 
+    ramp = warmup_device("cuda")
+    print(f"clock ramp: {ramp}", flush=True)
     tasks = args.tasks.split(",")
     models, ck = load_members(args.ckpts, "cuda")
     stats = ck["stats"]
     M = len(models)
     res = {"env": env_report("cuda"), "n_members": M, "rows": [],
+           "clock_ramp": ramp,
            "note": ("rel_l2 is the ensemble mean's error on that family's test "
                     "split, measured in the same bf16-autocast configuration "
                     "the GPU rows are timed in. Normalization and "

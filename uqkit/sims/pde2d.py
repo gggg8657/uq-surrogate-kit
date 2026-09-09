@@ -212,7 +212,7 @@ def _zero_mean(x):
     return x - x.mean(dim=(-2, -1), keepdim=True)
 
 
-def solve_darcy(a, f, tol=1e-10, max_iter=2000):
+def solve_darcy(a, f, tol=1e-10, max_iter=2000, check_every=1):
     """Solve -div(a grad u) = f (periodic, zero-mean) with batched PCG.
 
     Preconditioner: the constant-coefficient spectral inverse scaled by the
@@ -221,6 +221,16 @@ def solve_darcy(a, f, tol=1e-10, max_iter=2000):
     float32 it stagnates near 1e-3 relative residual, which would put the
     "ground truth" at the same order as the model error it is meant to measure.
     Returns (u, residual_ratio) with u cast back to the input dtype.
+
+    `check_every` amortizes the convergence test. The test calls `.max()` and
+    compares it in Python, which forces a device-to-host synchronization on
+    every iteration -- an adversarial review of the speedup benchmark pointed
+    out, correctly, that this makes the reference solver slower than it needs to
+    be and therefore subsidizes any surrogate timed against it. The default is
+    1, which is what generated the corpus and what `bench_speedup.py` times, so
+    the headline number is unchanged; `bench_isoaccuracy.py` also times
+    `check_every=10` so the size of that subsidy is measured rather than
+    argued about.
     """
     out_dtype = a.dtype
     a, f = a.double(), f.double()
@@ -244,13 +254,14 @@ def solve_darcy(a, f, tol=1e-10, max_iter=2000):
     p = z.clone()
     rz = dot(r, z)
 
-    for _ in range(max_iter):
+    for it in range(max_iter):
         Ap = _zero_mean(_darcy_apply(a, p))
         pAp = dot(p, Ap).clamp_min(1e-30)
         alpha = rz / pAp
         u = u + alpha * p
         r = r - alpha * Ap
-        if (r.flatten(1).norm(dim=1) / b_norm).max() < tol:
+        if (it + 1) % check_every == 0 and \
+                (r.flatten(1).norm(dim=1) / b_norm).max() < tol:
             break
         z = precond(r)
         rz_new = dot(r, z)

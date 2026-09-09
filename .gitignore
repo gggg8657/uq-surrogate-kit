@@ -3,4 +3,5 @@ __pycache__/
 data/
 .scratch/
 runs/**/*.pt
+runs/m*/log.jsonl
 logs/*.log
