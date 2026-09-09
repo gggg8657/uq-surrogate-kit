@@ -1,0 +1,18 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install -r requirements.txt
+      - name: calibration layer (exact coverage identities)
+        run: PYTHONPATH=. python tests/test_conformal.py
+      - name: end-to-end on a non-PDE simulator, CPU only
+        run: PYTHONPATH=. python tests/test_api.py
+      - name: vendored physics and the residual floor
+        run: PYTHONPATH=. python tests/test_sims.py
+      - name: report regenerates without run JSONs present
+        run: PYTHONPATH=. python scripts/report.py --out /tmp/RESULTS.md
