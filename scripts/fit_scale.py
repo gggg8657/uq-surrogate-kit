@@ -54,6 +54,8 @@ from uqkit.equivar import (predict_equivariant,  # noqa: E402
                            reference_scale)
 from uqkit.features import spectral_features  # noqa: E402
 from uqkit.metrics import binom_ci, rel_l2  # noqa: E402
+from uqkit.ood import consistency_score  # noqa: E402
+from uqkit.sims.pde2d_sim import PDE2DSimulator  # noqa: E402
 from uqkit.scale import (GroupScaleConformal,  # noqa: E402
                          PerFamilyScale,
                          QuantileScale, ScaleConformal)
@@ -96,6 +98,20 @@ def main():
                          "dynamic range in the fitting target'. The names are "
                          "checked against FEAT_NAMES and an unknown one is an "
                          "error, not a silent no-op.")
+    ap.add_argument("--residual-features", action="store_true",
+                    help="H22: add two scalars per sample derived from ONE "
+                         "residual evaluation r = L(mu) - f: log10 of the "
+                         "dimensionless consistency score ||r||/(||L mu||+||f||) "
+                         "and log10 of ||r||/||f||. Both are exactly invariant "
+                         "to rescaling the linear channel, so any gain they "
+                         "produce CANNOT be the amplitude effect that H19 "
+                         "showed carries every other arm. "
+                         "`PDE2DSimulator.residual` is None for the two "
+                         "time-stepped families, so this restricts the "
+                         "evaluation to poisson/helmholtz/darcy -- 24 of the "
+                         "32 covariate shards. The baseline must be re-read on "
+                         "the same 24; `scripts/agg_scale.py` does that from "
+                         "per-shard cells already on disk.")
     ap.add_argument("--per-family-h", action="store_true",
                     help="H19: fit a separate h per family instead of one "
                          "pooled h with family one-hots. H18 measured that "
@@ -122,6 +138,25 @@ def main():
 
     man = json.loads(Path(args.root, "manifest.json").read_text())
     in_tasks = man["in_tasks"]
+    # H22: which families have a cheap operator apply is a property of the
+    # problem, not a choice. Ask the simulator rather than hardcoding a list,
+    # so the restriction cannot drift away from what `residual()` can do.
+    if args.residual_features:
+        import torch as _t
+        probe = _t.zeros(1, 2, 64, 64)
+        keep = []
+        for t in in_tasks:
+            sim = PDE2DSimulator(t, device="cpu")
+            if sim.residual(probe, _t.zeros(1, 1, 64, 64)) is not None:
+                keep.append(t)
+        dropped = [t for t in in_tasks if t not in keep]
+        if not keep:
+            raise SystemExit("--residual-features: no family has a cheap apply")
+        print(f"--residual-features: restricted to {keep}; "
+              f"{dropped} have no cheap operator apply, so they are EXCLUDED "
+              f"rather than fed a placeholder. The baseline must be re-read on "
+              f"the same subset.", flush=True)
+        in_tasks = keep
     if single:
         model, ck = load_model(args.ckpt[0], args.device)
         if not ck["args"].get("uq"):
@@ -162,6 +197,29 @@ def main():
     #: every later call uses an identical layout
     KEEP: list[int] = []
 
+    _sims: dict = {}
+
+    def resid_feats(a, mean, parent):
+        """(n, 2) log residual features, or None where there is no cheap apply.
+
+        One `residual()` call; `L(mu)` is recovered as `r + f` rather than by a
+        second apply, so this costs a single evaluation of the operator and no
+        solve. Ground truth is never touched.
+        """
+        if parent not in _sims:
+            _sims[parent] = PDE2DSimulator(parent, device=a.device)
+        sim = _sims[parent]
+        r = sim.residual(a, mean)
+        if r is None:
+            return None
+        f = sim.rhs(a)
+        eps = 1e-12
+        c = consistency_score(r, r + f, f)
+        rn = (r.flatten(1).norm(dim=1)
+              / f.flatten(1).norm(dim=1).clamp_min(eps))
+        return torch.stack([torch.log10(c.clamp_min(eps)),
+                            torch.log10(rn.clamp_min(eps))], dim=-1)
+
     def features(a, mean, sigma, parent):
         """(n, d) from the input, the prediction and its spread. No truth."""
         nonlocal FEAT_NAMES
@@ -180,13 +238,23 @@ def main():
         ], dim=-1)
         oh = torch.zeros(len(a), len(in_tasks), device=a.device)
         oh[:, FAM_IDX[parent]] = 1.0
-        z = torch.cat([fa, fm, scal, oh], dim=1)
+        parts, extra_names = [fa, fm, scal, oh], []
+        if args.residual_features:
+            rf = resid_feats(a, mean, parent)
+            if rf is None:
+                raise SystemExit(
+                    f"--residual-features: {parent} has no cheap operator "
+                    f"apply, so it must be excluded from this arm rather "
+                    f"than fed zeros. This is a bug in the shard filter.")
+            parts.append(rf)
+            extra_names = ["log_consist", "log_resid"]
+        z = torch.cat(parts, dim=1)
         if FEAT_NAMES is None:
             FEAT_NAMES = ([f"a_spec{i}" for i in range(fa.shape[1])]
                           + [f"mu_spec{i}" for i in range(fm.shape[1])]
                           + ["log_sigrel", "log_signorm", "log_sigmax",
                              "log_sigmed", "log_munorm", "log_mumax"]
-                          + [f"fam_{t}" for t in in_tasks])
+                          + [f"fam_{t}" for t in in_tasks] + extra_names)
             drop = [d for d in args.drop_features.split(",") if d.strip()]
             unknown = [d for d in drop if d not in FEAT_NAMES]
             if unknown:
@@ -243,6 +311,8 @@ def main():
     _tick(f"generating {len(dev_specs)} development shards in memory")
     dev = {}
     for i, (task, parent, mech, _over) in enumerate(dev_specs):
+        if parent not in in_tasks:
+            continue    # H22: family excluded for lack of a cheap apply
         if i % 5 == 0:
             _tick(f"  dev shard {i}/{len(dev_specs)} {task}")
         a, u, _extra = D.generate(task, args.dev_n, N=64,
@@ -278,6 +348,7 @@ def main():
            "sigma_floor_median": MED, "sigma_floor_frac": 0.05,
            "equivariant": bool(args.equivariant),
            "per_family_h": bool(args.per_family_h),
+           "residual_features": bool(args.residual_features),
            "dropped_features": [d for d in args.drop_features.split(",")
                                 if d.strip()],
            "n_features": len(KEEP),
@@ -297,7 +368,8 @@ def main():
     specs = []
     for kind, tasks in man["ood_suite"].items():
         if kind in COVARIATE_KINDS:
-            specs += [(kind, t, 64) for t in tasks]
+            specs += [(kind, t, 64) for t in tasks
+                      if PARENT.get(t, t) in in_tasks]
 
     _tick(f"scoring {len(specs)} evaluation shards")
     eval_cache = {}
@@ -377,6 +449,7 @@ def main():
                "n_cal_q": sc_conf.n_cal,
                "coef_top": h.coef_table(FEAT_NAMES)[:12],
                "per_family_h": bool(args.per_family_h),
+           "residual_features": bool(args.residual_features),
                "loss_curve": h.loss_curve,
                "in_dist": {}, "shards": {}}
 

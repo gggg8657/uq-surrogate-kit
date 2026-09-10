@@ -3623,3 +3623,24 @@ No speedup number for this arm goes in any document before that runs.
    where no arm has ever gained anything.
 4. The seed spread will stay wide. H15's LOMO range is [2, 8] and H20's [1, 8]
    on a median of 4; any claim here is quoted with its range or not at all.
+
+### Correction to my H20 entry above: prediction 2 could not have discriminated anything
+
+My H20 entry presented the Darcy ladder holding under a per-family fit as
+evidence that "the Darcy-ladder gain was not spillover from other families'
+amplitude rows", and withdrew my H18 explanation on that basis. **The
+conclusion is right and the evidence I gave for it is not.**
+
+A per-family Darcy fit still sees Darcy's *own* amplitude development shards,
+so it retains the same carrier H19 identified. The ladder holding is therefore
+consistent with both branches of the dichotomy I registered, and discriminates
+neither. What actually settles it is H19 — deleting `a_spec9`/`a_spec10` takes
+every arm to 0/32 — and that had already been measured before H20 ran. I let a
+prediction be "confirmed" by a run that could not have falsified it.
+
+Both branches assumed the question was *which rows* drive the fit; H19 had
+already answered *which feature*. The procedural fix, which is cheap: re-read
+registered predictions against everything measured since, immediately before
+reading the result. This is the second time a two-branch prediction of mine has
+had reality supply a third branch (H13 was the first), so it is a habit rather
+than an accident.
