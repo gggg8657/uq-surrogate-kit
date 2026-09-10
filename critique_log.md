@@ -717,3 +717,85 @@ graded ladder — and on exactly those two rows `combo` is *worse* than
 `mahalanobis` alone (0.900, 0.876), because taking a maximum over z-scores pays
 for a second, noisier component. That is a cost of the combination and it is
 reported next to its benefit, not omitted from it.
+
+### Rung 4 on clause 1 (`agy`, `logs/critic_agy_howto_coverage.log`) — and two corrections to my own reporting that came out of checking it
+
+I asked `agy` how to make coverage land in [88, 92] on shifted shards. Its
+diagnosis was half right, and checking the half that was wrong turned up two
+things this repo has been reporting incorrectly.
+
+**What `agy` got wrong.** It said the over-coverage "stems directly from the
+calibrators", pointing at the pooled `q_split = 524.73` swamping families whose
+own quantiles are 4.90 (helmholtz) to 29.22 (darcy). The arithmetic is right —
+those numbers are in `runs/conformal.json` — but the conclusion is not new: the
+class-conditional `GroupConformal` that fixes exactly this **already exists and
+is already what the in-distribution headline uses** (`pooled_group`, 88.6%).
+
+**Correction 1, and it reverses the direction of the failure.** For OOD shards
+this repo reported the `split` and `weighted` columns and **never reported the
+`group` column at all** — while headlining `group` in distribution. Two
+different calibrators either side of the comparison. Measured now from the same
+`runs/conformal.json`, over the 42 shards whose covariate-shift assumption
+holds:
+
+| calibrator | n | in band | over-covers | under-covers | median |
+|---|---|---|---|---|---|
+| `split` (pooled) | 42 | 0 | 32 | 10 | 1.0000 |
+| `group` (class-conditional, **the in-distribution headline's calibrator**) | 42 | **6** | 3 | **33** | **0.7012** |
+| `weighted` | 32 | 2 | 29 | 1 | 1.0000 |
+
+So the sentence this repo and the board have been carrying — *"the dominant
+failure is over-coverage, 24/32 at 99–100%"* — is true of `split` and **false
+of the calibrator the in-distribution number uses**, under which the dominant
+failure is **under-coverage, 33/42**. I reported the harmless failure mode and
+omitted the harmful one. Over-coverage is wasteful; under-coverage at a median
+of 70% against a 90% target is an interval that lies. That correction goes to
+the board.
+
+**Correction 2: the `weighted` 100%s are not coverage, they are abstention.**
+`agy` was right here and I had the diagnostic in hand without reading it.
+`probe_auc = 1.000` on every shard — the calibration and test inputs are
+completely separable in spectral-feature space — so the weighted quantile is
+`+∞`: **30 of 32 shards have at least one infinite quantile and 14 of 32 are
+infinite for all 512 test points.** An infinite interval covers everything.
+Quoting "weighted conformal reaches 100% coverage" without that is quoting the
+width-∞ degenerate case as a success. Every coverage number in this repo needs
+its width and its `n_infinite_quantiles` printed next to it, and the report
+will not emit one without them.
+
+Neither correction was found by an adversary. `agy` pointed at the calibrator;
+the corrections came from checking whether it was right.
+
+**What `agy` got right and I am taking.**
+
+- *Two-sided 90 ± 2% under arbitrary covariate shift without labels is provably
+  unattainable.* Weighted conformal gives one-sided conservative validity only,
+  and under non-overlapping support distribution-free validity requires infinite
+  intervals — which is precisely the ∞ above, so the theory and my measurement
+  agree. This is a statement to make in the report, not a defeat to hide.
+- *The smallest label budget that makes it exact is k = 9 per shard*, because
+  `⌈(n+1)(1−α)⌉ ≤ n` needs `n ≥ ⌈(1−α)/α⌉ = 9` at α = 0.1. That is a clean
+  constructive complement and it sits beside the k = 1 detection probe already
+  in `runs/label_probe.json`: **one label to notice the shift, nine to
+  re-certify the interval.** I like this a great deal more than the clause it
+  replaces, and it will be reported as a different claim, not as the KPI.
+- *The experiment that separates "the weights are bad" from "the score is bad"*:
+  split each shifted shard 50/50, calibrate split-conformal on the target half,
+  test on the other half. If coverage lands in band, the score is sound and the
+  failure is entirely importance weighting. It uses labels, so it is an **oracle
+  upper bound and a diagnostic, never a deployable method**, and it will be
+  labelled that way at the point the number appears.
+
+### H7 (clause 1), written before it runs
+
+**Hypothesis.** The `field_max` score is sound under shift and the entire
+coverage failure is calibration transfer. Falsified if oracle target-split
+calibration does *not* land in [88, 92] on a majority of the 42 shards — which
+would mean the score distribution itself is pathological under shift and no
+amount of reweighting fixes it.
+
+**Prediction, registered now.** Oracle target-split lands in band on ≥ 38/42
+shards (it is split conformal on exchangeable data, so it should be nearly
+free), and the k = 9 curve reaches the band by k = 9 with the finite-sample
+guarantee, not before. If oracle target-split fails, that is the more
+interesting result and it kills the score, not the calibrator.

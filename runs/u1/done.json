@@ -1,0 +1,9 @@
+{
+  "seed": 1,
+  "epochs": 60,
+  "best_cal_mean": 0.012415252393111587,
+  "elapsed_s": 1329.2848172187805,
+  "params": 26254532,
+  "params_uq_head": 8707,
+  "detach_uq": true
+}

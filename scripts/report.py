@@ -10,6 +10,7 @@ and a missing row is not.
 from __future__ import annotations
 
 import argparse
+from statistics import median as _median
 import json
 from pathlib import Path
 
@@ -96,21 +97,71 @@ def sec_conformal(c, out):
                "p(y|x) changed too and weighted conformal's covariate-shift "
                "assumption does not hold. Its number is a diagnostic, not a "
                "repair.\n")
-    out.append("| shift | kind | rel-L2 | split | weighted | probe AUC | cal ESS | q=∞ |")
-    out.append("|---|---|---|---|---|---|---|---|")
+    out.append("**`group` is the calibrator the in-distribution headline uses, "
+               "and until 2026-09-10 this table omitted it.** Reporting pooled "
+               "`split` here while headlining per-family `group` above put a "
+               "different calibrator on either side of the comparison, and it "
+               "changed the reported failure mode: under `split` the shards "
+               "over-cover, under `group` they *under*-cover. Both columns are "
+               "now shown and the summary below counts each.\n")
+    out.append("A coverage number is meaningless without its width. **`q=∞` is "
+               "the number of test points whose weighted quantile is "
+               "infinite** — an infinite interval covers everything and "
+               "certifies nothing, so a `weighted` cell at 100% next to a large "
+               "`q=∞` is abstention, not coverage.\n")
+    out.append("| shift | kind | rel-L2 | split (pooled q) | group (per-family q) "
+               "| weighted | probe AUC | cal ESS | q=∞ |")
+    out.append("|---|---|---|---|---|---|---|---|---|")
     if head:
         for k, r in sorted(head["ood"].items(),
                            key=lambda kv: (kv[1]["kind"], kv[0])):
             w = r.get("weighted")
+            g = r.get("group")
             d = r.get("weighted_diag", {})
             vio = "‡" if r.get("assumption_violated") else ""
             out.append(
                 f"| `{k.split('/')[1]}` @N{r['N']} | {r['kind']}{vio} | "
                 f"{r['rel_l2_mean']:.4f} | {cov_cell(r['split'])} {band(r['split'])} | "
+                f"{(cov_cell(g) + ' ' + band(g)) if g else NM} | "
                 f"{cov_cell(w) if w else NM} {band(w) if w else ''} | "
                 f"{d.get('probe_auc', float('nan')):.3f} | "
                 f"{d.get('ess', float('nan')):.0f}/{d.get('n_cal', 0)} | "
                 f"{d.get('n_infinite_quantiles', '—')} |")
+
+        # the tally, computed here rather than counted by eye
+        ok = [r for r in head["ood"].values() if not r.get("assumption_violated")]
+        out.append("\nOver the "
+                   f"{len(ok)} shards whose covariate-shift assumption holds "
+                   "(operator-shift shards excluded, since p(y|x) changed):\n")
+        out.append("| calibrator | n | in band [88, 92] | over-covers | "
+                   "under-covers | median coverage |")
+        out.append("|---|---|---|---|---|---|")
+        import statistics as _st
+        for col in ("split", "group", "weighted"):
+            vals = [r[col]["coverage"] for r in ok if col in r]
+            if not vals:
+                continue
+            out.append(
+                f"| `{col}` | {len(vals)} | "
+                f"**{sum(1 for v in vals if 0.88 <= v <= 0.92)}** | "
+                f"{sum(1 for v in vals if v > 0.92)} | "
+                f"{sum(1 for v in vals if v < 0.88)} | "
+                f"{pct(_st.median(vals))} |")
+        n_inf = [r["weighted_diag"]["n_infinite_quantiles"] for r in ok
+                 if "weighted_diag" in r]
+        if n_inf:
+            out.append(
+                f"\n`weighted`'s median of {pct(_st.median([r['weighted']['coverage'] for r in ok if 'weighted' in r]))} "
+                f"is the degenerate case, not a success: "
+                f"**{sum(1 for x in n_inf if x > 0)}/{len(n_inf)}** shards have "
+                f"at least one infinite quantile and "
+                f"**{sum(1 for x in n_inf if x >= 512)}/{len(n_inf)}** are "
+                f"infinite for every test point. The density-ratio probe "
+                f"separates calibration from test inputs at AUC 1.000 on every "
+                f"shard, which is exactly the non-overlapping-support case in "
+                f"which distribution-free validity *requires* an infinite "
+                f"interval. The theory and the measurement agree; neither is a "
+                f"coverage result.\n")
     return c
 
 
@@ -250,10 +301,13 @@ def sec_consistency(cs, out, tag="M1"):
     out.append("|---|---|---|---|---|---|---|---|---|---|---|")
 
     def cell(r, d):
+        # 4 decimals, not 3: `poisson_dam0p1`'s mahalanobis is 0.8999, and at 3
+        # decimals it prints "0.900" with no tick, which reads as a typo rather
+        # than as a value one part in ten thousand under the threshold.
         v = r["auroc"].get(d)
         if v is None:
             return NM
-        return f"{v['auroc']:.3f}" + (" ✅" if v["auroc"] >= 0.9 else "")
+        return f"{v['auroc']:.4f}" + (" ✅" if v["auroc"] >= 0.9 else "")
 
     for k, r in sorted(cs["shards"].items(), key=lambda kv: (kv[1]["kind"], kv[0])):
         fc = r["floor_c"]
@@ -289,10 +343,61 @@ def sec_consistency(cs, out, tag="M1"):
         "prediction being wrong. Predicted in `critique_log.md` before the run "
         "— `measure_residual_floor.py` had already put the `frac_s3` residual "
         "floor above its own right-hand side — and reported rather than banked.\n")
+    # --- the graded ladder: where does detection give out? ---------------- #
+    # The `*_dam*` shards interpolate the input-roughness exponent from its
+    # trained value to the `*_rough` value; `dam0p1` is one tenth of the way.
+    # Asking for AUROC >= 0.9 on `dam0p1` is asking to detect a shift that is
+    # almost not there, so the informative number is not pass/fail on that row
+    # but the severity at which the curve crosses 0.9. Derived here from the
+    # per-shard AUROCs the run measured; nothing new is timed or fitted.
+    lad = {}
+    for k, r in cs["shards"].items():
+        name = k.split("/")[1]
+        if r["kind"] != "graded_rough" or "_dam" not in name:
+            continue
+        fam, sev = name.split("_dam")
+        lad.setdefault(fam, []).append(
+            (float(sev.replace("p", ".")), r["auroc"]))
+    dets = ["mahalanobis", "cons_B", "combo"]
+    if lad:
+        out.append("\n**Where detection gives out.** The `*_dam*` shards "
+                   "interpolate the input-roughness exponent from its trained "
+                   "value (severity 0) to the `*_rough` value (severity 1), so "
+                   "the useful number is the severity at which AUROC crosses "
+                   "0.9, not whether the mildest rung passes.\n")
+        out.append("| family | " + " | ".join(f"severity where `{d}` crosses 0.9"
+                                              for d in dets) + " |")
+        out.append("|---|" + "---|" * len(dets))
+        for fam, rows in sorted(lad.items()):
+            rows.sort()
+            cells = []
+            for d in dets:
+                pts = [(sv, a[d]["auroc"]) for sv, a in rows if a.get(d)]
+                cross = next((f"≤ {sv:g}" for sv, v in pts if v >= 0.9), None)
+                cells.append(cross or f"> {max(sv for sv, _ in pts):g} (never)")
+            out.append(f"| `{fam}` | " + " | ".join(cells) + " |")
+        out.append("\nRow by row across the ladder, so the shape is visible "
+                   "and not only the crossing:\n")
+        for fam, rows in sorted(lad.items()):
+            sevs = [sv for sv, _ in rows]
+            out.append(f"| `{fam}` severity | "
+                       + " | ".join(f"{sv:g}" for sv in sevs) + " |")
+            out.append("|---|" + "---|" * len(sevs))
+            for d in dets:
+                cells = " | ".join(f"{a[d]['auroc']:.3f}" if a.get(d) else NM
+                                   for _, a in rows)
+                out.append(f"| `{d}` | {cells} |")
+            out.append("")
+
     out.append(
         f"Two shards remain under 0.9 for every detector here, and both are the "
         f"*weakest* rung of the graded ladder, where the shift is by design "
-        f"barely present. Note also that `combo` = max(z) is **worse** than "
+        f"barely present — and one of them, `poisson_dam0p1`, sits at "
+        f"**0.8999**, one part in ten thousand under the threshold and well "
+        f"inside its own bootstrap interval, so the clause turns there on a "
+        f"difference this sample size cannot resolve. The crossing table above "
+        f"is the honest presentation of that row; a tick or a cross is not. "
+        f"Note also that `combo` = max(z) is **worse** than "
         f"`mahalanobis` alone on exactly those two rows: taking a maximum over "
         f"z-scores pays for a second, noisier component. `router` — use the "
         f"consistency residual only when the requested operator is untrained, "
@@ -493,12 +598,29 @@ def verdict(c, b, o, out, i=None, m=None, cs=None):
                         if 0.88 <= r["weighted"]["coverage"] <= 0.92)
         n_in_band_split = sum(1 for r in oods
                               if 0.88 <= r["split"]["coverage"] <= 0.92)
+        # `group` is the calibrator the in-distribution row uses. Counting only
+        # `split` and `weighted` here, as this file did until 2026-09-10, put a
+        # different calibrator on either side of the comparison and reported
+        # the wrong failure mode.
+        allo = [r for r in h["ood"].values()
+                if "group" in r and not r.get("assumption_violated")]
+        n_grp = sum(1 for r in allo if 0.88 <= r["group"]["coverage"] <= 0.92)
+        n_grp_under = sum(1 for r in allo if r["group"]["coverage"] < 0.88)
+        n_inf_any = sum(1 for r in oods
+                        if r.get("weighted_diag", {}).get(
+                            "n_infinite_quantiles", 0) > 0)
         lines.append(f"| coverage, in distribution | 90±2% | {cov_cell(ind)} | "
                      f"`runs/conformal.json` | {band(ind)} |")
-        lines.append(f"| coverage, under covariate shift | 90±2% | split: "
-                     f"{n_in_band_split}/{len(oods)} shards in band; weighted: "
-                     f"{n_in_band}/{len(oods)} | `runs/conformal.json` | "
-                     f"{'✅' if n_in_band == len(oods) else '❌'} |")
+        lines.append(
+            f"| coverage, under covariate shift | 90±2% | **`group`, the "
+            f"in-distribution headline's own calibrator: {n_grp}/{len(allo)} "
+            f"shards in band, {n_grp_under}/{len(allo)} *under*-covering** "
+            f"(median {pct(_median([r['group']['coverage'] for r in allo]))}); "
+            f"pooled `split` {n_in_band_split}/{len(oods)}; `weighted` "
+            f"{n_in_band}/{len(oods)}, and {n_inf_any}/{len(oods)} of those "
+            f"shards return an infinite quantile so their 100% is abstention "
+            f"| `runs/conformal.json` | "
+            f"{'✅' if n_grp == len(allo) else '❌'} |")
     # clause 2
     if b is None:
         lines.append(f"| inference speedup | ≥100× | {NM} | — | — |")

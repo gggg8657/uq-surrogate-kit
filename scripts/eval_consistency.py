@@ -51,7 +51,9 @@ from uqkit.metrics import auroc, rel_l2  # noqa: E402
 from uqkit.ood import auroc_ci, consistency_score, shift_auroc  # noqa: E402
 from uqkit.sims.pde2d import PARENT, PRETRAIN_TASKS  # noqa: E402
 from uqkit.sims.pde2d_sim import PDE2DSimulator  # noqa: E402
-from uqkit.sims.predict import load_members, load_shard, predict_shard  # noqa: E402
+from uqkit.sims.checkpoint import load_model  # noqa: E402
+from uqkit.sims.predict import (load_members, load_shard,  # noqa: E402
+                                predict_shard, predict_shard_single)
 
 
 def consistency(sim, a, u):
@@ -74,11 +76,26 @@ def main():
     ap.add_argument("--root", default="data")
     ap.add_argument("--out", default="runs/consistency.json")
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--sigma-source", default=None,
+                    choices=["het", "cqr", "const"],
+                    help="score the single-network UQ model instead of an "
+                         "ensemble. Only the MEAN enters the consistency "
+                         "residual, so this changes which predictor is being "
+                         "checked and nothing else about the detector.")
     args = ap.parse_args()
+    single = args.sigma_source is not None
+    if single and len(args.ckpts) != 1:
+        ap.error("--sigma-source is a single-network mode; pass one checkpoint")
 
     man = json.loads(Path(args.root, "manifest.json").read_text())
     in_tasks = man["in_tasks"]
-    models, ck = load_members(args.ckpts, args.device)
+    if single:
+        model, ck = load_model(args.ckpts[0], args.device)
+        if not ck["args"].get("uq"):
+            raise SystemExit(f"{args.ckpts[0]} is not a UQ checkpoint")
+        models = [model]
+    else:
+        models, ck = load_members(args.ckpts, args.device)
     TRAINED_OPS = {PDE2DSimulator(t, device="cpu").operator_key()
                    for t in PRETRAIN_TASKS}
     stats = ck["stats"]
@@ -92,7 +109,13 @@ def main():
     def scored(task, split, N=64):
         """Both presentations, the truth's floor, and the input features."""
         blob = load_shard(args.root, task, split, N)
-        mean, _sigma, truth, a = predict_shard(models, blob, stats, args.device)
+        if single:
+            mean, _sigma, truth, a = predict_shard_single(
+                models[0], blob, stats, args.device,
+                sigma_source=args.sigma_source)
+        else:
+            mean, _sigma, truth, a = predict_shard(models, blob, stats,
+                                                   args.device)
         parent = PARENT.get(task, task)
         out = {"task": task, "parent": parent, "N": N,
                "err": rel_l2(mean, truth).cpu().numpy(),
@@ -172,6 +195,8 @@ def main():
 
     DET = ["mahalanobis", "cons_A", "cons_B", "combo", "router", "lookup"]
     res = {"n_members": len(models), "ckpts": args.ckpts,
+           "sigma_source": args.sigma_source or "ensemble_spread",
+           "seed": ck["args"].get("seed"),
            "pretrain_tasks": list(PRETRAIN_TASKS),
            "presentation": {
                "A": "residual under PARENT[task] -- the configured operator. "
