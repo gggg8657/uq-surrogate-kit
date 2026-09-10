@@ -3534,3 +3534,92 @@ against the 0/32 ungated arm is solid — every seed of every arm that keeps the
 amplitude features beats it, p = 0.0078 — but *between* these arms the
 per-seed variance swamps everything, which is exactly what the brief's
 seed-count lesson says to expect and to say out loud.
+
+## H22 — written before the run: the PDE residual as a width feature, because it is the one signal that cannot be amplitude
+
+**Where this leaves off.** Four arms have now attacked clause 1 under covariate
+shift and every one of them moved it by exactly one mechanism: H15's learned
+width model (top coefficient +2.8946 on log input amplitude, 5.78× the next),
+H17's closed-form equivariance repair (the same correction, exact), H18's
+composition of the two (double-counted, p = 0.0234 worse), and H20's per-family
+refit (indistinguishable, p = 0.8438). H19 is the load-bearing measurement:
+**delete the two amplitude features and every arm goes to 0/32 on 8 of 8
+seeds.** So there is currently no evidence that anything except amplitude is
+learnable from the feature set, and amplitude is better handled in closed form.
+
+**What the feature set is missing.** Every feature so far is a function of the
+input and of the prediction *considered as a field* — spectral bands, σ
+summaries, μ summaries, a family one-hot. None of them evaluates whether the
+prediction actually **satisfies its own governing equation**. That quantity is
+deployment-observable, costs **one operator apply and no solve**, and is the
+route the brief named for this project. H14 used it as a *gate* and it failed —
+but H14's own finding was that selection is the wrong tool because the failure
+is in the scale. Using the residual to set the *scale* is a different use of
+the same signal, and it has not been tried. The H15 registration explicitly
+deferred it ("the `consist` residual is a separate labelled variant, not part
+of the headline h") and it was never run.
+
+### The change (one)
+
+`scripts/fit_scale.py --residual-features`: add two scalars per sample to z,
+both derived from a single residual evaluation `r = Lû − f`:
+
+* `log_consist` = log₁₀ of `uqkit.ood.consistency_score(r, r+f, f)` = the
+  dimensionless `‖r‖ / (‖Lû‖ + ‖f‖)`;
+* `log_resid` = log₁₀ of `‖r‖ / ‖f‖`.
+
+Nothing else moves: same dev suite, same seed block, same folds, same
+per-family quantile on T, same 8 checkpoints.
+
+### Why this is the first arm whose gain could not be amplitude
+
+**Both features are exactly invariant to rescaling the linear channel.** For a
+linear operator, `f → c·f` implies `Lû → c·Lû` and `r → c·r`, so both ratios
+are unchanged. The amplitude effect is *algebraically absent* from these two
+features. So if this arm improves on the H15 baseline, the improvement cannot
+be the amplitude correction that H19 showed carries every other arm — which
+makes it the first result here that would say something new about the clause
+rather than another view of the same bug.
+
+### The availability constraint, which is forced and must not be laundered
+
+`PDE2DSimulator.residual` returns `None` for the two time-stepped families
+(diffusion, advdiff): there is no cheap apply, and that is a property of the
+problem, not a choice. So this arm exists for poisson, helmholtz and darcy —
+**24 of the 32 covariate-shift shards** (12 `input_shift`, 12 `graded_rough`).
+
+**Therefore the H15 baseline is re-reported on the same 24 shards**, restricted
+in the aggregator from per-shard cells already on disk, with no re-run and no
+change of protocol. Quoting a 24-shard arm against a 32-shard baseline would be
+exactly the kind of denominator switch this repo has caught itself doing twice,
+so the comparison is 24-vs-24 and the 32-shard numbers stay where they are.
+
+### The cost, stated and not asserted
+
+One apply per sample, inside the deployment path. This repo has already been
+burned once by asserting a wrapper was free (H17's "one extra reduction" was
++206% at batch 1 as implemented), so: **the clause-2 cost of this arm is
+`[not measured]` until `bench_fair.py` times it with the residual inside the
+captured graph.** `bench_speedup.make_uq_fn` already takes a `residual=` hook
+for exactly that, and there is a live bug blocking it — capture aborts with
+"operation not permitted when stream is capturing", which is on the list below.
+No speedup number for this arm goes in any document before that runs.
+
+### Predictions, registered now
+
+1. `log_consist` or `log_resid` enters the top three coefficients for **darcy**,
+   where the apply is cheap and the solve is thousands of PCG iterations, and
+   where the measured residual headroom is largest. Falsified if amplitude
+   still dominates and both residual coefficients are below 0.2 in magnitude —
+   in which case the residual carries no width information at this precision
+   and I say so.
+2. In-band on the 24-shard subset **exceeds** the H15 baseline on the same 24.
+   Exact paired sign-flip over 8 seeds. I expect a small gain, not the clause:
+   H16 bounds the prize at ±4.47% width accuracy over 28.6–68.4×.
+3. **The leak test.** If the *only* shards that improve are the `*_amp2` ones,
+   something is wrong with my invariance argument and I look for the error
+   before believing the arm — because those two features cannot see amplitude
+   by construction. I expect gains, if any, on the `rough`/`tau` axes, which is
+   where no arm has ever gained anything.
+4. The seed spread will stay wide. H15's LOMO range is [2, 8] and H20's [1, 8]
+   on a median of 4; any claim here is quoted with its range or not at all.
