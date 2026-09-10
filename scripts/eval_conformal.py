@@ -76,6 +76,20 @@ def main():
     ap.add_argument("--out", default="runs/conformal.json")
     ap.add_argument("--alpha", type=float, default=0.1)
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--probe-clip", type=float, nargs="+",
+                    default=[20.0],
+                    help="density-ratio clip(s) for weighted conformal. The "
+                         "weighted quantile is infinite exactly when a test "
+                         "point's weight exceeds W*alpha/(1-alpha); with "
+                         "ratios in [1/clip, clip] the worst case reduces to "
+                         "clip**2 > n_cal*alpha/(1-alpha), which is 10.67 at "
+                         "n_cal=1024, alpha=0.1. So abstention on a whole test "
+                         "shard is reachable by construction at the shipped "
+                         "clip of 20 and impossible at 10, whatever the shift "
+                         "(H13; the bound is pinned in tests/test_conformal.py). "
+                         "The probe fit does not depend on clip -- only "
+                         "`weights()` does -- so a sweep costs one logistic "
+                         "regression, not one per value.")
     ap.add_argument("--sigma-source", default=None,
                     choices=["het", "cqr", "const"],
                     help="single-network sigma head (FNO2dUQ). When set, "
@@ -215,19 +229,49 @@ def main():
             if per_sample and N == 64:
                 f_te = spectral_features(d["a"]).cpu()
                 probe = LikelihoodRatioProbe().fit(cal_feat[parent], f_te)
-                w_cal = probe.weights(cal_feat[parent])
-                w_te = probe.weights(f_te)
-                wc = WeightedConformal(args.alpha).fit(cal_scores[parent],
-                                                       w_cal, w_te)
-                rec["weighted"] = cov_entry(wc.covered(s))
+                by_clip = {}
+                for clip in args.probe_clip:
+                    probe.clip = clip
+                    w_cal = probe.weights(cal_feat[parent])
+                    w_te = probe.weights(f_te)
+                    wc = WeightedConformal(args.alpha).fit(
+                        cal_scores[parent], w_cal, w_te)
+                    # The bound this clip is being compared against, recomputed
+                    # from the calibration set actually used rather than
+                    # asserted: infinite quantiles are impossible when
+                    # clip**2 <= n_cal*alpha/(1-alpha).
+                    bound = (wc.n_cal * args.alpha / (1 - args.alpha)) ** 0.5
+                    by_clip[f"{clip:g}"] = {
+                        "coverage": cov_entry(wc.covered(s)),
+                        "probe_auc": probe.auc, "ess": wc.ess,
+                        "n_cal": wc.n_cal, "q_median": wc.q,
+                        "n_infinite_quantiles": wc.n_inf,
+                        "n_test": int(len(s)),
+                        "abstention_rate": wc.n_inf / max(len(s), 1),
+                        "no_inf_bound": bound,
+                        "clip_below_bound": bool(clip <= bound),
+                        "test_w_max_over_median": wc.test_w_ratio,
+                        "w_max": float(w_cal.max()),
+                        "w_median": float(np.median(w_cal)),
+                        # Sharpness: an interval that covers by being wide is
+                        # not a repair, so the median finite quantile travels
+                        # with every coverage number here.
+                        "q_over_unweighted": (
+                            wc.q / float(group.q.get(parent, group.q_pooled))
+                            if np.isfinite(wc.q) else float("inf")),
+                    }
+                shipped = f"{args.probe_clip[0]:g}"
+                w0 = by_clip[shipped]
+                rec["weighted"] = w0["coverage"]
+                rec["weighted_by_clip"] = by_clip
                 rec["weighted_diag"] = {
-                    "probe_auc": probe.auc, "ess": wc.ess,
-                    "n_cal": wc.n_cal, "q_median": wc.q,
-                    "n_infinite_quantiles": wc.n_inf,
-                    "test_w_max_over_median": wc.test_w_ratio,
+                    "probe_auc": probe.auc, "ess": w0["ess"],
+                    "n_cal": w0["n_cal"], "q_median": w0["q_median"],
+                    "n_infinite_quantiles": w0["n_infinite_quantiles"],
+                    "test_w_max_over_median": w0["test_w_max_over_median"],
                     "q_unweighted": float(group.q.get(parent, group.q_pooled)),
-                    "w_max": float(w_cal.max()),
-                    "w_median": float(np.median(w_cal)),
+                    "w_max": w0["w_max"], "w_median": w0["w_median"],
+                    "clip": args.probe_clip[0],
                     "note": ("covariate-shift validity requires p(y|x) "
                              "unchanged; this shard changes the operator"
                              if kind in OPERATOR_SHIFT_KINDS else
