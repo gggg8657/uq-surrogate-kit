@@ -378,66 +378,30 @@ all four rungs of the ladder with every route exhausted, and Option B in
 decision 1c becomes the honest call rather than a tie.
 
 <details>
-<summary>Earlier: H19 (finished — amplitude ablation)</summary>
+<summary>Earlier this turn: H19, the amplitude ablation — finished</summary>
 
-**H19 is running** in tmux `a4-h19` on GPU 3: the H15 arm refitted with the two
-input-amplitude features (`a_spec9`, `a_spec10`) ablated out of the feature
-vector, 8 seeds, writing `runs/scalena_u*_het.json`. It exists to separate the
-two explanations H18 left open, which recommend opposite things:
+**Finished, and it was the decisive run of the turn.** The H15 arm refitted
+with the two input-amplitude features (`a_spec9`, `a_spec10`) removed from a
+44-feature vector, 8 seeds, `runs/scalena_u*_het.json`. It existed to separate
+two explanations of H18 that recommended opposite things: **(a)** amplitude was
+the only large learnable signal and the route is finished, versus **(b)**
+flattening the amplitude axis starved the *fit* rather than exhausting what is
+learnable, in which case the next move is a richer target.
 
-- **(a) nothing left to learn** — amplitude was the only large learnable
-  signal, H17 removes it exactly, and the residual axes are not predictable
-  from these features. Then H15-minus-amplitude ≈ H18's 1/32 and the route is
-  finished.
-- **(b) lost dynamic range** — flattening the amplitude axis starves the *fit*
-  rather than exhausting what is learnable. Then H15-minus-amplitude stays near
-  4/32, and the next move is a richer fitting target, not stopping.
+Registered prediction was (a). Measured: **0/32 in band on 8 of 8 seeds**,
+against H15's 4/32 median — deleting two of forty-four features destroys the
+entire gain, and the arm becomes indistinguishable from H18. Prediction 4
+named the falsification condition ("falsified if it stays ≥3/32"); it did not
+fire. The width model is also *worse than useless* without amplitude: on the
+Darcy ladder it drives coverage below the ungated baseline it was meant to
+repair (`darcy_rough` 0.547 → 0.099, `darcy_dam0p5` 0.571 → 0.122).
 
-Registered prediction is (a). Check with:
+This also settled a competing explanation of mine. I had suggested H15's
+Darcy-ladder win was loss-mass spillover from unrelated families. It was
+simpler: the win was the amplitude feature, and there was never a Darcy
+difficulty model at all.
 
-```bash
-tmux capture-pane -pt a4-h19 | tail -5          # or: tail logs/h19_chain.log
-python scripts/agg_scale.py --out runs/scale.json
-```
-
-GPU 2 is free.
-
-```bash
-python scripts/report.py                  # regenerates RESULTS.md from runs/
-python scripts/check_prose_numbers.py     # fails if any prose number drifted
-python scripts/run_tests.py               # 7 files
-./scripts/h14_chain.sh                    # gated certificate, 8 seeds, ~12 min
-./scripts/h14b_chain.sh                   # the abstention price curve, ~12 min
-./scripts/h15_chain.sh                    # learned interval width, ~15 min
-./scripts/h16_chain.sh                    # width tolerance + equivariance, ~10 min
-./scripts/h18_chain.sh                    # width model o equivariance, ~15 min
-./scripts/h19_chain.sh                    # width model minus amplitude features, ~15 min
-python scripts/agg_selective.py --out runs/selective.json
-python scripts/agg_scale.py --out runs/scale.json
-CUDA_VISIBLE_DEVICES=2 python scripts/bench_fair.py \
-    --ckpt runs/u0/best.pt --uq-source het --task darcy \
-    --fast-apply --precond continuous discrete \
-    --out runs/bench_fair_h12.json                             # clause 2, ~50 min
-CUDA_VISIBLE_DEVICES=2 python scripts/check_packed_equivalence.py \
-    --ckpt runs/u0/best.pt          # 64/64 shards bit-identical, ~2 min
-CUDA_VISIBLE_DEVICES=2 python scripts/profile_surrogate.py \
-    --ckpt runs/u0/best.pt          # where the 0.512 ms goes
-```
-
-**Next hypothesis, written down before it runs (H13 in `critique_log.md`).**
-Clause 1's shifted-coverage failure is partly ours. `WeightedConformal` returns
-an infinite quantile — abstention, not coverage — exactly when a test point's
-importance weight exceeds `W·α/(1-α)`, and with ratios clipped to `[1/clip,
-clip]` the worst case makes that `clip² > n_cal·α/(1-α)`. At `n_cal = 1024`,
-`α = 0.1` that threshold is **10.67**, and the shipped `clip` is **20.0**. So
-abstention on whole test shards is reachable by construction at 20 and
-impossible at 10 — which is why the ∞ counts sit at exactly 512 (the whole
-shard) on shards whose calibration ESS is a healthy 807/1024. The bound is
-pinned in `tests/test_conformal.py`, not asserted. Sweeping `clip` gives either
-in-band shifted coverage on shards that currently abstain (clause 1 met on a
-reading always available and mis-set by us) or out-of-band coverage (a real
-statement about the estimator). Both are worth having.
-
+Long form in [`critique_log.md`](critique_log.md), H19.
 </details>
 
 ## The things I got wrong, and caught
