@@ -114,6 +114,25 @@ class PDE2DSimulator:
             return None
         return r.unsqueeze(1).float()
 
+    #: cfg keys that enter the operator itself, per family. Everything else in
+    #: `CFG` (alpha, tau, amp, contrast, w_scale) parameterises the *input*
+    #: distribution and leaves L untouched -- `darcy`'s coefficient is read out
+    #: of the input tensor, so its contrast belongs there too. Comparing whole
+    #: cfgs instead calls every `*_rough` shard an operator shift, which is how
+    #: the first run of `eval_consistency.py` labelled 39 shards as operator
+    #: shift when six of them are.
+    OPERATOR_KEYS = {
+        "poisson": (), "biharmonic": (), "darcy": (),
+        "fractional": ("s",), "helmholtz": ("kappa2",),
+        "diffusion": ("nu", "T"), "advdiff": ("nu", "cx", "cy", "T"),
+        "navier_stokes": ("nu", "T", "dt"),
+    }
+
+    def operator_key(self):
+        """Hashable identity of L. Two tasks share it iff they share an operator."""
+        return (self.base,) + tuple((k, self.cfg[k])
+                                    for k in self.OPERATOR_KEYS[self.base])
+
     def rhs(self, a):
         """The right-hand side the residual is normalized by."""
         return (a[:, 1:2] if self.base == "darcy" else a[:, 0:1]).float()

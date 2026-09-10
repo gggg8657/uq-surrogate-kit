@@ -35,7 +35,9 @@ from uqkit.bench import env_report, timeit, warmup_device  # noqa: E402
 from uqkit.metrics import rel_l2  # noqa: E402
 from uqkit.sims.pde2d import PARENT, TASK_ID  # noqa: E402
 from uqkit.sims.pde2d_sim import PDE2DSimulator  # noqa: E402
-from uqkit.sims.predict import load_members, load_shard, predict_shard  # noqa: E402
+from uqkit.sims.fno2d_uq import sigma_from, split_heads  # noqa: E402
+from uqkit.sims.predict import (load_members, load_shard,  # noqa: E402
+                                predict_shard, predict_shard_single)
 
 
 def make_surrogate_fn(models, a_raw, st, tid, k, residual=None, autocast=True):
@@ -69,6 +71,43 @@ def make_surrogate_fn(models, a_raw, st, tid, k, residual=None, autocast=True):
     return fn
 
 
+def make_uq_fn(model, a_raw, st, tid, source, q_hat=1.0, residual=None,
+               autocast=True):
+    """Closure timing ONE forward pass that emits the mean *and* the interval.
+
+    The ensemble path pays M forward passes for a quantity this head produces in
+    one, which is why `runs/bench.json` could put 108.5x and "has an interval"
+    on different rows and never on the same one. Everything the deployment runs
+    is inside the timed region, on the same terms as `make_surrogate_fn`:
+    normalization, the forward pass, splitting the heads, de-normalizing the
+    mean, scaling sigma, and **forming the conformal band** `mean +- q_hat *
+    sigma`. `q_hat` is a scalar fitted offline on the calibration split -- the
+    same offline step the ensemble path also needs -- so its *value* does not
+    change the timing and only the multiply is counted here.
+
+    sigma is scaled by `u_std` and not shifted by `u_mean`: it is a spread, not
+    a field value. Same rule as `predict_shard_single`.
+    """
+    a_mean, a_std = st["a_mean"].to(a_raw.device), st["a_std"].to(a_raw.device)
+    u_mean, u_std = st["u_mean"].to(a_raw.device), st["u_std"].to(a_raw.device)
+
+    def fn():
+        a_norm = (a_raw - a_mean) / a_std
+        if autocast and a_raw.is_cuda:
+            with torch.autocast("cuda", dtype=torch.bfloat16):
+                y = model(a_norm, tid).float()
+        else:
+            y = model(a_norm, tid)
+        mean = split_heads(y)[0] * u_std + u_mean
+        sigma = sigma_from(y, source) * u_std
+        _ = mean - q_hat * sigma
+        _ = mean + q_hat * sigma
+        if residual is not None:
+            _ = residual(a_raw, mean)
+        return mean
+    return fn
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ckpts", nargs="+", required=True)
@@ -82,6 +121,13 @@ def main():
                     help="families the surrogate was NOT trained on, timed for "
                          "the solver cost only")
     ap.add_argument("--no-cpu", action="store_true")
+    ap.add_argument("--uq-source", default=None, choices=["het", "cqr"],
+                    help="time the single-network UQ model instead of the "
+                         "ensemble: ONE forward pass that emits the mean and "
+                         "the interval. Requires exactly one UQ checkpoint. "
+                         "The solver denominator, batches, iteration counts "
+                         "and clock ramp are unchanged, so the rows are "
+                         "directly comparable to an ensemble run.")
     ap.add_argument("--cpu-acc-n", type=int, default=128,
                     help="samples used for the CPU accuracy check")
     args = ap.parse_args()
@@ -92,6 +138,18 @@ def main():
     models, ck = load_members(args.ckpts, "cuda")
     stats = ck["stats"]
     M = len(models)
+    uq = args.uq_source
+    if uq:
+        if M != 1:
+            ap.error("--uq-source times one network; pass one checkpoint")
+        if not ck["args"].get("uq"):
+            ap.error(f"{args.ckpts[0]} is not a UQ checkpoint")
+        res_uq_note = (
+            "Timed model is FNO2dUQ, ONE forward pass emitting mean, log-sigma "
+            "and two residual quantiles. The 108.5x M=1 row in "
+            "runs/members.json was measured on a 1-channel ensemble MEMBER and "
+            "does NOT transfer to this model -- the extra 1x1 projection is a "
+            "cost to be measured, not assumed. That is what this run measures.")
     res = {"env": env_report("cuda"), "n_members": M, "rows": [],
            "clock_ramp": ramp,
            "note": ("rel_l2 is the ensemble mean's error on that family's test "
@@ -120,14 +178,25 @@ def main():
             n = len(blob["a"]) if dev_ == "cuda" else args.cpu_acc_n
             sub = {"a": blob["a"][:n], "u": blob["u"][:n], "task": t}
             ms = [m.to(dev_).eval() for m in models]
-            for k, name in ((1, "single"), (M, "ensemble")):
-                mean, _, truth, _ = predict_shard(ms[:k], sub, stats, dev_,
-                                                  autocast=ac_)
+            pairs = ((1, "uq_single"),) if uq else ((1, "single"), (M, "ensemble"))
+            for k, name in pairs:
+                if uq:
+                    mean, _, truth, _ = predict_shard_single(
+                        ms[0], sub, stats, dev_, autocast=ac_,
+                        sigma_source=args.uq_source)
+                else:
+                    mean, _, truth, _ = predict_shard(ms[:k], sub, stats, dev_,
+                                                      autocast=ac_)
                 acc[f"{t}|{dev_}|{name}"] = float(rel_l2(mean, truth).mean())
                 del mean, truth
         [m.to("cuda") for m in models]
         torch.cuda.empty_cache()
     res["accuracy"] = acc
+    if uq:
+        res["uq_source"] = args.uq_source
+        res["forward_passes_per_interval"] = 1
+        res["uq_note"] = res_uq_note
+        res["seed"] = ck["args"].get("seed")
     res["accuracy_key"] = "task|device|variant; cuda = bf16 autocast, cpu = fp32"
     print("rel-L2:", {k: round(v, 5) for k, v in acc.items()
                       if k.endswith("|cuda|ensemble")}, flush=True)
@@ -161,16 +230,27 @@ def main():
                        "threads": torch.get_num_threads(),
                        "solver_timing": sol, "surrogate": {}}
                 has_res = sim.residual(a_raw, sim.solve(a_raw)) is not None
-                variants = {"single": (1, False), "ensemble": (M, False)}
-                if has_res:
-                    variants["ensemble+residual"] = (M, True)
+                if uq:
+                    variants = {"uq_single": (1, False)}
+                    if has_res:
+                        variants["uq_single+residual"] = (1, True)
+                else:
+                    variants = {"single": (1, False), "ensemble": (M, False)}
+                    if has_res:
+                        variants["ensemble+residual"] = (M, True)
                 for name, (k, use_res) in variants.items():
-                    fn = make_surrogate_fn(
-                        models_d, a_raw, st, tid, k,
-                        residual=(sim.residual if use_res else None))
+                    res_fn = sim.residual if use_res else None
+                    if uq:
+                        fn = make_uq_fn(models_d[0], a_raw, st, tid,
+                                        args.uq_source, residual=res_fn,
+                                        autocast=(device == "cuda"))
+                        variant_acc = acc.get(f"{t}|{device}|uq_single")
+                    else:
+                        fn = make_surrogate_fn(models_d, a_raw, st, tid, k,
+                                               residual=res_fn)
+                        variant_acc = acc.get(
+                            f"{t}|{device}|{'single' if k == 1 else 'ensemble'}")
                     tm = timeit(fn, 3, n_iter, device)
-                    variant_acc = acc.get(
-                        f"{t}|{device}|{'single' if k == 1 else 'ensemble'}")
                     row["surrogate"][name] = {
                         "s": tm["median_s"], "s_per_sample": tm["median_s"] / B,
                         "speedup": sol["median_s"] / max(tm["median_s"], 1e-12),

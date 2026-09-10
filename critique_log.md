@@ -414,3 +414,306 @@ about seeds, and I read it as being about seeds. It is about *any* comparison
 whose noise floor is unmeasured. A timing harness is a measurement instrument
 and its repeatability is a property to be measured, not assumed, particularly
 when the instrument reports a ratio of two quantities that drift together.
+
+---
+
+## Turn 4 — 2026-09-10 — A4 REOPENED at rung 2. Hypothesis H5, written before the run
+
+The board reopened this project with a named route, and the route is right about
+the *structure* of my failure. Restating it in my own words so that I am
+attacking the thing and not a paraphrase of it:
+
+`runs/conformal.json` records `n_members: 5`. Every interval in this repository
+is `pred ± q̂·σ` where `σ` is the **sample standard deviation across ensemble
+members**. That single design decision — mine, made in turn 1 because a deep
+ensemble was what `pde-neural-operator` already had — is what makes two of the
+three clauses mutually exclusive:
+
+- an interval needs `σ`, so it needs M ≥ 2 (`uqkit/ensemble.py` raises on M=1);
+- `runs/members.json` measures M=1 at **108.5×** and M=2 at **58.5×**.
+
+So the speedup clause was being evaluated against a model that pays M forward
+passes for a quantity that one forward pass can also produce. The 0/10 rows
+≥100× is a fact about deep ensembles, not about surrogate inference.
+
+### H5 (coverage + speedup, one change)
+
+**Hypothesis.** Replacing the ensemble spread with a *single network's*
+uncertainty head keeps in-distribution `field_max` coverage inside [88, 92] and
+puts the coverage row and the ≥100× row on the same model, because the head
+costs three extra output channels in the final 1×1 projection and nothing else.
+
+**The change, and only this change.** `FNO2d` already takes `out_ch`. Train it
+with `out_ch=4`: channel 0 the mean, channel 1 `log σ`, channels 2–3 the two
+residual quantiles. Two σ sources come out of it and both get measured:
+
+| arm | σ | trained by |
+|---|---|---|
+| `ens` | sample std over 5 members (existing) | — (baseline, already measured) |
+| `het` | `exp(log σ)` from channel 1 | Gaussian NLL on the **detached** residual |
+| `cqr` | `(q_hi − q_lo)/2` from channels 2–3 | pinball loss at 0.05 / 0.95 on the **detached** residual |
+
+The mean's loss is `rel_l2`, byte-identical to `scripts/train_member.py`. The
+σ and quantile losses take `pred.detach()`, so **the mean's gradient is exactly
+the baseline's**. That is deliberate: if the mean degrades, the coverage and the
+speedup are no longer being compared against the same predictor and the whole
+comparison is contaminated. Mean rel-L2 against the M=1 baseline
+(0.00307, range 0.00284–0.00340 over 5 subsets) is a *check on the experiment*,
+not a result.
+
+Everything downstream is untouched — the same `SCORES`, the same
+`conformal_quantile` with its `(n+1)` correction, the same frozen calibration
+σ-floor, the same `GroupConformal` / `WeightedConformal`, the same shift suite.
+The only edit to the eval path is where `σ` comes from. If a number moves, it
+moved because of the head.
+
+**Protocol, fixed now, before any of it runs.**
+
+- α = 0.1; target 90%; KPI band [88, 92]. `field_max` is the headline as before.
+- **8 seeds per arm.** The seed-count lesson applies: 5 checkpoints could only
+  give C(5,M) subset spreads and I labelled that "screen, not verdict". A
+  clause verdict needs 8, so `het` and `cqr` get 8 seeds each and the
+  in-distribution coverage clause is judged on the 8-seed spread, not a point
+  estimate.
+- Speedup is measured on the **same rows and the same denominators** as
+  `runs/members.json` and `runs/bench.json`, with the 6-second clock ramp that
+  turn 3 showed is mandatory. No new denominator is introduced. The M=1 row's
+  solver is the Darcy-branch PCG at tol 1e-10 (`poisson_dam1`, 0.2133 s).
+- **The strict readings stay.** Landing ≥100× on the Darcy-PCG row does not
+  retire the two facts that this surrogate is 15–220× *slower* than the exact
+  spectral propagators and 2.2× iso-accuracy against the cheapest solver
+  setting swept. Those rows are reported next to it, and the clause is declared
+  per row with its denominator named. Rung 1 of the ladder is "report both
+  readings", not "pick the kind one".
+- Cost accounting, stated in advance so it cannot be adjusted afterwards: the
+  interval's inference cost is the one forward pass that emits mean and σ.
+  Conformal calibration is offline on the `cal` split, one quantile per score,
+  exactly as it is for the ensemble — it is not in the per-sample path for
+  either arm, so this is not a subsidy to the new one.
+
+**What would falsify H5.**
+
+1. In-distribution `field_max` coverage outside [88, 92] on the 8-seed mean →
+   the head cannot calibrate and rung 2 has failed for the coverage clause.
+2. The 4-channel forward pass measuring under 100× on the row where M=1 read
+   108.5× → the head is not free and the two clauses stay incompatible.
+3. Mean rel-L2 moving materially from the M=1 baseline → the arms are not
+   comparable; that is a bug in my experiment, to be fixed before any number
+   from it is reported.
+
+**The obvious alternative explanation, and how the run distinguishes it.** If
+`het` covers, the cheap story is "any σ calibrates, because split conformal
+rescales whatever you give it by q̂". That is *true for marginal coverage and
+false for the interval's usefulness*, and the two are separable with numbers I
+already collect: a constant σ also reaches 90% marginal coverage while its
+interval is the same width everywhere. So the run reports, beside coverage:
+`field_max` **interval width** and the **spread–error correlation** for `het`,
+`cqr`, `ens`, and a deliberately useless `const` σ arm. If `het`'s correlation
+is near the ensemble's +0.91 the head carries information; if it is near
+`const`'s ~0 the coverage is a rescaling artefact and I will say so.
+
+### H6 (OOD) — deferred to the next turn, but named now so it is not invented after the fact
+
+The identity argument in turn 2 is airtight *for the deployment it models*, and
+I want to be precise about why, because the board's suggested escape does not
+apply to it as written. `uqkit/sims/pde2d.py:458` fixes the framing:
+`PARENT["biharmonic"] = "poisson"` — the operator-shift shards model **"the
+process changed and nobody reconfigured the model."** The configured operator is
+still Poisson. `scripts/eval_ood.py` computes the residual under
+`PARENT.get(task)`, i.e. under Poisson, and the surrogate's output *is* a
+Poisson solution of the same in-distribution `f`, so the residual is small and
+the detector is at chance by construction. Applying "the configured operator"
+changes nothing, because the configured operator is the parent. That is why all
+three detectors read 0.486–0.503, and the number is not a defect.
+
+But there is a *second* deployment failure with the same shards and a different
+answer, and I conflated the two by only measuring one:
+
+- **(A) not reconfigured** — the request still says Poisson; the physics moved.
+  Observable at test time: `(f, poisson)`. Identical in distribution to
+  in-distribution samples. **Provably undetectable** unsupervised; needs a
+  label, which is what `runs/label_probe.json` prices at k=1.
+- **(B) reconfigured** — the request says *biharmonic*, an operator this
+  surrogate was never trained on. Observable at test time: `(f, biharmonic)`.
+  The configured operator is now genuinely different information, and
+  `L_biharmonic û − f` is large because `û` is not a biharmonic solution. This
+  is the case where the board's solver-consistency residual works, and it is
+  the case a *kit* meets most often: the operator is part of the request.
+
+H6 is that (B) is detectable at AUROC ≥ 0.9 on the operator-shift shards where
+the residual has headroom over its own floor, and that it is *not* detectable
+where the floor swamps it — `measure_residual_floor.py` already says the
+biharmonic floor is 5.3e-2 and `frac_s3` is 68, so I am predicting the
+detector's own failure boundary before measuring it, which is the part that
+makes it a hypothesis rather than a demonstration. Both presentations get
+reported for every shard, labelled (A) and (B), and (A) stays in the table as
+the strict reading.
+
+---
+
+## Turn 4 (2026-09-10) — H6 made concrete, and the trap in it named first
+
+`train_single_uq.sh` (H5, 8 seeds) is running on GPU 3; this turn does not touch
+it. It works H6 instead, on the checkpoints that already exist.
+
+### What the shard inventory actually says
+
+I enumerated the 39 OOD shards and compared `FAMILY_BASE[task]` and `CFG[task]`
+against the parent's. **Six shards change the operator**; 33 change only the
+input distribution or a family parameter that the operator's *form* does not
+depend on:
+
+| shard | requested operator | algebraic apply? |
+|---|---|---|
+| `biharmonic` | \|k\|^4 | yes |
+| `frac_s0p25` | \|k\|^0.5 | yes |
+| `frac_s0p5` | \|k\|^1 | yes |
+| `frac_s3` | \|k\|^6 | yes |
+| `navier_stokes` | nonlinear, time-evolved | **no** |
+| `ns_T0p25` | nonlinear, time-evolved | **no** |
+
+So presentation (B) can only differ from (A) on those six, and can only be
+*computed* on four. On the other 33 shards `L_requested ≡ L_parent` and (B) is
+byte-identical to (A) — that is a control, not a disappointment, and it goes in
+the table so that nothing credits the new detector with the old one's work.
+
+### The trap, which I want on the record before the number exists
+
+`residual_score = ||L û − f|| / ||f||` is **not comparable across operators**.
+Applying \|k\|^6 to anything at 64² produces a large number whether or not the
+prediction is any good — `measure_residual_floor.py` already measured that
+floor at **68** for `frac_s3`, i.e. larger than the right-hand side itself. A
+detector that pools in-distribution scores (Poisson request) against `frac_s3`
+scores (sixth-order request) will separate them at AUROC ≈ 1 **because of the
+operator's conditioning, not because the prediction is wrong**. That would be a
+number I could put in RESULTS.md and it would be worthless.
+
+Two things guard against it, both defined now:
+
+1. **The score is made dimensionless.**
+   `consistency(û, a; L) = ||L û − f|| / (||L û|| + ||f||)`, bounded in [0, 1],
+   zero iff the prediction satisfies the requested equation. Uses only the
+   input, the prediction and the requested operator — legal at deployment.
+2. **An offline diagnostic that the detector never sees**: the same score on
+   that shard's *ground truth*, `floor_c = consistency(u_true, a; L)`, and
+   `headroom = median c(û) / median c(u_true)`. If `floor_c` is already near 1
+   the operator is unconditioned in fp64 and a high AUROC on that shard is an
+   operator-identity signal, which I will label as such rather than bank.
+
+### The baseline that has to be beaten, and probably is not
+
+If the request names the operator, then `known_operator` — a dict lookup,
+`1 if task not in PRETRAIN_TASKS else 0` — scores **AUROC 1.000 on all six
+operator-shift shards at zero cost**, and 0.5 on the other 33. Any credit the
+consistency residual claims on `biharmonic` or the `frac_*` shards has to be
+credit over *that*, not over chance. Where the residual earns its keep, if
+anywhere, is that it is continuous and defined for an operator whose *name* is
+familiar and whose *parameters* are not. The inventory above says this corpus
+has exactly one such shard, `darcy_c3` (contrast 3.0 vs 1.5), and its operator
+form is unchanged, so I expect the residual to buy nothing there either. I am
+writing that expectation down so that if it does buy something I have to
+explain why rather than accept it.
+
+### Predictions, registered before the run
+
+- `biharmonic`: AUROC ≥ 0.99, `headroom` ≫ 1 → genuine detection.
+- `frac_s0p25`, `frac_s0p5`: symbols *lower* order than Poisson, so the floor is
+  below Poisson's 6.2e-5 and the signal is O(1) → AUROC ≥ 0.95, headroom ≫ 1.
+- `frac_s3`: AUROC ≈ 1.0 **and `floor_c` ≈ 1 with headroom ≈ 1** → the number is
+  real and the detection is not. Predicted failure of the *interpretation*, not
+  of the metric, which is the part that makes this a hypothesis.
+- `navier_stokes`, `ns_T0p25`: `[not measured]`, no cheap apply exists.
+- All 33 input-shift shards: (B) ≡ (A), no change from `runs/ood.json`.
+- Combined `max(z_maha, z_consistency)`, z-standardised on the **in-distribution
+  `cal` split only**: ≥ 0.9 on more shards than either alone. If it is not, the
+  combination is not worth its complexity and I will drop it.
+
+### What this can and cannot settle for the clause
+
+At best it converts the four algebraically-checkable operator-shift shards from
+0.486–0.503 to near 1, leaves the two NS shards unmeasurable, and leaves the
+`mahalanobis` 43/49 elsewhere unchanged. That is a clause-relevant improvement
+on 4 shards of 49 and it does **not** retire the (A) identity argument, which
+stays the strict reading. Rung 1 of the ladder is "report both", and (A) is the
+deployment where nobody reconfigured the model.
+
+### Rung 4, asked the right way this time (`codex`, `logs/critic_codex_howto_speed.log`)
+
+The board's addendum is right that I had only ever asked adversaries "what is
+wrong with this", which is why they only ever returned defects. Asked instead
+"how would you make the ≥100× clause pass honestly", `codex` returned three
+things, and one of them is a defect in *this turn's plan* that I had not seen.
+
+> "**108.5× currently belongs to the member ablation** (`runs/members.json:31`)
+> … Fill those values from the shipped checkpoint."
+
+**This is correct and it is load-bearing.** The 108.5× M=1 row was measured on
+an *ensemble member* — a 1-channel `FNO2d`. The model that would ship is
+`FNO2dUQ`, 4 channels through an extra 1×1 projection. H5 asserts that head
+"costs three output channels and one extra 1×1 projection and nothing else",
+and I wrote that as though it were a fact. It is a hypothesis, it is H5's own
+falsifier #2, and until `bench_speedup.py` is run **on a `runs/u*/best.pt`**
+the 108.5× may not be carried into any sentence about the shipped model. Noted
+and queued; the number in this repo stays attached to the ablation until then.
+
+> "a numerical-methods referee will likely require iso-accuracy for an
+> unqualified '100× acceleration' headline, but can accept an explicitly
+> qualified fixed-reference claim … **remeasure it for the new network**."
+
+Agreed, and it is rung 1 stated by someone else: both readings, each with its
+denominator named, neither substituted for the other. The 2.15× iso-accuracy
+figure in `runs/isoaccuracy.json` is also an ensemble measurement and is also
+not transferable; it gets re-run on the shipped checkpoint or it is `[not
+measured]` for that checkpoint.
+
+> "Require the speedup's **lower 95% bound ≥ 100×**."
+
+Taken. That is strictly harder than what the clause asks and it costs nothing,
+so there is no reason to use the point estimate.
+
+> "For exact FFT families: **no**, there is no defensible positive
+> inference-speedup claim when the surrogate is slower. Report ratios below one."
+
+Which is what `runs/bench.json` already does and what the 15–220×-slower row in
+RESULTS.md says. Confirmed rather than new, and I am not going to dress it up.
+
+### H6 result — measured, `runs/consistency_M1.json`
+
+Every prediction registered above survived, including the one about the
+detector's own failure boundary:
+
+| shard | maha (A) | cons (A) | cons (B) | floor_c | headroom | reading |
+|---|---|---|---|---|---|---|
+| `biharmonic` | 0.497 | 0.520 | **1.000** | 0.0216 | 46.3 | genuine |
+| `frac_s0p25` | 0.497 | 0.511 | **1.000** | 2.1e-7 | 4.3e6 | genuine |
+| `frac_s0p5` | 0.503 | 0.503 | **1.000** | 9.1e-7 | 8.6e5 | genuine |
+| `frac_s3` | 0.492 | 0.510 | 1.000 | **0.981** | **1.02** | **artefact** |
+| `navier_stokes` | 1.000 | — | — | — | — | no cheap apply |
+| `ns_T0p25` | 1.000 | — | — | — | — | no cheap apply |
+
+and all 33 non-operator shards returned `cons_B` byte-identical to `cons_A`,
+which is the control behaving.
+
+`frac_s3` is the row worth the turn. Its AUROC is 1.000 and it is **not
+detection**: the exact solution of that shard scores 0.981 on the same detector,
+so the separation is the sixth-order operator being round-off dominated in fp64,
+not the prediction being wrong. Without `floor_c` I would have banked 4/4 and
+one of them would have been false. `measure_residual_floor.py` predicted it
+(floor 68, above the right-hand side) and the prediction was written down before
+the run.
+
+**What this does not buy.** On all six operator-shift shards a *dict lookup* —
+is the requested operator one we trained on — scores AUROC 1.000 for free. So
+the consistency residual does not beat the baseline on separation and I will not
+claim it does. What it adds over the lookup is (a) a severity rather than a bit,
+and (b) `floor_c`, which is the only thing here that could tell me `frac_s3`'s
+1.000 was worthless. That is a smaller claim than "the residual detects operator
+shift" and it is the one the numbers support.
+
+**Clause arithmetic.** `combo = max(z_maha, z_cons_B)` reaches **47/49** shards
+≥ 0.9 against `mahalanobis`'s 43/49 under (A). The two survivors are
+`poisson_dam0p1` (0.888) and `darcy_dam0p1` (0.841), the weakest rung of the
+graded ladder — and on exactly those two rows `combo` is *worse* than
+`mahalanobis` alone (0.900, 0.876), because taking a maximum over z-scores pays
+for a second, noisier component. That is a cost of the combination and it is
+reported next to its benefit, not omitted from it.

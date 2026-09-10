@@ -82,3 +82,27 @@ def auroc_ci(scores, labels, n_boot=1000, seed=0):
     if not out:
         return (float("nan"), float("nan"))
     return (float(np.percentile(out, 2.5)), float(np.percentile(out, 97.5)))
+
+
+def consistency_score(resid, applied, rhs, eps=1e-12):
+    """||L u_hat - f|| / (||L u_hat|| + ||f||) -- residual made dimensionless.
+
+    `residual_score` divides by ||f|| alone, which makes it **incomparable
+    across operators**: applying |k|^6 at 64^2 returns a large number whether or
+    not the prediction is good (`measure_residual_floor.py` puts that floor at
+    68 for `frac_s3`, above the right-hand side itself). Pooling in-distribution
+    scores under a second-order request against out-of-distribution scores under
+    a sixth-order one then separates them at AUROC ~ 1 for a reason that has
+    nothing to do with the prediction.
+
+    Dividing by ||L u_hat|| + ||f|| bounds the score in [0, 1], makes it zero
+    exactly when the prediction satisfies the requested equation, and leaves it
+    invariant to rescaling L. It does **not** rescue an operator whose apply is
+    round-off dominated -- there the score is near 1 for the exact solution too,
+    which is why `eval_consistency.py` reports `floor_c`, the same score on the
+    ground truth, next to every AUROC. A high AUROC with `floor_c` near 1 is an
+    operator-identity signal and is labelled as one.
+    """
+    num = resid.flatten(1).norm(dim=1)
+    den = (applied.flatten(1).norm(dim=1) + rhs.flatten(1).norm(dim=1))
+    return num / den.clamp_min(eps)

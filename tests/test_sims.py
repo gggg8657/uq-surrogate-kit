@@ -14,6 +14,7 @@ from pathlib import Path
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from uqkit.ood import consistency_score  # noqa: E402
 from uqkit.sims import pde2d as P  # noqa: E402
 from uqkit.sims.fno2d import FNO2d  # noqa: E402
 from uqkit.sims.pde2d_sim import PDE2DSimulator  # noqa: E402
@@ -94,6 +95,63 @@ def test_shift_configs_change_the_input_not_the_operator():
           f"{high_frac(a0):.4f} -> {high_frac(a1):.4f}")
 
 
+def test_operator_key_partitions_the_ood_suite():
+    """Exactly six OOD shards change L; the other 33 change only the input.
+
+    The first run of `eval_consistency.py` compared whole `CFG` dicts and so
+    labelled all 39 shards an operator shift, because `alpha` and `tau`
+    parameterise the input field and live in the same dict. That made the free
+    `lookup` baseline read 1.000 everywhere. This pins the partition so the
+    same mistake cannot come back silently.
+    """
+    import json
+    man = json.loads(Path(__file__).resolve().parents[1].joinpath(
+        "data", "manifest.json").read_text())
+    key = lambda t: PDE2DSimulator(t, device="cpu").operator_key()
+    ood = [t for g in man["ood_suite"].values() for t in g]
+    changed = sorted(t for t in ood if key(t) != key(P.PARENT[t]))
+    assert changed == sorted(["biharmonic", "frac_s0p25", "frac_s0p5",
+                              "frac_s3", "navier_stokes", "ns_T0p25"]), changed
+    # and the shards that do NOT change it must be exactly the input shifts
+    for t in ood:
+        if t not in changed:
+            assert key(t) == key(P.PARENT[t]), t
+    trained = {key(t) for t in P.PRETRAIN_TASKS}
+    assert all(key(t) not in trained for t in changed)
+    print(f"ok  {len(changed)}/{len(ood)} OOD shards change the operator: "
+          f"{', '.join(changed)}")
+
+
+def test_consistency_score_is_scale_free_and_zero_on_the_truth():
+    """`consistency_score` must not rank an operator by its own magnitude.
+
+    `residual_score` divides by ||f||, so applying c*L multiplies the score by
+    ~c and a sixth-order request outscores a second-order one whatever the
+    prediction is. That is the artefact the dimensionless form exists to avoid,
+    and it is the reason a `frac_s3` AUROC cannot be read as detection.
+    """
+    torch.manual_seed(0)
+    sim = PDE2DSimulator("poisson", device=DEV, N=32)
+    a = sim.sample_inputs(16, seed=1, N=32)
+    u = sim.solve(a)
+    f = sim.rhs(a)
+
+    def cons(field, scale=1.0):
+        r = sim.residual(a, field) * scale
+        return consistency_score(r, r + f * scale, f * scale)
+
+    # zero (to round-off) on the exact solution
+    assert float(cons(u).max()) < 1e-3, float(cons(u).max())
+    # invariant to rescaling the operator and its right-hand side together
+    assert torch.allclose(cons(u, 1.0), cons(u, 1000.0), atol=1e-6)
+    # and bounded in [0, 1] for a prediction that is pure noise
+    bad = cons(torch.randn_like(u) * float(u.std()))
+    assert float(bad.min()) > 0.3 and float(bad.max()) <= 1.0, (
+        float(bad.min()), float(bad.max()))
+    print(f"ok  consistency {float(cons(u).mean()):.2e} on the truth, "
+          f"{float(bad.mean()):.3f} on noise, scale-invariant")
+
+
 def test_operator_is_resolution_invariant():
     """The FNO evaluates on a grid it never saw -- the property the kit relies on."""
     torch.manual_seed(0)
@@ -106,6 +164,8 @@ def test_operator_is_resolution_invariant():
 
 
 if __name__ == "__main__":
+    test_operator_key_partitions_the_ood_suite()
+    test_consistency_score_is_scale_free_and_zero_on_the_truth()
     test_residual_floor_where_the_detector_is_used()
     test_residual_is_useless_above_fourth_order()
     test_time_families_have_no_cheap_residual()

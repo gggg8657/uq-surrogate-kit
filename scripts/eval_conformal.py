@@ -46,7 +46,9 @@ from uqkit.features import spectral_features  # noqa: E402
 from uqkit.metrics import (binom_ci, cluster_bootstrap_ci,  # noqa: E402
                            pearson, rel_l2)
 from uqkit.sims.pde2d import PARENT  # noqa: E402
-from uqkit.sims.predict import load_members, load_shard, predict_shard  # noqa: E402
+from uqkit.sims.checkpoint import load_model  # noqa: E402
+from uqkit.sims.predict import (load_members, load_shard,  # noqa: E402
+                                predict_shard, predict_shard_single)
 
 SCORE_NAMES = ["field_max", "norm_ratio", "rel_l2", "pixel"]
 # weighted conformal's covariate-shift assumption does not hold when the
@@ -74,17 +76,36 @@ def main():
     ap.add_argument("--out", default="runs/conformal.json")
     ap.add_argument("--alpha", type=float, default=0.1)
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--sigma-source", default=None,
+                    choices=["het", "cqr", "const"],
+                    help="single-network sigma head (FNO2dUQ). When set, "
+                         "--ckpts must be exactly one UQ checkpoint and the "
+                         "interval comes from ONE forward pass.")
     args = ap.parse_args()
+    single = args.sigma_source is not None
+    if single and len(args.ckpts) != 1:
+        ap.error("--sigma-source is a single-network mode; pass one checkpoint")
 
     man = json.loads(Path(args.root, "manifest.json").read_text())
     in_tasks = man["in_tasks"]
-    models, ck = load_members(args.ckpts, args.device)
+    if single:
+        model, ck = load_model(args.ckpts[0], args.device)
+        if not ck["args"].get("uq"):
+            raise SystemExit(f"{args.ckpts[0]} is not a UQ checkpoint")
+        models = [model]
+    else:
+        models, ck = load_members(args.ckpts, args.device)
     stats = ck["stats"]
 
     # ---- gather predictions -------------------------------------------------
     def gather(task, split, N=64):
         blob = load_shard(args.root, task, split, N)
-        m, s, t, a = predict_shard(models, blob, stats, args.device)
+        if single:
+            m, s, t, a = predict_shard_single(
+                models[0], blob, stats, args.device,
+                sigma_source=args.sigma_source)
+        else:
+            m, s, t, a = predict_shard(models, blob, stats, args.device)
         return {"mean": m, "sigma": s, "truth": t, "a": a,
                 "task": task, "parent": PARENT.get(task, task), "N": N}
 
@@ -100,7 +121,11 @@ def main():
                 ood_specs.append((f"resolution_{N}", t, N))
 
     res = {"alpha": args.alpha, "n_members": len(models),
-           "ckpts": args.ckpts, "scores": {}, "error": {}, "spread": {}}
+           "ckpts": args.ckpts, "scores": {}, "error": {}, "spread": {},
+           "sigma_source": args.sigma_source or "ensemble_spread",
+           "forward_passes_per_interval": 1 if single else len(models),
+           "seed": ck["args"].get("seed"),
+           "detach_uq": ck["args"].get("detach_uq")}
 
     # per-family error and spread-error correlation: context for every coverage
     for t in in_tasks:
@@ -134,6 +159,22 @@ def main():
         group = GroupConformal(args.alpha).fit(pooled_cal, pooled_grp)
         out["q_split"] = split.q
         out["q_group"] = {k: float(v) for k, v in group.q.items()}
+        # Mean half-width of the band this quantile produces, per family, in
+        # the field's own units and relative to the field's own norm. Coverage
+        # alone cannot distinguish a sigma that knows which samples are hard
+        # from a constant one, because the conformal quantile rescales either
+        # to ~90%; a wider band at equal coverage is a worse interval, and
+        # `sharpness_rel` is the number that says so.
+        out["sharpness"] = {}
+        for t in in_tasks:
+            from uqkit.conformal import _floor
+            half = split.q * _floor(test[t]["sigma"], res["sigma_floor_frac"],
+                                    MED)
+            out["sharpness"][t] = {
+                "mean_half_width": float(half.mean()),
+                "sharpness_rel": float(
+                    half.flatten(1).norm(dim=1).mean()
+                    / test[t]["truth"].flatten(1).norm(dim=1).mean())}
 
         # in distribution
         te_scores = {t: fn(test[t]["mean"], test[t]["sigma"], test[t]["truth"],

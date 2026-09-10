@@ -6,14 +6,21 @@ from pathlib import Path
 import torch
 
 from .fno2d import FNO2d
+from .fno2d_uq import FNO2dUQ
 
 
 def load_model(path, device="cuda", strict=True):
     """Rebuild an FNO2d from a checkpoint written by `scripts/train_ddp.py`."""
     ckpt = torch.load(Path(path), map_location="cpu", weights_only=False)
     a = ckpt["args"]
-    model = FNO2d(width=a["width"], modes=a["modes"], n_layers=a["layers"],
-                  n_tasks=a.get("n_tasks", 8))
+    # `uq` marks a single-network checkpoint with the mean+sigma+quantile head
+    # (FNO2dUQ). Dispatching on the checkpoint rather than on a flag passed by
+    # the caller means an eval script cannot silently load a 4-channel model as
+    # a 1-channel one and read the log-sigma channel as part of the field.
+    cls = FNO2dUQ if a.get("uq") else FNO2d
+    kw = {} if not a.get("uq") else {"detach_uq": a.get("detach_uq", True)}
+    model = cls(width=a["width"], modes=a["modes"], n_layers=a["layers"],
+                n_tasks=a.get("n_tasks", 8), **kw)
     model.load_state_dict(ckpt["model"], strict=strict)
     return model.to(device).eval(), ckpt
 

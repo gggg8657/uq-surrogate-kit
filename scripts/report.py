@@ -215,6 +215,91 @@ def sec_ood(o, out):
         out.append(f"| `{d}` | {cells} |")
 
 
+def sec_consistency(cs, out, tag="M1"):
+    """H6: the residual under the REQUESTED operator, and what it does not buy."""
+    out.append(f"\n### 3c. Solver-consistency detection, and the two deployments "
+               f"(`runs/consistency_{tag}.json`)\n")
+    if cs is None:
+        out.append(f"{NM} — `runs/consistency_{tag}.json` absent.\n")
+        return
+    op = set(cs["operator_shift_shards"])
+    out.append(
+        f"An operator shift is observable only if the request *names* the "
+        f"operator. **(A)** scores the residual under `PARENT[task]`, the "
+        f"operator the surrogate is configured for — the process moved and "
+        f"nobody reconfigured the model. Under (A) every unsupervised detector "
+        f"is a function of (input, configured operator), neither of which "
+        f"changed, so it is at chance **by construction**; that is the strict "
+        f"reading and it stands. **(B)** scores it under the operator the "
+        f"request names. Of the {cs['summary']['mahalanobis']['n_total_shards']} "
+        f"shards, exactly **{len(op)} change the operator** "
+        f"(`tests/test_sims.py::test_operator_key_partitions_the_ood_suite` "
+        f"pins the partition); on the rest (B) is byte-identical to (A), which "
+        f"is the control.\n")
+    out.append(
+        "`lookup` is a **dict lookup** — *is the requested operator one we "
+        "trained on?* — costing nothing. Where it is 1.000, no continuous "
+        "detector may claim credit over chance; it must claim it over 1.000. "
+        "`floor_c` is the same consistency score on that shard's **ground "
+        "truth**, an offline diagnostic no detector sees: `floor_c` near 1 "
+        "means applying that operator in fp64 is round-off dominated, so a "
+        "high AUROC there is an operator-identity signal and not detection. "
+        "`headroom` is median c(û) / median c(u_true).\n")
+    out.append("| shard | L changed | rel-L2 | mahalanobis | (A) cons | "
+               "(B) cons | floor_c | headroom | combo | router | lookup |")
+    out.append("|---|---|---|---|---|---|---|---|---|---|---|")
+
+    def cell(r, d):
+        v = r["auroc"].get(d)
+        if v is None:
+            return NM
+        return f"{v['auroc']:.3f}" + (" ✅" if v["auroc"] >= 0.9 else "")
+
+    for k, r in sorted(cs["shards"].items(), key=lambda kv: (kv[1]["kind"], kv[0])):
+        fc = r["floor_c"]
+        hd = r["headroom"]
+        flag = ""
+        if fc is not None and hd is not None and hd < 2.0:
+            flag = " ⚠️"
+        out.append(
+            f"| `{k.split('/')[1]}` @N{r['N']} | "
+            f"{'**yes**' if r['operator_changed'] else 'no'} | "
+            f"{r['rel_l2_mean']:.4g} | {cell(r, 'mahalanobis')} | "
+            f"{cell(r, 'cons_A')} | {cell(r, 'cons_B')}{flag} | "
+            f"{NM if fc is None else f'{fc:.4g}'} | "
+            f"{NM if hd is None else f'{hd:.3g}'} | "
+            f"{cell(r, 'combo')} | {cell(r, 'router')} | {cell(r, 'lookup')} |")
+
+    out.append("\n| detector | shards scored | ≥0.9 | ≥0.9 among the "
+               f"{len(op)} operator-shift shards |")
+    out.append("|---|---|---|---|")
+    for d, v in cs["summary"].items():
+        o2 = cs["summary_operator_shift"][d]
+        out.append(f"| `{d}` | {v['n_shards_scored']}/{v['n_total_shards']} | "
+                   f"**{v['n_ge_0p9']}**/{v['n_total_shards']} | "
+                   f"{o2['n_ge_0p9']}/{o2['n_total']} (scored {o2['n_scored']}) |")
+
+    arte = [k for k, r in cs["shards"].items()
+            if r["headroom"] is not None and r["headroom"] < 2.0]
+    out.append(
+        f"\n**⚠️ marks a row whose AUROC is not detection.** {len(arte)} row(s) "
+        f"here: " + (", ".join(f"`{k.split('/')[1]}`" for k in arte) or "none")
+        + ". Their `floor_c` says the *exact* solution scores nearly the same, "
+        "so the separation comes from the operator's conditioning, not from the "
+        "prediction being wrong. Predicted in `critique_log.md` before the run "
+        "— `measure_residual_floor.py` had already put the `frac_s3` residual "
+        "floor above its own right-hand side — and reported rather than banked.\n")
+    out.append(
+        f"Two shards remain under 0.9 for every detector here, and both are the "
+        f"*weakest* rung of the graded ladder, where the shift is by design "
+        f"barely present. Note also that `combo` = max(z) is **worse** than "
+        f"`mahalanobis` alone on exactly those two rows: taking a maximum over "
+        f"z-scores pays for a second, noisier component. `router` — use the "
+        f"consistency residual only when the requested operator is untrained, "
+        f"else the input detector — avoids that, but on the {len(op)} shards "
+        f"where it differs it is inheriting the free `lookup`, not beating it.\n")
+
+
 def sec_noise(n, out):
     out.append("\n### How repeatable are these timings?\n")
     if n is None:
@@ -385,7 +470,7 @@ def sec_floor(f, out):
                "Poisson, Helmholtz, Darcy. Not usable at fourth order and above.\n")
 
 
-def verdict(c, b, o, out, i=None, m=None):
+def verdict(c, b, o, out, i=None, m=None, cs=None):
     """The KPI, clause by clause, with the JSON each verdict came from."""
     out.insert(0, "")
     lines = ["## KPI verdict\n",
@@ -452,6 +537,26 @@ def verdict(c, b, o, out, i=None, m=None):
                      f"[{ed[bd]['ci95'][0]:.3f}, {ed[bd]['ci95'][1]:.3f}] | "
                      f"`runs/ood.json` | "
                      f"{'✅' if ed[bd]['auroc'] >= 0.9 else '❌'} |")
+    if cs is not None:
+        n_op = len(cs["operator_shift_shards"])
+        tot = cs["summary"]["mahalanobis"]["n_total_shards"]
+        best = max(("mahalanobis", "combo", "router"),
+                   key=lambda d: cs["summary"][d]["n_ge_0p9"])
+        arte = [k for k, r in cs["shards"].items()
+                if r["headroom"] is not None and r["headroom"] < 2.0]
+        lines.append(
+            f"| OOD shift AUROC, presentation (B): the request names the "
+            f"operator | ≥0.9 on every shard | `{best}` "
+            f"**{cs['summary'][best]['n_ge_0p9']}/{tot}** shards ≥0.9 "
+            f"(vs `mahalanobis` {cs['summary']['mahalanobis']['n_ge_0p9']}/{tot} "
+            f"under (A)); {len(arte)} of the gained rows is an operator-"
+            f"conditioning artefact, not detection | "
+            f"`runs/consistency_M1.json` | "
+            f"{'✅' if cs['summary'][best]['n_ge_0p9'] == tot else '❌'} |")
+        lines.append(
+            f"| — the free baseline it must beat | — | a dict lookup on the "
+            f"requested operator scores **1.000 on all {n_op} operator-shift "
+            f"shards** at zero cost | `runs/consistency_M1.json` | — |")
     nz = load("bench_noise.json")
     if nz and "headline_speedup" in nz:
         v = nz["headline_speedup"]
@@ -493,6 +598,7 @@ def main():
     sec_noise(load("bench_noise.json"), body)
     sec_iso(i, body)
     sec_ood(o, body)
+    sec_consistency(load('consistency_M1.json'), body, 'M1')
     sec_probe(lp, body)
     sec_members(m, body)
     sec_floor(f, body)
@@ -501,7 +607,7 @@ def main():
             "hand — every number here is regenerated from the JSON a run wrote.",
             ""]
     Path(args.out).write_text(
-        "\n".join(head + verdict(c, b, o, body, i, m) + body) + "\n")
+        "\n".join(head + verdict(c, b, o, body, i, m, load('consistency_M1.json')) + body) + "\n")
     print(f"wrote {args.out}")
 
 

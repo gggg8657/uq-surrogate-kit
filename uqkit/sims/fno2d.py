@@ -1,5 +1,9 @@
 # Vendored from pde-neural-operator/pdeno/fno2d.py (same author, 2026-09).
-# Unmodified except this header: the kit treats it as one example surrogate.
+# Modified twice since: this header, and `trunk()` split out of `forward()`
+# (2026-09-10) so that a second output head can be attached to the shared
+# representation without duplicating the body. `forward` is unchanged in
+# behaviour -- it is now `proj(trunk(...))` -- which `tests/test_sims.py`
+# pins against the vendored checkpoints.
 """Multi-PDE 2D Fourier Neural Operator.
 
 Same mechanism as the 1D model in `fno.py` -- FFT, keep the low modes, multiply
@@ -125,7 +129,8 @@ class FNO2d(nn.Module):
         Y, X = torch.meshgrid(y, x, indexing="ij")
         return torch.stack([X, Y]).expand(B, 2, H, W)
 
-    def forward(self, a, task):
+    def trunk(self, a, task):
+        """Everything before the output projection: (B, width, H, W)."""
         B, _, H, W = a.shape
         if task.dim() == 0:
             task = task.expand(B)
@@ -137,7 +142,10 @@ class FNO2d(nn.Module):
                 x = checkpoint(blk, x, use_reentrant=False)
             else:
                 x = blk(x)
-        return self.proj(x)
+        return x
+
+    def forward(self, a, task):
+        return self.proj(self.trunk(a, task))
 
     def param_count(self):
         """Number of trainable real-valued parameters."""
