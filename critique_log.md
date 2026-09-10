@@ -3322,3 +3322,60 @@ I am not aware of a further route that does not either change what is
 certified or need labels, and both of those are reportable only as a
 *different* guarantee, never as this one. The one thing I will not do is loosen
 the score to make the tolerance look survivable.
+
+## H20 — written before the run: does clause 3's success rest on the same bug clause 1's did?
+
+**Why this is the ablation the last result demands.** H18 and H19 established
+that H15's entire measured gain on clause 1 was the input-amplitude axis, and
+H17 established that that axis was our own broken equivariance. Clause 3 (OOD
+AUROC ≥ 0.9) is currently reported as **47/49 shards strict** and **33/33
+conditional on the shift degrading the surrogate by >1.06×**
+(`runs/consistency_uq.json`). Those numbers were measured on the *same broken
+predictor*.
+
+The four `*_amp2` shards are where the surrogate's relative error was 31–47%.
+A detector scoring those shards was separating "the model has collapsed" from
+"the model is fine" — an easy problem *created by our bug*. H17 removes the
+collapse: on those shards the equivariant predictor's error becomes
+0.981–0.997× its own in-distribution error, i.e. the shift is neutralised.
+
+So the question is sharp and uncomfortable: **how much of clause 3's 47/49 was
+detecting our own bug?**
+
+### The change (one)
+
+Re-run the consistency/OOD evaluation with the H17 equivariant wrapper around
+the predictor, everything else identical — same checkpoints, same shards, same
+detectors, same degradation threshold, same seeds. `--equivariant` on
+`scripts/eval_consistency.py`, mirroring the flag already on
+`eval_width_tolerance.py` and `fit_scale.py`.
+
+### Predictions, registered now
+
+1. **The four linear `*_amp2` shards drop out of the degradation-conditional
+   population**, because they no longer degrade the surrogate past the 1.06×
+   threshold. The conditional denominator falls from 33 to about 29. That is
+   *not* a loss — it is the conditional reading becoming honest, and it must be
+   reported as a change of denominator, not as a change of score.
+2. **Their strict AUROC falls**, possibly a long way. The residual-based
+   detectors were scoring a prediction that violated its own equation by tens
+   of percent; once it satisfies it, there is much less to detect. If strict
+   goes from 47/49 to below 43/49, then a measurable share of clause 3 was
+   detecting our bug, and I will say so in exactly those terms.
+3. **The two existing misses are unaffected.** Both are `dam0p1` at 1.06×
+   degradation, a roughness shift with no amplitude component, so equivariance
+   is near-identity there (H17 measured non-amplitude shards moving by at most
+   2.4e-05 in relative error).
+4. **`darcy_amp2` is again the control.** Its channel 0 is log-permeability, so
+   the wrapper is near-identity and its AUROC must not move. If it moves, the
+   wrapper is doing something other than what it claims.
+5. The `lookup` baseline (a dict lookup on the requested operator, scoring
+   1.000 on all 6 operator-shift shards at zero cost) is unaffected by any of
+   this and stays in the table as the thing the residual has to beat.
+
+**What either outcome means.** If clause 3 survives, it survives on a predictor
+that is no longer broken, which makes it a stronger result than the one it
+replaces. If it does not, then this repo's third clause was substantially a
+measurement of its own defect — and given that this is now the *second* clause
+where that turned out to be true, that pattern is the most transferable thing
+the weekend has produced.

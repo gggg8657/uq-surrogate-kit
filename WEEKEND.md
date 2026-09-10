@@ -282,29 +282,61 @@ work and would move the number against us, which is the reason to do it. A
 decision is needed on which side gets the next turn; the honest default is the
 reference, because that is the side a reader will attack.
 
-**1c. Should clause 1 under shift become a *conditional* coverage
-specification?** H13 established that the recoverable regime is bounded by the
-surrogate's own competence: coverage decays monotonically with shift strength on
-both calibrators and both die at the same shift, because past that point p(y|x)
-has changed and no reweighting of the inputs can reach it. Meanwhile the OOD
-detector already identifies exactly that boundary — **33/33** shards at AUROC
-≥0.9 conditional on the shift degrading the model.
-- *Option A — keep the unconditional specification.* Clause 1 under shift is
-  **not met** at ~2/32 shards and will stay not met. Defensible: an
-  unconditional 90±2% is what the KPI says, and a certificate with an escape
-  clause is worth less than one without.
-- *Option B — certify conditionally.* Emit an interval where the detector says
-  the model is in competence, and **abstain deliberately** elsewhere, with the
-  abstention rate as a reported quantity rather than an artefact of a clip
-  constant. Defensible: it is what a plant would actually want, and it is
-  honest in a way the current 100%-coverage-by-infinite-interval cells are not.
-- *Recommendation:* **B, but it is a specification change and we are not taking
-  it unilaterally.** It converts a failed clause into a met one by changing what
-  is being promised, which is precisely the move that needs a human to sign it.
-  Note the shape of the trade before signing: Option B's abstention rate would
-  be a *measured* number on each shard, so the deliverable becomes "90±2%
-  coverage on the x% of inputs we certify", and x is what the buyer is really
-  purchasing.
+**1c. Clause 1 under shift: what do we ship, now that we know what the wall is?**
+*This decision replaces the one that stood here until turn 13, which recommended
+making coverage **conditional** — certify where the OOD detector says the model
+is competent, abstain deliberately elsewhere, and report the abstention rate.
+**That recommendation is withdrawn: it was measured and it does not work.***
+H14 gated the certificate on a competence score at a pre-registered 5%
+in-distribution false-abstention rate and got **0/32 shards in band on 8 of 8
+seeds**, and H14b swept the abstention rate to **95%** and found **no rate that
+buys the band** — 2/32 shards are ever reachable at *any* price, **including
+with an oracle gate on the true error**. The mechanism is measured: coverage
+fails on a *ratio*, max|μ−u|/σ̃, and a gate selects on its own score, with
+median within-shard rank correlation of only +0.256 (+0.697 even for the
+oracle, which knows just the numerator). **Selection acts on the population;
+the failure is in the scale.** There is nothing left to sign here.
+
+What replaced it is a sharper picture. Every intervention that has ever moved
+this clause moved it by correcting **one thing: the input amplitude.** A learned
+width model (H15) put a coefficient of **+2.8946** on log input amplitude —
+5.78× its next-largest term, on 8/8 seeds — and reached 4/32; **delete that one
+feature and it is 0/32 on all 8 seeds** (H19). H17 does the identical
+correction in closed form, exactly, with no fitting: four of five families are
+linear in the shifted channel, so `u(c·f) = c·u(f)`, and the only reason the
+network broke it was that inputs are standardized with frozen calibration
+statistics, so a 2× input extrapolates instead of scaling. Doing both
+double-counts and is significantly *worse* than either (H18, p = 0.0234).
+**The amplitude failure was our own preprocessing bug, and it is fixed.**
+
+And once it is fixed, the wall is stateable without mentioning uncertainty
+quantification at all (H16): the widths giving coverage in [0.88, 0.92] are
+exactly [Q₀.₈₈(S), Q₀.₉₂(S)], so **the clause requires predicting the interval
+width to ±4.47%** (median over shards; 0.40–19.75%) **across a 28.6–68.4×
+range**. Nothing tried here comes close, and the in-sample ceiling equals the
+held-out result (p = 0.5156), so it is not a data problem.
+
+- *Option A — ship clause 1 as in-distribution, and publish the shift result as
+  the finding it is.* Coverage 0.9026 in distribution, 8/8 seeds, one forward
+  pass ✅. Under shift: **not met**, with the ±4.47%-over-68× bound as the
+  reason and the amplitude repair as the engineering deliverable. Honest, and
+  the negative result is genuinely useful to anyone else who would try the
+  same three routes.
+- *Option B — declare clause 1 under shift `UNREACHABLE` for this surrogate
+  class* on the H16 bound, and re-scope the KPI to in-distribution coverage
+  plus an OOD flag. Cleaner to read; costs the option of ever revisiting it.
+- *Option C — keep attacking.* The remaining route is a richer conditional
+  target rather than a richer model: the in-sample ceiling says the feature
+  set, not the fit, is binding. That is a week of work, not a weekend, and
+  H16 bounds the prize.
+- *Recommendation:* **A.** The amplitude repair is worth shipping on its own
+  merits regardless of the clause — it takes rel-L2 on the four linear
+  amplitude shards from **0.3111–0.4711 to 0.00257–0.00338**, i.e. to
+  **0.981–0.997×** the in-distribution error of the same checkpoints, with the
+  control `darcy_amp2` unchanged at ratio 1.0000. That is a 100× accuracy
+  result obtained by deleting a bug, and it does not need the clause to be
+  valuable. What needs a human is only whether the KPI text gets re-scoped
+  (Option B) or the gap stays visible in the table (Option A).
 
 **2. Does clause 3 mean "detect every shift" or "detect every shift that
 matters"?** Strict, all 49 shards: **47/49**. Conditional on the shift actually
@@ -321,6 +353,32 @@ there is a false alarm, not a detection.
   ≤1.06×, so the ordering does the work and no threshold is load-bearing.
 
 ## Still running / how to check
+
+**H20 is running** in tmux `a4-h20` on GPU 3 of the lease: the H15 arm refitted
+with **one width model per family** (`--per-family-h`,
+`uqkit.scale.PerFamilyScale`) instead of one pooled fit with family one-hots,
+8 seeds, writing `runs/scalepf_u*_het.json`. Registered prediction: it does not
+reach 29/32, and after H19 its diagnostic value is reduced — H19 already showed
+the pooled fit's whole gain was the amplitude feature, so a per-family fit is
+mostly a check that isolating families does not recover anything the pooled fit
+was suppressing. Check with:
+
+```bash
+cd ~/Documents/workspace/uq-surrogate-kit
+tail -5 logs/h20_chain.log            # progress, one seed at a time
+ls runs/scalepf_u*_het.json | wc -l   # 8 when done
+~/miniforge3/envs/pdeno/bin/python scripts/agg_scale.py --out runs/scale.json
+~/miniforge3/envs/pdeno/bin/python scripts/report.py     # regenerates RESULTS.md
+~/miniforge3/envs/pdeno/bin/python scripts/run_tests.py  # 6 files, must exit 0
+~/miniforge3/envs/pdeno/bin/python scripts/check_prose_numbers.py
+```
+
+If it lands at or below H19's 0/32, clause 1 under shift has been attacked at
+all four rungs of the ladder with every route exhausted, and Option B in
+decision 1c becomes the honest call rather than a tie.
+
+<details>
+<summary>Earlier: H19 (finished — amplitude ablation)</summary>
 
 **H19 is running** in tmux `a4-h19` on GPU 3: the H15 arm refitted with the two
 input-amplitude features (`a_spec9`, `a_spec10`) ablated out of the feature
@@ -379,6 +437,8 @@ pinned in `tests/test_conformal.py`, not asserted. Sweeping `clip` gives either
 in-band shifted coverage on shards that currently abstain (clause 1 met on a
 reading always available and mis-set by us) or out-of-band coverage (a real
 statement about the estimator). Both are worth having.
+
+</details>
 
 ## The things I got wrong, and caught
 

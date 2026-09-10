@@ -46,6 +46,8 @@ import numpy as np
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from uqkit.equivar import (predict_equivariant,  # noqa: E402
+                           reference_scale)
 from uqkit.features import Mahalanobis, spectral_features  # noqa: E402
 from uqkit.metrics import auroc, rel_l2  # noqa: E402
 from uqkit.ood import auroc_ci, consistency_score, shift_auroc  # noqa: E402
@@ -76,6 +78,12 @@ def main():
     ap.add_argument("--root", default="data")
     ap.add_argument("--out", default="runs/consistency.json")
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--equivariant", action="store_true",
+                    help="H20: wrap the predictor in the H17 test-time scale "
+                         "equivariance before scoring any detector. Asks how "
+                         "much of clause 3 was detecting our own broken "
+                         "equivariance rather than the shift. `darcy_amp2` is "
+                         "the control that must not move.")
     ap.add_argument("--sigma-source", default=None,
                     choices=["het", "cqr", "const"],
                     help="score the single-network UQ model instead of an "
@@ -106,10 +114,28 @@ def main():
             sims[task] = PDE2DSimulator(task, device=args.device)
         return sims[task]
 
+    REF = {}
+    if args.equivariant:
+        for t in in_tasks:
+            REF[t] = reference_scale(
+                load_shard(args.root, t, "cal")["a"], t)
+        print("equivariant REF (from cal only): "
+              + ", ".join(f"{t}={REF[t]:.4g}" for t in in_tasks), flush=True)
+
     def scored(task, split, N=64):
         """Both presentations, the truth's floor, and the input features."""
         blob = load_shard(args.root, task, split, N)
-        if single:
+        _parent_for_eq = PARENT.get(task, task)
+        if args.equivariant:
+            def _raw(b, _m=models, _s=stats):
+                if single:
+                    return predict_shard_single(
+                        _m[0], b, _s, args.device,
+                        sigma_source=args.sigma_source)
+                return predict_shard(_m, b, _s, args.device)
+            mean, _sigma, truth, a = predict_equivariant(
+                _raw, blob, _parent_for_eq, REF[_parent_for_eq])
+        elif single:
             mean, _sigma, truth, a = predict_shard_single(
                 models[0], blob, stats, args.device,
                 sigma_source=args.sigma_source)
@@ -194,7 +220,8 @@ def main():
                 ood_specs.append((f"resolution_{N}", t, N))
 
     DET = ["mahalanobis", "cons_A", "cons_B", "combo", "router", "lookup"]
-    res = {"n_members": len(models), "ckpts": args.ckpts,
+    res = {"n_members": len(models), "equivariant": bool(args.equivariant),
+           "equivariant_ref": {k: float(v) for k, v in REF.items()}, "ckpts": args.ckpts,
            "sigma_source": args.sigma_source or "ensemble_spread",
            "seed": ck["args"].get("seed"),
            "pretrain_tasks": list(PRETRAIN_TASKS),
