@@ -1,156 +1,83 @@
 {
-  "host": "dongjukim",
-  "torch": "2.8.0+cu128",
-  "torch_default_threads": 96,
   "steps": 200,
+  "feats": 44,
   "repeats": 3,
-  "chosen_in_code": 4,
-  "rows": [
-    {
-      "n_rows": 21760,
-      "n_feat": 44,
-      "steps": 200,
-      "threads": 1,
-      "seconds_median": 0.2497297115623951,
-      "seconds_min": 0.24356627836823463,
-      "seconds_max": 0.25574342906475067,
-      "repeats": 3,
-      "is_torch_default": false
-    },
-    {
-      "n_rows": 21760,
-      "n_feat": 44,
-      "steps": 200,
-      "threads": 2,
-      "seconds_median": 0.2228020541369915,
-      "seconds_min": 0.21046791970729828,
-      "seconds_max": 0.2284299172461033,
-      "repeats": 3,
-      "is_torch_default": false
-    },
-    {
-      "n_rows": 21760,
-      "n_feat": 44,
-      "steps": 200,
-      "threads": 4,
-      "seconds_median": 0.19293105602264404,
-      "seconds_min": 0.17979462072253227,
-      "seconds_max": 0.2014777846634388,
-      "repeats": 3,
-      "is_torch_default": false
-    },
-    {
-      "n_rows": 21760,
-      "n_feat": 44,
-      "steps": 200,
-      "threads": 8,
-      "seconds_median": 0.18743248283863068,
-      "seconds_min": 0.1725861057639122,
-      "seconds_max": 0.1987050697207451,
-      "repeats": 3,
-      "is_torch_default": false
-    },
-    {
-      "n_rows": 21760,
-      "n_feat": 44,
-      "steps": 200,
-      "threads": 16,
-      "seconds_median": 0.19776613265275955,
-      "seconds_min": 0.17117441445589066,
-      "seconds_max": 0.1998816765844822,
-      "repeats": 3,
-      "is_torch_default": false
-    },
-    {
-      "n_rows": 21760,
-      "n_feat": 44,
-      "steps": 200,
-      "threads": 96,
-      "seconds_median": 19.13609078899026,
-      "seconds_min": 10.127005081623793,
-      "seconds_max": 19.59463743120432,
-      "repeats": 3,
-      "is_torch_default": true
-    },
-    {
-      "n_rows": 7360,
-      "n_feat": 44,
-      "steps": 200,
-      "threads": 1,
-      "seconds_median": 0.19487666711211205,
-      "seconds_min": 0.18382588028907776,
-      "seconds_max": 0.3098149932920933,
-      "repeats": 3,
-      "is_torch_default": false
-    },
-    {
-      "n_rows": 7360,
-      "n_feat": 44,
-      "steps": 200,
-      "threads": 2,
-      "seconds_median": 0.3172099068760872,
-      "seconds_min": 0.26734044402837753,
-      "seconds_max": 0.600595660507679,
-      "repeats": 3,
-      "is_torch_default": false
-    },
-    {
-      "n_rows": 7360,
-      "n_feat": 44,
-      "steps": 200,
-      "threads": 4,
-      "seconds_median": 0.33703426644206047,
-      "seconds_min": 0.16141552105545998,
-      "seconds_max": 4.380370911210775,
-      "repeats": 3,
-      "is_torch_default": false
-    },
-    {
-      "n_rows": 7360,
-      "n_feat": 44,
-      "steps": 200,
-      "threads": 8,
-      "seconds_median": 5.345037277787924,
-      "seconds_min": 3.837220348417759,
-      "seconds_max": 8.095995351672173,
-      "repeats": 3,
-      "is_torch_default": false
-    },
-    {
-      "n_rows": 7360,
-      "n_feat": 44,
-      "steps": 200,
-      "threads": 16,
-      "seconds_median": 9.081007737666368,
-      "seconds_min": 8.921981737017632,
-      "seconds_max": 9.138983063399792,
-      "repeats": 3,
-      "is_torch_default": false
-    },
-    {
-      "n_rows": 7360,
-      "n_feat": 44,
-      "steps": 200,
-      "threads": 96,
-      "seconds_median": 13.590770099312067,
-      "seconds_min": 13.407952453941107,
-      "seconds_max": 14.81996300444007,
-      "repeats": 3,
-      "is_torch_default": true
-    }
-  ],
-  "fastest_by_size": {
-    "21760": {
-      "threads": 8,
-      "seconds_median": 0.18743248283863068
-    },
+  "default_threads": 96,
+  "machine": "x86_64",
+  "torch": "2.8.0+cu128",
+  "note": "wall-clock of QuantileScale.fit at a fixed step count. The fit pins itself to min(4, available); this table is measured by overriding that pin, and the override is restored afterwards.",
+  "by_rows": {
     "7360": {
-      "threads": 1,
-      "seconds_median": 0.19487666711211205
+      "per_threads": {
+        "1": {
+          "median_s": 0.1437169909477234,
+          "min_s": 0.13880766928195953,
+          "n": 3
+        },
+        "2": {
+          "median_s": 0.10729986429214478,
+          "min_s": 0.09661536663770676,
+          "n": 3
+        },
+        "4": {
+          "median_s": 0.1286664791405201,
+          "min_s": 0.10112474113702774,
+          "n": 3
+        },
+        "8": {
+          "median_s": 0.10135168209671974,
+          "min_s": 0.10039838403463364,
+          "n": 3
+        },
+        "16": {
+          "median_s": 0.0988992489874363,
+          "min_s": 0.09542889893054962,
+          "n": 3
+        },
+        "96": {
+          "median_s": 1.1324692107737064,
+          "min_s": 0.7021484449505806,
+          "n": 3
+        }
+      },
+      "fastest_threads": 16,
+      "default_over_fastest": 11.450736202431326
+    },
+    "21760": {
+      "per_threads": {
+        "1": {
+          "median_s": 0.2605864480137825,
+          "min_s": 0.23167196288704872,
+          "n": 3
+        },
+        "2": {
+          "median_s": 0.2144571766257286,
+          "min_s": 0.21135753765702248,
+          "n": 3
+        },
+        "4": {
+          "median_s": 0.18208977580070496,
+          "min_s": 0.1784295067191124,
+          "n": 3
+        },
+        "8": {
+          "median_s": 0.18310785293579102,
+          "min_s": 0.1790284886956215,
+          "n": 3
+        },
+        "16": {
+          "median_s": 0.22247982025146484,
+          "min_s": 0.16696377471089363,
+          "n": 3
+        },
+        "96": {
+          "median_s": 15.614839434623718,
+          "min_s": 11.350363183766603,
+          "n": 3
+        }
+      },
+      "fastest_threads": 4,
+      "default_over_fastest": 85.7535211186924
     }
-  },
-  "speedup_of_4_over_default": {
-    "21760": 99.18616102295259,
-    "7360": 40.32459441820126
   }
 }

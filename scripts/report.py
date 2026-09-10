@@ -879,6 +879,10 @@ def _mean_sharp(a):
     return sum(sh) / len(sh)
 
 
+def _load_equivar_cost():
+    return load("equivar_cost.json")
+
+
 def sec_h16(sc, out):
     """H16 (what the clause demands) and H17 (the equivariance repair).
 
@@ -1030,6 +1034,42 @@ def sec_h16(sc, out):
             "shifts, and the reason it was available is that nobody had "
             "checked whether the network preserved a symmetry its own physics "
             "guarantees.\n")
+    ec = _load_equivar_cost()
+    if ec:
+        out.append("\n**What the wrapper costs, measured rather than "
+                   "argued.**\n")
+        out.append("| batch | unwrapped forward | wrapped | overhead | scale "
+                   "reduction alone |")
+        out.append("|---|---|---|---|---|")
+        for n, v in ec["by_batch"].items():
+            out.append(
+                f"| {n} | {v['bare']['median_s']*1e3:.3f} ms | "
+                f"{v['wrapped']['median_s']*1e3:.3f} ms | "
+                f"**{v['overhead_frac']*100:+.2f}%** | "
+                f"{v['scale_reduction_only']['median_s']*1e6:.1f} \u03bcs |")
+        out.append(
+            f"\nThe H17 write-up originally argued the wrapper was \u201cone "
+            f"extra reduction per sample, so the 100\u00d7 row is "
+            f"untouched\u201d. **That was an argument, and measuring it "
+            f"withdrew part of it.** The first implementation computed the "
+            f"scale and cloned the input on the *host* \u2014 shards load with "
+            f"`map_location=\"cpu\"` \u2014 and then copied the raw input to "
+            f"the GPU a second time: **+206% at batch 1 and +857% at batch "
+            f"64**. Moving the rescale on-device brings it to the table above. "
+            f"The arithmetic had always been one reduction; the implementation "
+            f"was not.\n")
+        out.append(
+            f"**The clause-2 impact is `{ec['clause2_impact']}`, and must "
+            f"stay that way until it is run.** These figures are on the eager "
+            f"`predict_shard_single` path, which carries normalization and "
+            f"host transfers; the 117.0\u00d7 worst-field number is measured "
+            f"under CUDA-graph replay on a different path. Multiplying this "
+            f"fraction into that number would be arithmetic across two "
+            f"protocols \u2014 an earlier version of "
+            f"`scripts/bench_equivar_cost.py` did exactly that and reported an "
+            f"\u201cimplied speedup\u201d, which is why the field is now a "
+            f"literal `[not measured]`. Settling it means running "
+            f"`bench_fair.py` with the wrapper inside the captured graph.\n")
     out.append(
         f"**This does not make the clause pass and was not expected to.** A "
         f"width model would still have to span "

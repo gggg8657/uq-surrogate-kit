@@ -1,0 +1,86 @@
+{
+  "ckpt": "runs/u0/best.pt",
+  "task": "darcy",
+  "device": "cuda",
+  "sigma_source": "het",
+  "reference_scale": 0.9998779296875,
+  "torch_threads": 96,
+  "gpu": "NVIDIA H100 NVL",
+  "machine": "x86_64",
+  "warmup": 50,
+  "note": "overhead_frac is the wrapper's added wall-clock as a fraction of the unwrapped forward ON THIS PATH -- eager `predict_shard_single`, which includes normalization and host transfers. The clause-2 number (117.0x on the worst field) is measured under CUDA-graph replay on a different path, so this fraction MUST NOT be multiplied into it: an earlier version of this script did exactly that and reported an 'implied speedup' that mixed two protocols. Deciding the clause-2 impact requires running `bench_fair.py` with the wrapper in the captured graph, which has not been done.",
+  "clause2_impact": "[not measured]",
+  "by_batch": {
+    "1": {
+      "bare": {
+        "median_s": 0.002270268276333809,
+        "min_s": 0.0014392808079719543,
+        "p90_s": 0.0029320329427719115,
+        "iters": 300
+      },
+      "wrapped": {
+        "median_s": 0.002541596069931984,
+        "min_s": 0.0019640177488327026,
+        "p90_s": 0.0025823872536420824,
+        "iters": 300
+      },
+      "scale_reduction_only": {
+        "median_s": 7.840245962142944e-05,
+        "min_s": 5.9626996517181396e-05,
+        "p90_s": 8.560381829738616e-05,
+        "iters": 300
+      },
+      "overhead_s": 0.00027132779359817505,
+      "overhead_frac": 0.11951353786096792
+    },
+    "8": {
+      "bare": {
+        "median_s": 0.0025158077478408813,
+        "min_s": 0.002015911042690277,
+        "p90_s": 0.0025522518903017045,
+        "iters": 300
+      },
+      "wrapped": {
+        "median_s": 0.0027607623487710953,
+        "min_s": 0.002047717571258545,
+        "p90_s": 0.002800222486257553,
+        "iters": 300
+      },
+      "scale_reduction_only": {
+        "median_s": 7.787533104419708e-05,
+        "min_s": 7.623061537742615e-05,
+        "p90_s": 8.36893916130066e-05,
+        "iters": 300
+      },
+      "overhead_s": 0.00024495460093021393,
+      "overhead_frac": 0.09736618433600067
+    },
+    "64": {
+      "bare": {
+        "median_s": 0.005257114768028259,
+        "min_s": 0.005168899893760681,
+        "p90_s": 0.005290024355053902,
+        "iters": 300
+      },
+      "wrapped": {
+        "median_s": 0.005463697016239166,
+        "min_s": 0.0053018853068351746,
+        "p90_s": 0.005493992939591408,
+        "iters": 300
+      },
+      "scale_reduction_only": {
+        "median_s": 7.817335426807404e-05,
+        "min_s": 5.763396620750427e-05,
+        "p90_s": 8.104555308818817e-05,
+        "iters": 300
+      },
+      "overhead_s": 0.00020658224821090698,
+      "overhead_frac": 0.03929574630313578
+    }
+  },
+  "in_dist_prediction_change": {
+    "rel_l2_median": 8.392180461669341e-08,
+    "rel_l2_max": 0.0008237652946263552,
+    "note": "the wrapper is NOT the identity in distribution -- s varies per sample around 1 -- so this is a magnitude, not a bit-equality check"
+  }
+}

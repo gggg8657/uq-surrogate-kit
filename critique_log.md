@@ -3047,3 +3047,147 @@ this portfolio.
 is still 68.4×, set by the control shard and by the `rough` shards at 1.4–19×,
 against a ±2.2% tolerance. Roughness is not a symmetry and there is no free
 repair for it.
+
+## H17 correction — I asserted the wrapper was free and it was not
+
+The H17 registration said the wrapper is "one extra reduction per sample, so
+the 100× row is untouched." The arithmetic was right and the sentence was
+wrong, which `scripts/bench_equivar_cost.py` established the moment it existed.
+
+**First implementation, measured** (`runs/equivar_cost.json`, eager
+`predict_shard_single` path, darcy, GPU 2): **+205.66% at batch 1, +23.30% at
+batch 8, +856.80% at batch 64.** Not one reduction — a host-side `clone()` of
+the whole input tensor (shards load with `map_location="cpu"`, so the "one
+reduction" ran on the CPU) plus a duplicate host-to-device copy of the raw
+input on the way out.
+
+**After moving the rescale on-device:** +11.95% at batch 1, +9.74% at batch 8,
+**+3.93% at batch 64**, with the scale reduction itself a constant ~78 µs, i.e.
+launch-bound. That is a real cost, not a free one.
+
+**And my benchmark's own headline was invalid arithmetic.** The first version
+divided the clause-2 figure (117.0× on the worst field) by (1 + overhead) and
+printed an "implied speedup … UNDER 100x". The overhead is measured on the
+eager path, which carries normalization and host transfers; the 117.0× is
+measured under CUDA-graph replay. Multiplying one into the other is exactly the
+cross-protocol arithmetic this repo has now published three times and caught
+three times. The field is now the literal string `[not measured]` in the JSON,
+and it stays that way until `bench_fair.py` runs with the wrapper inside the
+captured graph.
+
+**Withdrawn:** "so the 100× row is untouched". **Replaced by:** the wrapper
+costs 3.9–12.0% of the forward on the eager path, its effect on the clause-2
+reading is `[not measured]`, and the run that would settle it is named.
+
+Worth noting what this near-miss looked like from inside: the claim was
+plausible, the mechanism was correctly understood, the arithmetic was correct,
+and the implementation was 20× off. Nothing about reasoning harder would have
+caught it. Only running it did.
+
+## H18 result — two interventions that each work, and measurably do not compose
+
+`runs/scale.json → h18`, 8 seeds, same checkpoints as H15 so the pairing is
+exact.
+
+| arm | LOMO in band /32, per seed | median |
+|---|---|---|
+| baseline (no width model, no wrapper) | 0,0,0,0,0,0,0,0 | 0 |
+| **H17 equivariance wrapper alone** (exact algebra, no fitting) | 2,2,1,1,2,2,1,0 | ~1.5 |
+| **H15 width model alone** | 3,2,5,4,4,2,8,7 | **4** |
+| **H18 both composed** | 1,3,1,1,1,1,1,0 | **1** |
+
+Paired against H15 seed by seed: diffs **−2,+1,−4,−3,−3,−1,−7,−7**, exact
+two-sided sign-flip **p = 0.0234**. **Composing them is significantly worse
+than the width model alone.** Prediction 1 is falsified — I expected the gain
+to be concentrated in the `amp` fold and to add to H15's; the `amp` fold's
+held-out count stayed at 0/5, which is the exact falsification condition I
+wrote down.
+
+### What each piece actually does, per shard
+
+The equivariance wrapper alone is the real amplitude fix, and its registered
+control holds:
+
+| shard | baseline | **wrapper alone** | wrapper + width model |
+|---|---|---|---|
+| `advdiff_amp2` | 0.000 | **0.920** | 0.999 |
+| `diffusion_amp2` | 0.000 | **0.909** | 1.000 |
+| `poisson_amp2` | 0.000 | **0.731** | 1.000 |
+| `helmholtz_amp2` | 0.000 | **0.575** | 1.000 |
+| `darcy_amp2` — **the control, must not improve** | 0.000 | **0.000** | 0.000 |
+
+Three orders of magnitude of "unfixable" amplitude failure was a preprocessing
+bug, and the control — Darcy, whose shifted channel enters the operator
+nonlinearly so the algebra does not apply — stays at exactly 0.000 in both
+columns. That is the strongest single result in this repo's shift work and it
+required no fitting at all.
+
+**Then the width model overshoots what the wrapper fixed** (0.575–0.920 →
+0.999–1.000, over-covering) **and loses the Darcy ladder it had won**:
+
+| shard | H15 | H18 |
+|---|---|---|
+| `darcy_dam0p5` | 0.907 | 0.562 |
+| `darcy_dam0p7` | **0.896** | 0.042 |
+| `darcy_dam1` | **0.943** | 0.000 |
+| `darcy_smooth` | 0.785 | 0.002 |
+| `darcy_tau` | 0.508 | 1.000 |
+
+### The mechanism, and it makes me trust H15 less
+
+The pinball loss is **linear in the residual of log S**, so a shard whose score
+sits two orders of magnitude out contributes roughly ten times the loss per
+sample of an ordinary one. In H15 the four `amp2`-like development rows carried
+that mass and dominated the fit. The equivariance wrapper removes exactly those
+rows' difficulty — so h is fitted against a different loss landscape and learns
+a different function everywhere, including on the Darcy axis it had nothing to
+do with.
+
+**The uncomfortable corollary: H15's Darcy-ladder win was partly a side effect
+of loss pressure from unrelated families.** It was not a Darcy difficulty model
+that generalized; it was a pooled fit whose dominant term happened to produce
+coefficients that also served Darcy. That is a much weaker claim than "a learned
+width model recalibrates the graded ladder", and the H15 entry should be read
+with it. I did not test this when H15 looked good, and I only found it because
+composing two improvements made things worse.
+
+Prediction 4 fired, and it was the one worth watching. I wrote: "If the ceiling
+now pulls away from LOMO, the binding constraint has genuinely moved." It did —
+H18's in-sample ceiling is 2,5,3,4,4,3,0,0 against LOMO 1,3,1,1,1,1,1,0,
+**p = 0.0469**, where in H15 the two were indistinguishable (p = 0.5156). So
+after the amplitude effect is removed by algebra, h's problem stops being
+representational and becomes a generalization problem. Lower ceiling, different
+wall.
+
+## H20 — written before the run: fit h per family
+
+**One change.** `scripts/fit_scale.py --per-family-h`: one `QuantileScale` per
+family instead of one pooled fit with family one-hots
+(`uqkit.scale.PerFamilyScale`). Everything else identical — same dev suite,
+same seed block, same folds, same per-family quantile on T, same 8 checkpoints,
+so the pairing against H15 and H18 is exact.
+
+**Why this and not something else.** H18 measured that the pooled h is driven
+by whichever rows carry the most loss mass, across families. A per-family fit
+makes that particular contamination *impossible by construction* rather than by
+tuning a weight. It also directly tests the uncomfortable corollary above: if
+H15's Darcy win survives a fit that never sees Poisson's amplitude rows, it was
+a Darcy difficulty model after all; if it evaporates, it was loss-mass spillover
+and H15's headline needs re-reading.
+
+**Predictions, registered now:**
+
+1. LOMO in-band ≥ H15's 4/32 median. Seed 0 alone gives 4/32 with the `all`
+   fold at 6/32, but H15's per-seed spread was 2–8, so **one seed is a screen
+   and not a result** and I am not reading it as one.
+2. The Darcy ladder keeps the coverage H15 gave it (0.896–0.943 on
+   `dam0p5`/`dam0p7`/`dam1`). **This is the diagnostic prediction**: if it holds,
+   H15's win was a real Darcy difficulty model; if the ladder collapses the way
+   it did under H18, H15's win was loss-mass spillover and I say so.
+3. Within a family the loss-mass argument still applies *across shift axes*, so
+   this is one step and not a cure. I do not expect 29/32.
+4. 8 seeds, exact sign-flip against H15 seed by seed.
+
+Note on naming: `a4-h19` was taken by a concurrently running feature ablation
+(dropping `a_spec9,a_spec10`, the two largest coefficients), so this is H20 and
+runs on GPU 3 of the lease while that one uses GPU 2. Neither oversubscribes.

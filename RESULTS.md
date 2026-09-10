@@ -688,6 +688,19 @@ The last column is the claim. For the four families that are linear in the shift
 
 This is the more useful half of H17: read as a surrogate result rather than a UQ one, a ten-line test-time wrapper turns a 31–47% error into a 0.26–0.34% error on the amplitude shifts, and the reason it was available is that nobody had checked whether the network preserved a symmetry its own physics guarantees.
 
+
+**What the wrapper costs, measured rather than argued.**
+
+| batch | unwrapped forward | wrapped | overhead | scale reduction alone |
+|---|---|---|---|---|
+| 1 | 2.270 ms | 2.542 ms | **+11.95%** | 78.4 μs |
+| 8 | 2.516 ms | 2.761 ms | **+9.74%** | 77.9 μs |
+| 64 | 5.257 ms | 5.464 ms | **+3.93%** | 78.2 μs |
+
+The H17 write-up originally argued the wrapper was “one extra reduction per sample, so the 100× row is untouched”. **That was an argument, and measuring it withdrew part of it.** The first implementation computed the scale and cloned the input on the *host* — shards load with `map_location="cpu"` — and then copied the raw input to the GPU a second time: **+206% at batch 1 and +857% at batch 64**. Moving the rescale on-device brings it to the table above. The arithmetic had always been one reduction; the implementation was not.
+
+**The clause-2 impact is `[not measured]`, and must stay that way until it is run.** These figures are on the eager `predict_shard_single` path, which carries normalization and host transfers; the 117.0× worst-field number is measured under CUDA-graph replay on a different path. Multiplying this fraction into that number would be arithmetic across two protocols — an earlier version of `scripts/bench_equivar_cost.py` did exactly that and reported an “implied speedup”, which is why the field is now a literal `[not measured]`. Settling it means running `bench_fair.py` with the wrapper inside the captured graph.
+
 **This does not make the clause pass and was not expected to.** A width model would still have to span 68.4× while holding ±2.2%. What H17 establishes is that a large part of that requirement was our own broken equivariance rather than a fact about uncertainty quantification — the certificate could not be fixed without fixing the model.
 
 

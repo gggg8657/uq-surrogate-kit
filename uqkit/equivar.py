@@ -82,7 +82,7 @@ def rescale_inputs(a, parent, s):
     return out
 
 
-def predict_equivariant(predict_fn, blob, parent, ref):
+def predict_equivariant(predict_fn, blob, parent, ref, device=None):
     """`F_eq(a) = s * F(a / s)` around any `(mean, sigma, truth, a)` predictor.
 
     `truth` and the returned inputs are the originals -- only the prediction
@@ -90,11 +90,25 @@ def predict_equivariant(predict_fn, blob, parent, ref):
     exactly the data it saw before. `sigma` is multiplied by `s` along with the
     mean because it is a spread in the field's units; leaving it unscaled would
     hand the amplitude shift a narrower interval than the mean it belongs to.
+
+    **The rescale happens on `device`, not on the host.** The first version of
+    this function computed the scale and cloned the input on whatever device
+    `blob["a"]` happened to live on -- the CPU, since shards are loaded with
+    `map_location="cpu"` -- and then moved the raw input to the GPU a second
+    time to return it. `scripts/bench_equivar_cost.py` measured that at **+206%
+    of the forward at batch 1 and +857% at batch 64**, against an argument in
+    the H17 write-up that it was "one extra reduction per sample, so the 100x
+    row is untouched". The arithmetic was one reduction; the implementation was
+    a host-side clone of the whole input plus a duplicate host-to-device copy.
+    Doing it on-device is what makes the argument true, and it had to be
+    measured to find that out.
     """
     a_raw = blob["a"]
-    s_cpu = sample_scale(a_raw, parent, ref)
+    if device is not None and a_raw.device.type != torch.device(device).type:
+        a_raw = a_raw.to(device, non_blocking=True)
+    s_dev = sample_scale(a_raw, parent, ref)
     scaled = dict(blob)
-    scaled["a"] = rescale_inputs(a_raw, parent, s_cpu)
+    scaled["a"] = rescale_inputs(a_raw, parent, s_dev)
     mean, sigma, truth, _a = predict_fn(scaled)
-    s = s_cpu.to(mean.device).view(-1, *([1] * (mean.dim() - 1)))
+    s = s_dev.to(mean.device).view(-1, *([1] * (mean.dim() - 1)))
     return mean * s, sigma * s, truth, a_raw.to(mean.device)
