@@ -2267,3 +2267,184 @@ coefficient, apply is cheap, solve is thousands of PCG iterations — so a
 residual-conditioned width is legitimate there and is a Darcy-only variant, not
 a headline. Codex did not distinguish these cases and its proposal 2 would have
 produced a spectacular and meaningless Poisson number.
+
+## H15 result, and the two bugs of mine it went through first
+
+Seed 0 first, because the route changed twice before it produced a number worth
+reading, and both changes were my errors rather than findings.
+
+**Bug 1: the fit was 27× slower than it needed to be, for no reason.** The
+pinball fit ran at torch's default thread count — 96 on this host — on a
+21,760 × 44 problem, where synchronisation dominates arithmetic. Pinned to 4
+threads the fit went from not finishing inside 75 s to **2.8 s**. Recorded
+because I nearly concluded the route was computationally awkward when it was a
+one-line default. *And in writing that up I put a number in a docstring that no
+run produced* — "5.4 s at the 96-thread default" was arithmetic on a 50-step
+timing taken at 7,360 rows, presented as a 200-step timing at 21,760. Removed;
+`scripts/bench_scale_fit.py` now has to produce it. Third time this repo has
+published arithmetic on a guess.
+
+**Bug 2, which mattered to the result: I compared a pooled calibrator against a
+per-family baseline.** `ScaleConformal` put one global quantile on T = S/h,
+while the `group` baseline it is measured against uses one quantile per family.
+In-distribution coverage under the pooled version: helmholtz **0.5879**,
+diffusion **1.000**, advdiff **1.000**, against `group`'s 0.9023 on all five.
+h absorbs difficulty *within* a family and leaves a per-family offset behind,
+so dropping the per-family degree of freedom re-opens exactly the failure
+`GroupConformal` exists to close. **This is the same mismatch this repo already
+caught itself making once**, in the shifted-coverage table, and I made it again
+in new code. Fixed with `GroupScaleConformal`; the pooled reading is kept beside
+it. The fix moved the generous fold from **1/32 → 5/32** shards in band, and it
+restores in-distribution coverage to 0.9023 on all five families.
+
+### What H15 measures once it is set up correctly (seed 0)
+
+| fold | what h saw | in band /32 | at deployable width (≤3× the ungated interval) |
+|---|---|---|---|
+| `all` | every mechanism, bracketing strengths — the generous reading | 5 | 5 |
+| `alpha` held out | no roughness shifts | 3 | 3 |
+| `tau` held out | no correlation-length shifts | 3 | 3 |
+| `amp` held out | no amplitude shifts | 4 | 3 |
+| **LOMO headline** | each shard scored only by the fold blind to its mechanism | **3** | **3** |
+| `insample_leak` — **h fitted ON the evaluation shards, not a result** | the answer | **4** | 4 |
+
+**The leak fold is the one that settles it.** Fitting h *on the very shards it
+is scored on* — the in-sample ceiling of this feature set and this model class —
+gives **4/32**. So H15 does not fail because h cannot generalize to an unseen
+mechanism. It fails with the answer in front of it. Prediction 1 ("(A) will
+beat (B)") is technically right, 5 vs 3, but the gap is noise next to the fact
+that the ceiling is 4.
+
+Prediction 2 was **falsified**: I expected the `smooth` shards to be the easy
+win, since they over-cover and h only has to narrow. Under the leak fold they
+go to 0.148–0.934 — h narrows them straight through the band and out the other
+side. Prediction 3 (`amp2` hardest) was **half right**: those shards reach
+0.652–0.986 coverage, but at **68–100× the ungated width**, so prediction 4's
+flag catches them and they are not deployable certificates.
+
+### Why it fails, which is not a fact about h at all
+
+The diagnostic I added with the leak fold is `underprediction_factor`: the
+shard's realized 90th percentile of S divided by the width h actually emitted.
+Across all 32 shards it is **0.59–3.17** — h is within a factor of about 2 to 3
+of the right answer nearly everywhere, and *often within 5%*. And coverage out
+of that ranges from **0.000 to 0.990**. Those two statements are only
+compatible if coverage is hypersensitive to the width, which sent me to measure
+the sensitivity directly rather than reason about it.
+
+## H16 — the width tolerance, which is the number this clause actually turns on
+
+No method is involved. For a per-sample score S the width achieving coverage
+exactly p *is* the p-th quantile of S, so the widths keeping coverage inside
+the KPI band span exactly [Q₀.₈₈(S), Q₀.₉₂(S)], and
+
+    tol = (Q₀.₉₂(S) − Q₀.₈₈(S)) / Q₀.₉₀(S)
+
+is the fractional error a width predictor is permitted before the clause fails.
+Three order statistics. `scripts/eval_width_tolerance.py`, seed 0,
+`field_max`:
+
+| | median tol over the 32 shards | in distribution | range over shards |
+|---|---|---|---|
+| `field_max` | **4.36%** | 4.36% | 1.11–19.75% |
+| `norm_ratio` | **3.91%** | 3.77% | 1.06–18.32% |
+| `rel_l2` | **6.63%** | 4.33% | 0.22–26.88% |
+
+**So "coverage 90±2%" is, to within a factor of two, the requirement "predict
+the interval width to ±2%".**
+
+**And my own explanation for the sensitivity was wrong.** I expected `field_max`
+to be uniquely hypersensitive because a maximum over 4,096 pixels concentrates
+by extreme-value effects, and that switching to an aggregate score would buy
+slack. It does not: 3.91% for `norm_ratio` against 4.36% for `field_max`. The
+tolerance is a property of the score density near its own 0.9 quantile, and all
+three scores here are similar. **Changing the score is not an escape**, which is
+worth knowing precisely because it was the obvious next thing to try.
+
+### The requirement, stated as a specification, and why nothing can meet it
+
+Alongside the tolerance, the same run reports how far the deployed
+(in-distribution-calibrated) width is from the width that would be exactly
+right on each shard:
+
+| | deployed width / ideal width | required correction factor |
+|---|---|---|
+| in distribution, all five families | **0.988–1.020** | ~1 |
+| `*_smooth` shards | 1.10–1.66 | 0.60–0.91× |
+| graded ladder, mildest rungs | 0.87–0.95 | 1.05–1.15× |
+| `*_rough`, `*_tau` | 0.05–0.70 | 1.4–19× |
+| **`*_amp2`** | **0.0086–0.0192** | **52–117×** |
+
+Read the two tables together and the clause is specified exactly: **a width
+model must span a dynamic range of ~117× while being accurate to ~±2% on every
+shard.** H15's h achieves 0.59–3.17× — between 10× and 70× worse than the
+tolerance allows, and its in-sample ceiling is no better. That is not a gap that
+a better regressor, more features or an MLP closes; it is two orders of
+magnitude.
+
+The same two numbers also *predict the in-distribution pass*, which is the
+check that makes me believe the framing rather than just like it: in
+distribution the deployed width sits at 0.988–1.020 of ideal against a
+tolerance of 2.80–10.00%, i.e. inside tolerance on all five families — and
+in-distribution coverage is 0.9026, 8/8 seeds in band. One framework, both
+outcomes, no free parameters.
+
+### Where this puts the blame, and it is not on conformal prediction
+
+The 117× is the surrogate's error scale blowing up under an amplitude shift, not
+a defect of the certificate. **The certificate cannot be fixed without fixing
+the model.** That reframes the clause: I have been trying to build an
+uncertainty layer that survives a model whose error moves two orders of
+magnitude, and the tolerance says no such layer exists at ±2%. The honest
+engineering conclusion is to shrink the required dynamic range instead — which
+is a statement about the surrogate, and it names H17.
+
+## H17 — written before the run: make the required dynamic range small instead of predicting it
+
+**The binding constraint is the 117×, and it is concentrated in one mechanism.**
+The `*_amp2` shards need 52–117×; every other shift needs ≤19× and the graded
+ladder's mild rungs need ≤1.15×. Amplitude is also the axis H14 measured σ̃ to be
+blindest to (true error 8.6–147× past its refusal threshold, σ̃ 1.01–1.41×).
+
+**The mechanism, and why this is a bug in the surrogate rather than a hard
+limit.** Poisson, Helmholtz, diffusion and advection-diffusion are **linear** in
+the field the `amp` shift scales: `generate()` multiplies the GRF `g` by `amp`,
+and for those four families `g` is the source or the initial condition, so the
+exact solution satisfies u(c·f) = c·u(f). The surrogate breaks that equivariance
+for one reason only — it standardizes inputs with **frozen calibration
+statistics**, so a 2× input lands 2× outside the range it was trained on and the
+network extrapolates instead of scaling. The physics is exactly equivariant and
+the implementation is not.
+
+**The change (one):** a test-time wrapper. Divide each input by its own scale,
+predict, multiply the mean *and* σ back by that scale. No retraining, no new
+data, one extra reduction per sample, so the 100× row is untouched. For the four
+linear families this should make an amplitude shift *exactly* in-distribution.
+
+**Darcy is excluded and the reason must be stated, or the result is a lie.** For
+Darcy, `g` is the log-permeability field, not the source (`rhs` reads
+`a[:, 1:2]`), so `amp` scales log-k — permeability to the power `amp` — which is
+**not** a linear rescaling of anything. Scale-equivariance is not available
+there and `darcy_amp2` should not improve. That makes it the control: **if
+`darcy_amp2`'s required factor drops too, the wrapper is doing something other
+than what I claim** and I look for the leak before believing the other four.
+
+**Predictions, registered now:**
+
+1. `poisson_amp2`, `helmholtz_amp2`, `diffusion_amp2`, `advdiff_amp2`: required
+   correction factor drops from 54–117× to **< 1.3×**, and their ungated
+   coverage moves from 0.000 into or near the band with no width model at all.
+2. `darcy_amp2` (the control): required factor stays **> 20×**.
+3. The `*_rough`, `*_tau` and graded shards barely move (< 1.2× change in their
+   required factor): roughness and correlation length are not amplitude, and the
+   wrapper is not a general shift repair. If they improve a lot, the wrapper is
+   changing more than the input scale and I have a leak.
+4. In-distribution coverage is unchanged to within seed noise (the wrapper is
+   near-identity there, since the in-distribution scale is what the
+   standardizer was fitted on). **If in-distribution coverage moves, the
+   wrapper is not scale-equivariant and is broken.**
+5. This does **not** make the clause pass. Four of 32 shards are `amp2`;
+   fixing them leaves the `rough`/`tau` families needing 1.4–19×, still far
+   outside a ±2% tolerance. The value of H17 is that it shrinks the
+   requirement, attributes the failure correctly, and is a real improvement to
+   the surrogate — not that it rescues clause 1.
