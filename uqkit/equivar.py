@@ -1,0 +1,100 @@
+"""H17: restore the scale-equivariance the surrogate throws away.
+
+H16 specified clause 1 under shift exactly: a width model would have to span a
+**117x** dynamic range while holding **+-2%** accuracy. The 117x is not spread
+across the shift suite -- it is concentrated in the four `*_amp2` shards, which
+need 52-117x while everything else needs <= 19x.
+
+That concentration is a bug in the surrogate, not a property of the physics.
+Poisson, Helmholtz, diffusion and advection-diffusion are **linear** in the
+field the `amp` shift scales, so the exact solution obeys
+
+    u(c * f) = c * u(f).
+
+The network breaks it for one reason: `predict_shard*` standardizes inputs with
+**frozen calibration statistics**, so a 2x input lands 2x outside the range the
+weights were fitted on and the network extrapolates instead of scaling.
+
+The repair is a test-time wrapper, not a retrain. Divide the linear channels by
+a per-sample scale, run the unchanged pipeline, multiply the mean **and sigma**
+back:
+
+    F_eq(a) = s(a) * F(a / s(a)),      s(a) = rms(a_linear) / ref
+
+This is exactly equivariant for any F whatsoever, which is worth stating
+because it makes the property testable without reference to the network:
+s(c*a) = c*s(a), so (c*a)/s(c*a) = a/s(a), so F_eq(c*a) = c*F_eq(a) to floating
+point. `tests/test_equivar.py` pins that identity.
+
+**Which channels are linear is family-specific and getting it wrong would
+manufacture the result.** For Poisson and Helmholtz channel 0 is the source; for
+diffusion and advection-diffusion it is the initial condition; both are linear.
+For **Darcy channel 0 is the log-permeability** -- `PDE2DSimulator.rhs` reads
+the source out of channel 1 -- so scaling it raises permeability to a power and
+is not a rescaling of anything. Darcy's linear channel is 1, which the `amp`
+shift does not touch, so `darcy_amp2` must **not** improve. That makes it the
+control: if it improves anyway, this wrapper is doing something other than what
+is claimed here.
+
+`ref` is the median per-sample scale on the **calibration** split, so s ~ 1 in
+distribution and the wrapper is near-identity there. If in-distribution
+coverage moves, the wrapper is broken.
+"""
+from __future__ import annotations
+
+import torch
+
+#: channels the solution is *linear* in, per family. Anything not listed here
+#: enters the operator nonlinearly and must be left alone.
+LINEAR_CHANNELS = {
+    "poisson": (0,),        # source
+    "helmholtz": (0,),      # source
+    "diffusion": (0,),      # initial condition
+    "advdiff": (0,),        # initial condition
+    "darcy": (1,),          # source; channel 0 is log-permeability
+}
+
+
+def sample_scale(a, parent, ref=1.0, eps=1e-12):
+    """Per-sample scale of the linear channels, relative to `ref`."""
+    ch = LINEAR_CHANNELS.get(parent)
+    if ch is None:
+        return torch.ones(len(a), device=a.device, dtype=a.dtype)
+    sub = a[:, list(ch)].flatten(1)
+    rms = sub.pow(2).mean(dim=1).sqrt()
+    return (rms / ref).clamp_min(eps)
+
+
+def reference_scale(a, parent):
+    """The median per-sample scale, to be computed on calibration data only."""
+    return float(sample_scale(a, parent, ref=1.0).median())
+
+
+def rescale_inputs(a, parent, s):
+    """`a` with its linear channels divided by `s`; other channels untouched."""
+    ch = LINEAR_CHANNELS.get(parent)
+    if ch is None:
+        return a
+    out = a.clone()
+    view = s.view(-1, *([1] * (a.dim() - 1)))
+    for c in ch:
+        out[:, c:c + 1] = out[:, c:c + 1] / view
+    return out
+
+
+def predict_equivariant(predict_fn, blob, parent, ref):
+    """`F_eq(a) = s * F(a / s)` around any `(mean, sigma, truth, a)` predictor.
+
+    `truth` and the returned inputs are the originals -- only the prediction
+    path is rescaled, so every score, calibrator and detector downstream sees
+    exactly the data it saw before. `sigma` is multiplied by `s` along with the
+    mean because it is a spread in the field's units; leaving it unscaled would
+    hand the amplitude shift a narrower interval than the mean it belongs to.
+    """
+    a_raw = blob["a"]
+    s_cpu = sample_scale(a_raw, parent, ref)
+    scaled = dict(blob)
+    scaled["a"] = rescale_inputs(a_raw, parent, s_cpu)
+    mean, sigma, truth, _a = predict_fn(scaled)
+    s = s_cpu.to(mean.device).view(-1, *([1] * (mean.dim() - 1)))
+    return mean * s, sigma * s, truth, a_raw.to(mean.device)

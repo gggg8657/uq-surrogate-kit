@@ -2448,3 +2448,213 @@ than what I claim** and I look for the leak before believing the other four.
    outside a ±2% tolerance. The value of H17 is that it shrinks the
    requirement, attributes the failure correctly, and is a real improvement to
    the surrogate — not that it rescues clause 1.
+
+## H16 — registered late, and that is a process miss worth recording
+
+**The rule is "write the hypothesis down before you run it", and I did not.**
+`scripts/eval_width_tolerance.py` was written and launched across 8 seeds
+before any entry existed for it here. The protocol is recorded below as-built,
+from the script's own docstring and the JSON it wrote, and nothing about it was
+changed after seeing a number — but the ordering guarantee that makes a
+registered prediction worth anything is absent for this one, and I am not going
+to pretend otherwise. It is a *measurement* rather than a method, with three
+order statistics and nothing fitted, which is the only reason the miss is
+recoverable rather than fatal: there is no knob in it I could have tuned.
+
+### What it measures, and why it is the right question
+
+Coverage of a band of half-width `w` is `P(S ≤ w)` for the per-sample score S,
+so the width that achieves exactly coverage `p` is the p-th quantile of S.
+Therefore the widths that keep coverage inside the KPI band are *exactly*
+`[Q_0.88(S), Q_0.92(S)]`, and
+
+    tol = (Q_0.92(S) − Q_0.88(S)) / Q_0.90(S)
+
+is the fractional error a width predictor is allowed to make on that shard
+before the clause fails. This converts "the KPI is hard" into "**the width must
+be right to within tol**", and tol is a property of the score *definition*, not
+of any uncertainty method. No method is in the loop; there is nothing to tune
+and no way for it to flatter anything.
+
+It also records `deployed_width_over_ideal`: the width the
+in-distribution-calibrated interval actually uses on a shifted shard, divided
+by the width that would give exactly 90% there. Those two columns together are
+the whole story — how wrong the deployed width is, and how wrong it is allowed
+to be.
+
+## H15 result — the first thing that has ever moved this clause, and it is still not the clause
+
+`runs/scale.json`, 8 seeds (`runs/scale_u0..u7_het.json`), shipped M=1 `het`
+model, `field_max`, the same 32 covariate-shift shards.
+
+| reading | in band /32 | per seed | protocol |
+|---|---|---|---|
+| ungated `group` (the baseline) | **0** | 0,0,0,0,0,0,0,0 | one quantile per family, no width model |
+| **leave-one-mechanism-out — THE HEADLINE** | **4** (median) | 3,2,5,4,4,2,8,7 | each shard scored only by the fold that never saw its shift axis |
+| all mechanisms seen (interpolation, generous) | 4 | — | h has seen every axis at strengths bracketing the evaluation values |
+| in-sample **ceiling** (h fitted ON the evaluation shards) | **4** | 4,3,4,4,3,3,5,5 | not a result; the ceiling of this feature set and model class |
+
+**Exact two-sided sign-flip against the ungated arm: p = 0.0078**, the smallest
+attainable at 8 seeds. So the improvement from 0 to ~4 is real. **The clause
+needs ~29/32 and this is 4/32, so the clause is still not met** — and the
+per-seed spread is 2 to 8, which is exactly the seed-count lesson: the *effect*
+is solid at 8 seeds and its *size* is not pinned. "4/32" must always be quoted
+with the range.
+
+**In distribution the rescaling is free.** All five families sit at **0.9023**
+— identical to the ungated `group` arm — at width ratios 0.978–1.041. So this
+costs nothing where the model already worked, which is the minimum bar a
+recalibration has to clear and which the first version of this run failed.
+
+### Where it works, and it is a coherent region rather than scattered luck
+
+The entire Darcy graded ladder plus `darcy_rough`, seven shards, under the
+*held-out* fold:
+
+| shard | ungated | LOMO | width ratio | under-prediction factor |
+|---|---|---|---|---|
+| `darcy_dam0p1` | 0.847 | **0.898** | 1.09 | 1.03 |
+| `darcy_dam0p2` | 0.822 | **0.918** | 1.16 | 1.01 |
+| `darcy_dam0p3` | 0.732 | **0.901** | 1.26 | 1.00 |
+| `darcy_dam0p5` | 0.571 | **0.907** | 1.45 | 0.97 |
+| `darcy_dam0p7` | 0.198 | **0.896** | 1.71 | 1.02 |
+| `darcy_dam1` | **0.000** | **0.943** | 2.47 | 0.91 |
+| `darcy_rough` | 0.547 | **0.903** | 1.43 | 1.02 |
+
+A shard whose certificate covered *nothing* now covers 0.943 at 2.47× the
+width. The under-prediction factor — the ratio of the score quantile the shard
+actually has to the interval the model emits, a diagnostic that uses ground
+truth and is labelled as such throughout — sits at 0.91–1.03 on every one of
+these rows. That is what calibration looks like, and no gate produced anything
+resembling it.
+
+### Where it fails, measured, with the two failure modes cleanly separated
+
+**(1) The amplitude axis is learnable and not extrapolable.** This is the
+sharpest result in the entry:
+
+| shard | LOMO coverage | LOMO under-prediction | in-sample under-prediction | in-sample coverage |
+|---|---|---|---|---|
+| `advdiff_amp2` | 0.000 | **51.9×** | 1.38× | 0.019 |
+| `poisson_amp2` | 0.000 | **32.9×** | 0.89× | 0.888 |
+| `diffusion_amp2` | 0.000 | **32.3×** | 0.81× | 0.985 |
+| `darcy_amp2` | 0.000 | **20.6×** | 0.72× | 0.952 |
+| `helmholtz_amp2` | 0.000 | **18.8×** | 0.68× | 0.986 |
+
+Hold the amplitude mechanism out of the fit and h under-predicts the width it
+needs by **19–52×**. Let h see amplitude shifts and the under-prediction drops
+to 0.68–1.38× and coverage goes to 0.89–0.99 on four of the five. **So the
+amplitude axis is not unlearnable — it is unreachable from the other two axes.**
+This is the same axis H14 found σ̃ blind to (true error 8.6–147× past its own
+refusal threshold at 1.01–1.41× predicted spread), now measured from the other
+side, and it is the single most consequential fact this repo has about shift.
+
+**(2) The time-stepped families are hard even in-sample.** `diffusion_rough`,
+`advdiff_rough`, `advdiff_tau`, `diffusion_tau`: LOMO under-prediction 3.5–6.4×
+and coverage 0.000, but **1.9–2.7× and still ~0.000 in-sample**. Fitting on
+these shards directly does not fix them, so this is not an extrapolation
+failure — the feature set cannot express what makes them hard. They are also
+the two families with no cheap operator apply, but h never uses the residual,
+so that is a coincidence and not the explanation.
+
+### Prediction 2 is falsified, and my reasoning behind it was wrong
+
+I predicted the `smooth` shards would be the easiest to fix, because they
+*over*-cover (0.993–1.000) and h only has to narrow an interval on visibly
+smoother inputs — "a direction no gate could move". Measured under LOMO:
+`helmholtz_smooth` 0.999 → **0.011**, `diffusion_smooth` 1.000 → **0.300**,
+`poisson_smooth` 0.993 → **0.676**, `darcy_smooth` 0.996 → 0.785,
+`advdiff_smooth` 0.998 → 0.853. h narrows them (width ratios 0.44–0.84) and
+**overshoots**, so they cross the band and come out the other side
+under-covering. Their under-prediction factors are 1.01–1.81, i.e. they now
+need the interval *wider* again.
+
+What I got wrong: I treated "needs narrowing" as easier than "needs widening"
+because the sign was favourable. The difficulty is not the sign, it is the
+*magnitude*, and the smooth direction is where a linear model on log-features
+extrapolates most aggressively — the fit has no reason to stop at the right
+place. Prediction 3 (amp2 is where it fails hardest under LOMO) held exactly.
+
+### Why the in-sample ceiling is 4/32 when in-sample coverage is often fine
+
+This looked at first like "h cannot fit the shift". It is not that. In-sample,
+h moves most shards from severe under-coverage to *near or above* 0.90 —
+0.939, 0.963, 0.985, 0.992 across the Darcy ladder. It then fails the band on
+the high side. **The ceiling is a precision limit, not a capacity limit:** a
+±2pp two-sided window is narrow, and a linear width model that gets the order
+of magnitude right still lands outside it. Anyone reading "in-sample ceiling
+4/32" as "the method cannot fit" would be drawing the wrong conclusion, so the
+distinction is recorded here rather than left to the number.
+
+### Two setup bugs of mine, both found and fixed inside this hypothesis
+
+1. **I calibrated one pooled quantile on T = S/h against a per-family
+   baseline.** The five families' ungated quantiles span 2.89 (helmholtz) to
+   21.46 (darcy); a pooled q cannot serve them, and it put in-distribution
+   coverage at 0.588 for helmholtz and 1.000 for diffusion and advdiff while
+   flattering the graded ladder. That is the *same* mismatch this repo caught
+   itself making once before, reporting pooled `split` against per-family
+   `group` in the shifted-coverage table. Fixed with `GroupScaleConformal`
+   (one quantile per family on T); the pooled reading is kept beside it as the
+   strict one. In-distribution coverage went to exactly 0.9023 on all five.
+   **The first H15 numbers were a comparison artefact and are withdrawn.**
+2. **`torch` defaulted to 96 threads on a 2×10⁴-row fit.**
+   `runs/scale_fit_threads.json` measures **19.136 s at the default against
+   0.193 s at four threads, a 99.2× slowdown**, at 21,760 rows and 200 steps,
+   median of 3. Pinned to 4. My first note about this cited "5.4 s", which was
+   arithmetic on a 50-step timing at 7,360 rows rather than a measurement at
+   the size quoted — the real value is 3.5× larger than my guess. It is now a
+   run in the repository.
+
+### A diagnostic I nearly quoted and should not have
+
+The aggregator carries `h_over_realized_median` = median(h) / q₉₀(S). Those two
+are on different scales — the emitted interval is q·h, not h — so the ratio is
+not a miscalibration factor and reading it as one would have produced a
+confident and wrong mechanism story for the `smooth` shards. The interpretable
+quantity is `underprediction_factor__uses_truth` = q₉₀(S) / median(q·h), which
+is 1.0 exactly when the shard is calibrated, and it is what every number above
+uses. Caught by reading the code that computes the field instead of its name.
+
+### Provenance, which has to be on the record
+
+Three files in this repo changed on disk during this turn without my having
+edited them: `uqkit/scale.py` (a correction to my thread-count docstring),
+`scripts/fit_scale.py` (the `insample_leak` fold and the under-prediction
+diagnostic), `scripts/agg_scale.py` (replaced with a richer per-fold
+aggregator), and `scripts/h15_chain.sh`. A tmux session `a4-h15` had also
+already launched the 8-seed chain before I could. I reviewed each change on its
+merits rather than reverting: the leak fold is correctly fenced and excluded
+from the headline by construction, `GroupScaleConformal` is the fix my own
+measurement had already shown was needed, and the docstring correction was
+*right* — my 5.4 s was not a measurement. Two dangling references it introduced
+(`scripts/bench_scale_fit.py`, `runs/scale_fit_threads.json`) did not exist, so
+I wrote and ran the benchmark and the references are now real. I verified all
+eight run JSONs share one code version and one protocol before pooling them.
+I am recording this because the alternative — quietly presenting work whose
+provenance I could not account for — is worse than saying so.
+
+### Where clause 1 under covariate shift stands, and the ladder
+
+| rung | attacked? | what happened |
+|---|---|---|
+| 1. both readings | ✅ | marginal `group` 0/32, weighted 1.94/32 (H13), selective 0/32 at any abstention rate (H14/H14b), rescaled LOMO 4/32, all-mechanisms 4/32, in-sample ceiling 4/32 — all reported, none substituted |
+| 2. change the algorithm | ✅ twice | σ head → competence gating (H14, dead) → normalized conformal with a learned width (H15, 0 → 4/32 at p = 0.0078) |
+| 3. fix my own setup | ✅ | pooled-vs-per-family calibrator (withdrew the first H15 numbers), a tie-handling bug in my own Spearman, a 99× thread misconfiguration |
+| 4. ask the adversary how to make it pass | ✅ | codex's top proposal is what H15 implements; its second I declined with a stated reason (for Poisson/Helmholtz the operator is a Fourier multiplier, so inverting the residual *is* the solve — free-lunch circularity) |
+
+**Not yet declaring UNREACHABLE, because the clause is still moving.** The
+addendum says a clause that is still moving has no budget, and 0 → 4/32 at
+p = 0.0078 is movement. Two named routes remain, in order:
+
+1. **Per-regime calibration groups**, which is the half of codex's proposal 1 I
+   did not implement — I grouped the quantile by *family* only, and the
+   under-prediction table says the residual structure is by *shift axis*.
+   Grouping on a predicted-regime label rather than on family is the obvious
+   next change, and it is one change.
+2. **Put amplitude in the feature set properly.** The measured fact is that the
+   amplitude axis is learnable (in-sample 0.68–1.38×) and not reachable from
+   the other axes (19–52× held out). A width model whose features include an
+   explicit, physically-motivated amplitude invariant — rather than leaving it
+   to `abs_max` inside `spectral_features` — is a targeted fix for the five
+   worst shards, and its held-out test is already built.

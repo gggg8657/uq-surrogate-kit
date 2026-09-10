@@ -51,6 +51,8 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from uqkit.conformal import GroupConformal, get_score  # noqa: E402
+from uqkit.equivar import (predict_equivariant,  # noqa: E402
+                           reference_scale)
 from uqkit.metrics import rel_l2  # noqa: E402
 from uqkit.sims.pde2d import PARENT  # noqa: E402
 from uqkit.sims.checkpoint import load_model  # noqa: E402
@@ -96,6 +98,12 @@ def main():
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--sigma-source", default=None,
                     choices=["het", "cqr", "const"])
+    ap.add_argument("--equivariant", action="store_true",
+                    help="H17: wrap the predictor in the test-time scale "
+                         "equivariance F_eq(a) = s*F(a/s). No retraining, one "
+                         "extra reduction per sample. `darcy_amp2` is the "
+                         "control that must NOT improve (its amp shift scales "
+                         "log-permeability, which is not a linear input).")
     args = ap.parse_args()
     single = args.sigma_source is not None
     if single and len(args.ckpt) != 1:
@@ -112,11 +120,26 @@ def main():
         models, ck = load_members(args.ckpt, args.device)
     stats = ck["stats"]
 
-    def predict(blob):
+    def predict_raw(blob):
         if single:
             return predict_shard_single(models[0], blob, stats, args.device,
                                         sigma_source=args.sigma_source)
         return predict_shard(models, blob, stats, args.device)
+
+    # H17: the reference scale is the median per-sample scale on the
+    # CALIBRATION split, so s ~ 1 in distribution and the wrapper is
+    # near-identity there. Computed before any evaluation shard is touched.
+    REF = {}
+    if args.equivariant:
+        for t in in_tasks:
+            REF[t] = reference_scale(
+                load_shard(args.root, t, "cal")["a"], t)
+
+    def predict(blob, parent=None):
+        if not args.equivariant:
+            return predict_raw(blob)
+        p = parent or PARENT.get(blob["task"], blob["task"])
+        return predict_equivariant(predict_raw, blob, p, REF[p])
 
     # sigma floor frozen on pooled calibration, exactly as everywhere else
     cal = {}
@@ -132,6 +155,8 @@ def main():
            "seed": ck["args"].get("seed"),
            "sigma_source": args.sigma_source or "ensemble_spread",
            "sigma_floor_median": MED, "sigma_floor_frac": 0.05,
+           "equivariant": bool(args.equivariant),
+           "reference_scale": REF,
            "note": ("tol_rel is a property of the score distribution on the "
                     "shard, computed from three order statistics. No "
                     "uncertainty method enters it."),
@@ -175,6 +200,11 @@ def main():
             # would hit 0.90 exactly on this set
             tol["deployed_width_over_ideal"] = (
                 float(group.q[t] / tol["q_target"]) if tol["q_target"] else None)
+            # and the coverage that width actually delivers, so the tolerance
+            # framing can be checked against the thing it claims to predict
+            tol["coverage_ungated"] = float((sc <= group.q[t]).mean())
+            tol["in_band"] = bool(BAND[0] <= tol["coverage_ungated"]
+                                  <= BAND[1])
             out["in_dist"][t] = tol
         for name, d in shard_pred.items():
             sc = fn(d["m"], d["s"], d["tr"], med=MED).cpu().numpy()
@@ -187,7 +217,10 @@ def main():
                 # from the width that would be exactly right on this shard
                 "deployed_width_over_ideal": (float(qg / tol["q_target"])
                                               if tol["q_target"] else None),
+                "coverage_ungated": float((sc <= qg).mean()),
             })
+            tol["in_band"] = bool(BAND[0] <= tol["coverage_ungated"]
+                                  <= BAND[1])
             out["shards"][name] = tol
         tols = [v["tol_rel"] for v in out["shards"].values()
                 if v["tol_rel"] is not None]
@@ -196,13 +229,28 @@ def main():
         out["tol_rel_max_over_shards"] = float(np.max(tols))
         out["tol_rel_median_in_dist"] = float(np.median(
             [v["tol_rel"] for v in out["in_dist"].values()]))
+        out["n_shards"] = len(out["shards"])
+        out["in_band_shards"] = sum(1 for v in out["shards"].values()
+                                    if v["in_band"])
+        out["in_band_in_dist"] = sum(1 for v in out["in_dist"].values()
+                                     if v["in_band"])
+        # the tolerance framing predicts in-band exactly when the deployed
+        # width sits inside the tolerance; this counts the disagreements
+        out["framing_disagreements"] = [
+            n for n, v in out["shards"].items()
+            if v["in_band"] != (abs(v["deployed_width_over_ideal"] - 1.0)
+                                <= v["tol_rel"] / 2)]
         res["by_score"][sname] = out
         print(f"[{sname:11s}] width tolerance, median over 32 covariate "
               f"shards: {out['tol_rel_median_over_shards']*100:6.2f}%  "
               f"(in distribution {out['tol_rel_median_in_dist']*100:.2f}%, "
               f"range over shards "
               f"{out['tol_rel_min_over_shards']*100:.2f}-"
-              f"{out['tol_rel_max_over_shards']*100:.2f}%)", flush=True)
+              f"{out['tol_rel_max_over_shards']*100:.2f}%)  "
+              f"in band {out['in_band_shards']}/{out['n_shards']} shards, "
+              f"{out['in_band_in_dist']}/5 families in distribution, "
+              f"framing disagreements {len(out['framing_disagreements'])}",
+              flush=True)
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(res, indent=2))

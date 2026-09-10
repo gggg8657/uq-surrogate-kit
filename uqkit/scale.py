@@ -97,18 +97,22 @@ class QuantileScale:
     def fit(self, z, s):
         """`z` (n, d) features, `s` (n,) conformity scores > 0.
 
-        Thread count is pinned for the duration of the fit. Torch defaults to
-        one thread per core -- 96 on this host -- and on a problem this small
-        the synchronisation dominates. `scripts/bench_scale_fit.py` measures
-        the fit at each thread count and writes `runs/scale_fit_threads.json`;
-        4 is chosen from that table.
+        Thread count is pinned for the duration of the fit. Torch defaults
+        to one thread per core -- 96 on this host -- and on a problem this
+        small (about 2e4 rows x 44 features, full-batch) the synchronisation
+        dominates completely. Measured by `scripts/bench_scale_fit.py` into
+        `runs/scale_fit_threads.json`, at 21,760 rows and 200 steps, median of
+        3: **19.136 s at the 96-thread default against 0.193 s at four
+        threads, a 99.2x slowdown**. 8 threads is marginally faster than 4
+        (0.187 s) and 16 marginally slower (0.198 s), so 4 is chosen as flat
+        on the plateau and modest about what it takes from other work.
 
-        An earlier version of this docstring claimed "5.4 s at the 96-thread
-        default" for 200 steps at 2e4 rows. That number was arithmetic on a
-        50-step timing taken at 7,360 rows, not a measurement at the stated
-        size, and it should not have been written down. The two readings that
-        *were* measured at 21,760 rows -- 0.68 s at one thread, 0.20 s at four,
-        200 steps -- are in the JSON with the rest.
+        An earlier version of this docstring quoted "5.4 s at the 96-thread
+        default" for that cell. It was arithmetic on a 50-step timing taken at
+        7,360 rows rather than a measurement at the size stated, and it should
+        not have been written down -- the measured value is 3.5x larger than
+        the guess. It is now a run in the repository, which is what the rule
+        requires.
         """
         torch.manual_seed(self.seed)
         _threads = torch.get_num_threads()
