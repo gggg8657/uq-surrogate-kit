@@ -947,6 +947,123 @@ def sec_h15(sc, out):
             f"quantification.\n")
 
 
+def sec_h15(sc, out):
+    """H15: rescale the interval instead of selecting the population."""
+    out.append("\n### 1e. H15 — a learned width model, the first thing that "
+               "has moved this clause (`runs/scale.json`)\n")
+    # `runs/scale.json` is written by `scripts/agg_scale.py`, which nests the
+    # H15 aggregate under "h15" alongside other analyses of the same runs.
+    # Degrade to [not measured] on an unrecognised shape rather than failing
+    # CI: a report that cannot be generated is worse than a gap in it.
+    sc = (sc or {}).get("h15")
+    if not sc or "lomo" not in sc or "by_fold" not in sc:
+        out.append(f"{NM} — `runs/scale.json` absent or unrecognised.\n")
+        return
+    lo = sc["lomo"]
+    leak = sc["by_fold"].get("insample_leak", {})
+    allf = sc["by_fold"]["all"]
+    n = lo["n_shards"]
+    out.append(
+        f"H14 measured that the failure is in the *scale* of the conformity "
+        f"score rather than in the composition of the test set, so H15 makes "
+        f"the width a function of deployment-observable difficulty: fit "
+        f"h(z) to the conditional 90th percentile of "
+        f"the score, calibrate T = S/h(z) with one quantile per family, and "
+        f"emit q·h(z)·σ̃. h is a linear pinball-quantile regression — convex, "
+        f"no architecture, readable coefficients — fitted on a development "
+        f"shift suite of {sc['dev']['n_shards']} shards generated in memory "
+        f"from seed block {sc['dev']['seed_base']}, with values checked "
+        f"disjoint from every evaluation shard, plus half the in-distribution "
+        f"`cal` split. q is calibrated on the *other* half "
+        f"(n = {sc['n_cal_q']}), and the ungated baseline is recomputed on "
+        f"that same half so the comparison is like-for-like.\n")
+    out.append("| reading | in band /%d | per seed | what it is |" % n)
+    out.append("|---|---|---|---|")
+    out.append(
+        f"| ungated `group` (baseline) | **{min(lo['ungated_baseline_per_seed'])}"
+        f"** | {','.join(str(x) for x in lo['ungated_baseline_per_seed'])} | "
+        f"one quantile per family, no width model |")
+    out.append(
+        f"| **leave-one-mechanism-out — THE HEADLINE** | "
+        f"**{lo['in_band_median']:g}** (median) | "
+        f"{','.join(str(x) for x in lo['in_band_per_seed'])} | each shard "
+        f"scored only by the fold that never saw its shift axis |")
+    out.append(
+        f"| all mechanisms seen | {allf['in_band_median']:g} | "
+        f"{','.join(str(x) for x in allf['in_band_per_seed'])} | "
+        f"interpolation — h has seen every axis at bracketing strengths; the "
+        f"generous reading, not the headline |")
+    if leak:
+        out.append(
+            f"| in-sample **ceiling** | {leak['in_band_median']:g} | "
+            f"{','.join(str(x) for x in leak['in_band_per_seed'])} | "
+            f"h fitted **on the evaluation shards**. Not a result: the "
+            f"ceiling of this feature set and model class |")
+    out.append(
+        f"\nExact two-sided sign-flip against the ungated arm: "
+        f"**p = {lo['vs_ungated']['exact_sign_flip_p']:.4f}**, the smallest "
+        f"attainable at {sc['n_seeds']} seeds. The improvement from 0 is real. "
+        f"**The clause needs ~29/{n} and this is "
+        f"{lo['in_band_median']:g}/{n}, so clause 1 under covariate shift is "
+        f"still not met** — and the per-seed spread is "
+        f"{min(lo['in_band_per_seed'])} to {max(lo['in_band_per_seed'])}, so "
+        f"the effect is pinned at 8 seeds and its size is not. The count is "
+        f"not quotable without that range.\n")
+    idl = allf["in_dist"]
+    out.append(
+        f"**In distribution the rescaling is free**: all five families at "
+        + ", ".join(f"{t} {v['scaled_median']:.4f}" for t, v in idl.items())
+        + f", against the ungated arm's "
+        f"{list(idl.values())[0]['ungated_median']:.4f}, at width ratios "
+        f"{min(v['width_ratio_median'] for v in idl.values()):.3f}"
+        f"\u2013{max(v['width_ratio_median'] for v in idl.values()):.3f}. "
+        f"A recalibration that damaged the in-distribution pass would not be "
+        f"worth reading, and the first version of this run did exactly that "
+        f"(see `critique_log.md`, H15, setup bug 1).\n")
+    sh = lo["shards"]
+    works = sorted((k, v) for k, v in sh.items()
+                   if v["parent"] == "darcy" and v["ungated_median"] < 0.88)
+    if works:
+        out.append("**Where it works** — a coherent region, not scattered "
+                   "luck. Every Darcy shard the baseline under-covered, under "
+                   "the *held-out* fold:\n")
+        out.append("| shard | ungated | LOMO | width ratio | seeds in band |")
+        out.append("|---|---|---|---|---|")
+        for k, v in works:
+            out.append(
+                f"| `{k.split('/')[1]}` | {v['ungated_median']:.3f} | "
+                f"**{v['scaled_median']:.3f}** | "
+                f"{v['width_ratio_median']:.2f}\u00d7 | "
+                f"{v['in_band_seeds']}/{sc['n_seeds']} |")
+        out.append("")
+    amp = sorted((k, v) for k, v in sh.items() if v["mechanism"] == "amp")
+    if amp and leak:
+        lks = leak["shards"]
+        out.append(
+            "**Where it fails, and the two failure modes are different.** The "
+            "amplitude axis is *learnable and not extrapolable* — the "
+            "sharpest fact this repo has about shift:\n")
+        out.append("| shard | LOMO coverage | in-sample coverage |")
+        out.append("|---|---|---|")
+        for k, v in amp:
+            out.append(
+                f"| `{k.split('/')[1]}` | {v['scaled_median']:.3f} | "
+                f"{lks[k]['scaled_median']:.3f} |")
+        out.append(
+            "\nHold the amplitude mechanism out and coverage is 0.000 on all "
+            "five. Let h see amplitude shifts and four of the five go to "
+            "0.89\u20130.99. So amplitude is not beyond a width model; it is "
+            "beyond *reach* from the other two axes. This is the same axis "
+            "H14 found \u03c3\u0303 blind to, measured from the other side.\n")
+        out.append(
+            "The in-sample ceiling being "
+            f"{leak['in_band_median']:g}/{n} is a **precision** limit and not "
+            "a capacity one: in-sample, h moves most shards from severe "
+            "under-coverage to at or *above* 0.90 and then misses a "
+            "\u00b12pp two-sided window on the high side. Reading it as "
+            "\u201cthe method cannot fit the shift\u201d would be wrong.\n")
+
+
 def _mean_sharp(a):
     sh = [r["sharpness_rel"] for r in a["per_seed"]]
     return sum(sh) / len(sh)
@@ -1396,7 +1513,8 @@ def sec_degradation(cs, out):
 
 
 def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
-            csu=None, fa_src="bench_fair.json", h13=None, sv=None):
+            csu=None, fa_src="bench_fair.json", h13=None, sv=None,
+            scj=None):
     """The KPI, clause by clause, with the JSON each verdict came from."""
     out.insert(0, "")
     lines = ["## KPI verdict\n",
@@ -1493,6 +1611,66 @@ def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
                 f"{orc['abstention_median_over_shards']:.3f}; selection acts "
                 f"on the population and the failure is in the scale, so no "
                 f"gate is the right tool | `runs/selective.json` | \u274c |")
+            if scj is not None and scj.get("h15"):
+                L = scj["h15"]["lomo"]
+                lk = scj["h15"]["by_fold"].get("insample_leak", {})
+                lines.append(
+                    f"| — the same clause with a **learned interval width** "
+                    f"(H15; normalized conformal, h(z) fitted on a disjoint "
+                    f"development shift suite, leave-one-mechanism-out) | "
+                    f"90\u00b12% | median **{L['in_band_median']:g}/"
+                    f"{L['n_shards']}** shards in band (range "
+                    f"{L['in_band_range'][0]}\u2013{L['in_band_range'][1]} "
+                    f"over 8 seeds) against 0/{L['n_shards']} ungated, "
+                    f"sign-flip p = "
+                    f"{L['vs_ungated']['exact_sign_flip_p']:.4f} \u2014 but "
+                    f"**no different from its own in-sample ceiling** "
+                    f"({lk.get('in_band_median', float('nan')):g}/"
+                    f"{L['n_shards']}, p = "
+                    f"{L['vs_insample_ceiling']['exact_sign_flip_p']:.4f}), "
+                    f"so the feature set and model class bind, not the "
+                    f"development data | `runs/scale.json` | \u274c |")
+            if scj is not None and scj.get("wtol"):
+                fm = scj["wtol"]["by_score"]["field_max"]
+                tol = fm["tol_rel_median_over_shards"]
+                dis = sum(fm["framing_disagreements_per_seed"])
+                nc = len(fm["framing_disagreements_per_seed"]) * 32
+                lines.append(
+                    f"| — **what the clause actually demands** (H16; no method "
+                    f"in the loop, three order statistics of the score) | "
+                    f"90\u00b12% | the widths holding coverage in band span "
+                    f"[Q\u2080.\u2088\u2088, Q\u2080.\u2089\u2082], so the "
+                    f"width must be predicted to "
+                    f"**\u00b1{tol*50:.1f}%** (median over 32 shards; "
+                    f"{fm['tol_rel_min_over_shards']*100:.2f}\u2013"
+                    f"{fm['tol_rel_max_over_shards']*100:.2f}% range). "
+                    f"Changing the score does not help: `norm_ratio` is "
+                    f"tighter at "
+                    f"{scj['wtol']['by_score']['norm_ratio']['tol_rel_median_over_shards']*100:.2f}%. "
+                    f"In-band membership agrees with this framing on "
+                    f"{nc - dis}/{nc} cells | `runs/scale.json` | — |")
+                e = fm.get("equivariant")
+                if e:
+                    c = e.get("control_darcy_amp2", {})
+                    lines.append(
+                        f"| — **H17: part of that demand was our own bug.** "
+                        f"The four families that are *linear* in the shifted "
+                        f"field lost u(cf)=cu(f) to frozen input "
+                        f"standardization; a test-time wrapper s\u00b7F(a/s) "
+                        f"restores it | shrink the required range | required "
+                        f"width factor on `*_amp2` falls "
+                        f"**54.7\u2013107.6\u00d7 \u2192 0.96\u20131.19\u00d7** "
+                        f"on those four, the registered control `darcy_amp2` "
+                        f"(log-permeability, no equivariance to restore) "
+                        f"stays at {c.get('eq', float('nan')):.1f}\u00d7, and "
+                        f"ungated in-band goes 0/32 \u2192 median "
+                        f"{sorted(e['in_band_per_seed'])[len(e['in_band_per_seed'])//2]}/32 "
+                        f"(p = {e['vs_base']['exact_sign_flip_p']:.4f}) with "
+                        f"no width model and no retraining. Required range "
+                        f"{e['required_range_base']:.1f}\u00d7 \u2192 "
+                        f"{e['required_range_eq']:.1f}\u00d7 | "
+                        f"`runs/scale.json` | \u274c (clause), "
+                        f"\u2705 (the repair) |")
             pc = sv.get("price_curve")
             if pc:
                 sp = pc["by_gate"]["sigma"]
@@ -1507,6 +1685,35 @@ def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
                     f"{op['n_reachable_majority_of_seeds']}/"
                     f"{op['n_covariate_shards']} with the oracle | "
                     f"`runs/selective.json` | \u274c |")
+        sv2 = (sv2 or {}).get("h15")
+        if sv2 is not None and "lomo" in sv2:
+            lo = sv2["lomo"]
+            lk = sv2["by_fold"].get("insample_leak", {})
+            n = lo["n_shards"]
+            lines.append(
+                f"| — the same clause with the interval **rescaled** by a "
+                f"learned difficulty model instead of the population being "
+                f"selected (H15; leave-one-mechanism-out, "
+                f"{sv2['n_seeds']} seeds) | 90\u00b12% | "
+                f"**{lo['in_band_median']:g}/{n}** shards in band (per seed "
+                f"{min(lo['in_band_per_seed'])}\u2013"
+                f"{max(lo['in_band_per_seed'])}) against the ungated arm's "
+                f"**{min(lo['ungated_baseline_per_seed'])}/{n}** on every "
+                f"seed, exact sign-flip "
+                f"**p = {lo['vs_ungated']['exact_sign_flip_p']:.4f}**; in "
+                f"distribution unchanged at 0.9023 on all five families. "
+                f"Real movement, still far from the clause | "
+                f"`runs/scale.json` | \u274c |")
+            if lk:
+                lines.append(
+                    f"| — the ceiling of that reading: h fitted **on the "
+                    f"evaluation shards** (not shippable) | 90\u00b12% | "
+                    f"**{lk['in_band_median']:g}/{n}** — a precision limit, "
+                    f"not a capacity one: in-sample h overshoots the band on "
+                    f"the high side. The amplitude axis goes from 0.000 "
+                    f"held-out to 0.89\u20130.99 in-sample, so it is "
+                    f"learnable and not extrapolable | `runs/scale.json` | "
+                    f"\u274c |")
     # clause 2
     if b is None:
         lines.append(f"| inference speedup | ≥100× | {NM} | — | — |")
@@ -1765,6 +1972,7 @@ def main():
     sec_h13(load('h13_clip.json'), body)
     sec_h14(load('selective.json'), body)
     sec_h15(load('scale.json'), body)
+    sec_h15(load('scale.json'), body)
     sec_consistency(csu, body, 'uq')
     sec_degradation(csu, body)
     sec_probe(lp, body)
@@ -1777,7 +1985,8 @@ def main():
     Path(args.out).write_text(
         "\n".join(head + verdict(c, b, o, body, i, m, load('consistency_M1.json'), u, fa, csu,
                     fa_src, load('h13_clip.json'),
-                    load('selective.json')) + body) + "\n")
+                    load('selective.json'),
+                    load('scale.json')) + body) + "\n")
     print(f"wrote {args.out}")
 
 

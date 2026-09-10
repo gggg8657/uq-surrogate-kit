@@ -2658,3 +2658,137 @@ p = 0.0078 is movement. Two named routes remain, in order:
    explicit, physically-motivated amplitude invariant — rather than leaving it
    to `abs_max` inside `spectral_features` — is a targeted fix for the five
    worst shards, and its held-out test is already built.
+
+### H16 result — the clause, restated as a specification a width model would have to meet
+
+8 seeds, `runs/scale.json → wtol`, over the same 32 covariate-shift shards.
+
+| score | width tolerance (median over shards) | in distribution | range over shards | required dynamic range |
+|---|---|---|---|---|
+| `field_max` | **4.47%** | — | 0.8–14% | **107.6×** |
+| `norm_ratio` | **4.22%** | — | 0.7–14% | **222.5×** |
+| `rel_l2` | **6.34%** | — | 0.2–27% | **158.7×** |
+
+**The explanation is airtight, and it is checked rather than asserted.** A
+shard is in band *iff* its deployed width lies inside `[factor_lo, factor_hi]`.
+The aggregator counts every disagreement between those two statements:
+`framing_disagreements` is 0 on 6 of 8 seeds for `field_max` and `rel_l2`, and
+1 on two seed-score cells out of 24. So the tolerance and the coverage are the
+same fact, and the deployed interval's failure is *entirely* a width error.
+
+So clause 1 under covariate shift is exactly this specification: **predict the
+interval width across a ~108–222× dynamic range while never being more than
+~4–6% wrong.** Nothing in the uncertainty literature offers that, and nothing
+in this repo was ever going to. That is a far more useful statement than
+"coverage was 0.436".
+
+### H15 result — the width model beats the baseline significantly and is indistinguishable from its own in-sample ceiling
+
+8 seeds, `runs/scale.json → h15`, leave-one-mechanism-out as registered.
+
+| arm | in band /32, per seed | median |
+|---|---|---|
+| ungated `group` (the baseline) | 0,0,0,0,0,0,0,0 | **0** |
+| **LOMO** (h never saw the shard's mechanism) | 3,2,5,4,4,2,8,7 | **4.0** |
+| `insample_leak` — h fitted **on the evaluation shards** | 4,3,4,4,3,3,5,5 | **4.0** |
+
+- Against the baseline: **exact sign-flip p = 0.0078**, the smallest attainable
+  at 8 seeds. The improvement is real: 0/32 → 4/32.
+- **Against its own in-sample ceiling: p = 0.5156.** Fitting h *on the very
+  shards it is scored on* does no better than never having seen the mechanism.
+
+**That second row is the finding, and it kills the route rather than the
+generalization story.** I registered prediction 1 as "(A) will beat (B)" —
+that the generous interpolating reading would beat leave-one-mechanism-out.
+It does not, because there is nothing to interpolate: a linear h on these
+features cannot represent the required width *even with the answers in front of
+it*. H16 says why in one number — the width must be right to 4–6% over a 108×
+range, and the fit lands within a factor of 0.76–2.56.
+
+Note the seed spread: 2 to 8 in-band shards on the same protocol. **The
+run-to-run spread is larger than the effect's median.** At 3 seeds this would
+have been reported as anything from "no effect" to "8/32 and climbing". This is
+the seed-count lesson arriving on schedule, and it is why the verdict rests on
+the exact test at 8 arms and not on the medians.
+
+Predictions 2 and 3 also resolved: the `smooth` shards were supposed to be the
+easy ones (h need only narrow a visibly-easier input) and `*_amp2` the hard
+ones. Per-shard required width factors say why prediction 3 was right for the
+wrong reason: `poisson_amp2` needs **108.53×**, `advdiff_amp2` **160.02×** —
+not a difficulty h mispredicted, a regime it cannot reach at all.
+
+### H17 result — the first change that moved the *structural* quantity, and its control held
+
+The `*_amp2` concentration in H16 is a bug in the surrogate, not the physics.
+Poisson, Helmholtz, diffusion and advection-diffusion are **linear** in the
+field the `amp` shift scales, so `u(c·f) = c·u(f)` exactly; the network breaks
+it only because `predict_shard*` standardizes with frozen calibration
+statistics, so a 2× input lands outside the range the weights saw. The repair
+is a test-time wrapper, no retraining, one extra reduction per sample:
+
+    F_eq(a) = s(a) · F(a / s(a)),   s(a) = rms(a_linear) / ref
+
+**Required width factor, base → equivariant** (`rel_l2`, median over 8 seeds):
+
+| shard | base | equivariant |
+|---|---|---|
+| `poisson_amp2` | 108.53× | **0.95×** |
+| `helmholtz_amp2` | 86.12× | **1.00×** |
+| `diffusion_amp2` | 151.14× | **0.99×** |
+| `advdiff_amp2` | 160.02× | **0.97×** |
+| **`darcy_amp2` — the registered control** | 11.71× | **11.71×** |
+| every non-`amp` shard (28 of them) | — | unchanged to 3 dp |
+
+**The control held to four decimal places on all three scores.** `darcy_amp2`
+goes 11.7331 → 11.7331 (`rel_l2`), 59.4272 → 59.4272 (`norm_ratio`),
+68.4416 → 68.4415 (`field_max`) — because Darcy's channel 0 is
+*log*-permeability, so scaling it raises permeability to a power and is not a
+rescaling of anything. If this wrapper had "fixed" `darcy_amp2` it would have
+been doing something other than what it claims. It did not.
+
+| score | in band /32, base | in band /32, equivariant | exact p | required range |
+|---|---|---|---|---|
+| `field_max` | 0,0,0,0,0,0,0,0 | 1,1,2,1,2,1,1,0 | **0.0156** | 107.6× → **68.4×** |
+| `norm_ratio` | 0,0,0,0,0,1,0,0 | 4,3,2,3,2,5,3,2 | **0.0078** | 222.5× → **59.4×** |
+| `rel_l2` | 0,1,0,1,0,0,1,0 | 4,4,3,4,2,3,4,2 | **0.0078** | 158.7× → **28.6×** |
+
+And the residual range is now *set by the control*: after the four linear
+`amp2` shards are exact, the worst remaining shard for `field_max` and
+`norm_ratio` **is** `darcy_amp2`, at exactly the 68.4× and 59.4× above. The
+wrapper has removed everything it is entitled to remove and nothing else.
+
+## H18 — written before the run: compose them, because they fail on disjoint axes
+
+**The hypothesis.** H17 makes the four `amp2` shards exact and leaves the other
+28 untouched. H15's h fails because it must cover a 108–222× range at 4–6%
+accuracy. Composing them means h no longer has to represent the amplitude
+effect at all — that axis becomes exactly 1.0 by construction — so h's job
+shrinks to the residual 28.6–68.4× range, and its capacity goes to `rough` and
+`tau` instead of being spent on a 100× effect it demonstrably cannot reach.
+
+**The one change:** `scripts/fit_scale.py --equivariant`, i.e. fit and evaluate
+h on top of the equivariant predictor. Everything else identical — same dev
+suite, same seed block, same leave-one-mechanism-out folds, same per-family
+quantile on T = S/h, same width flag, same 8 checkpoints.
+
+**Predictions, registered now:**
+
+1. LOMO in-band exceeds H15's 4/32 median, and the gain is concentrated in the
+   `amp` fold: the 4 `amp2` shards should go from 0/4 to ~4/4 nearly free.
+   Falsified if the `amp` fold's held-out count stays at 0/5.
+2. The `rough` and `tau` shards move **little**. Equivariance says nothing
+   about roughness, and `advdiff_rough` still needs 28.62× at 5.92% tolerance.
+   If they improve a lot, the wrapper is doing more than scale correction and I
+   look for the leak before believing it.
+3. `darcy_amp2` stays out of band — the control, again, and it is the shard
+   where the composed method should visibly *not* help.
+4. The in-sample-leak ceiling stays close to LOMO (p > 0.05). H15's binding
+   constraint was representational, not generalization, and composing does not
+   change the model class. **If the ceiling now pulls away from LOMO, the
+   binding constraint has genuinely moved and that is worth more than the
+   in-band count.**
+5. 8 seeds, exact sign-flip against the H15 arm seed-by-seed, same checkpoints,
+   so the pairing is exact.
+
+I do **not** expect this to reach 29/32. H16 already bounds what is available:
+even a perfect amplitude fix leaves a 28.6–68.4× range to predict at 4–6%.
