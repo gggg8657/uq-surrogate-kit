@@ -712,6 +712,753 @@
       }
     }
   },
+  "h18": {
+    "n_seeds": 8,
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "leak_fold": "insample_leak",
+    "leak_note": "h fitted ON the evaluation shards: an in-sample ceiling for this feature set and model class, never a result",
+    "dev": {
+      "n_shards": 75,
+      "n_per_shard": 256,
+      "seed_base": 40000,
+      "by_mechanism": {
+        "alpha": {
+          "n_rows": 8960,
+          "n_shards": 35
+        },
+        "tau": {
+          "n_rows": 5120,
+          "n_shards": 20
+        },
+        "amp": {
+          "n_rows": 5120,
+          "n_shards": 20
+        }
+      },
+      "disjoint_checked": true
+    },
+    "band": [
+      0.88,
+      0.92
+    ],
+    "width_flag": 3.0,
+    "n_cal_fit": 2560,
+    "n_cal_q": 2560,
+    "by_fold": {
+      "all": {
+        "leak": false,
+        "held_out_mechanism": null,
+        "in_band_per_seed": [
+          4,
+          3,
+          3,
+          2,
+          5,
+          5,
+          2,
+          2
+        ],
+        "in_band_deployable_per_seed": [
+          3,
+          2,
+          3,
+          2,
+          3,
+          3,
+          1,
+          2
+        ],
+        "in_band_median": 3.0,
+        "in_dist_coverage_median": {
+          "poisson": 0.90234375,
+          "helmholtz": 0.90234375,
+          "diffusion": 0.90234375,
+          "advdiff": 0.90234375,
+          "darcy": 0.90234375
+        },
+        "in_dist_coverage_pooled_q_median": {
+          "poisson": 0.8369140625,
+          "helmholtz": 0.8359375,
+          "diffusion": 0.8515625,
+          "advdiff": 0.978515625,
+          "darcy": 0.9990234375
+        },
+        "top_features": [
+          "mu_spec10",
+          "log_sigmax",
+          "a_spec10",
+          "mu_spec3",
+          "mu_spec1",
+          "mu_spec4"
+        ]
+      },
+      "alpha": {
+        "leak": false,
+        "held_out_mechanism": "alpha",
+        "in_band_per_seed": [
+          1,
+          3,
+          2,
+          2,
+          2,
+          2,
+          1,
+          1
+        ],
+        "in_band_deployable_per_seed": [
+          1,
+          3,
+          2,
+          2,
+          2,
+          2,
+          1,
+          1
+        ],
+        "in_band_median": 2.0,
+        "in_dist_coverage_median": {
+          "poisson": 0.90234375,
+          "helmholtz": 0.90234375,
+          "diffusion": 0.90234375,
+          "advdiff": 0.90234375,
+          "darcy": 0.90234375
+        },
+        "in_dist_coverage_pooled_q_median": {
+          "poisson": 0.837890625,
+          "helmholtz": 0.8203125,
+          "diffusion": 0.892578125,
+          "advdiff": 0.9482421875,
+          "darcy": 1.0
+        },
+        "top_features": [
+          "mu_spec2",
+          "log_sigmax",
+          "log_sigrel",
+          "mu_spec1",
+          "mu_spec10",
+          "a_spec10"
+        ]
+      },
+      "amp": {
+        "leak": false,
+        "held_out_mechanism": "amp",
+        "in_band_per_seed": [
+          4,
+          6,
+          2,
+          2,
+          1,
+          4,
+          0,
+          1
+        ],
+        "in_band_deployable_per_seed": [
+          3,
+          2,
+          2,
+          2,
+          1,
+          2,
+          0,
+          0
+        ],
+        "in_band_median": 2.0,
+        "in_dist_coverage_median": {
+          "poisson": 0.90234375,
+          "helmholtz": 0.90234375,
+          "diffusion": 0.90234375,
+          "advdiff": 0.90234375,
+          "darcy": 0.90234375
+        },
+        "in_dist_coverage_pooled_q_median": {
+          "poisson": 0.8544921875,
+          "helmholtz": 0.931640625,
+          "diffusion": 0.9033203125,
+          "advdiff": 0.9970703125,
+          "darcy": 0.828125
+        },
+        "top_features": [
+          "mu_spec4",
+          "mu_spec1",
+          "fam_advdiff",
+          "fam_diffusion",
+          "fam_poisson",
+          "a_spec2"
+        ]
+      },
+      "insample_leak": {
+        "leak": true,
+        "held_out_mechanism": null,
+        "in_band_per_seed": [
+          2,
+          5,
+          3,
+          4,
+          4,
+          3,
+          0,
+          0
+        ],
+        "in_band_deployable_per_seed": [
+          2,
+          5,
+          1,
+          4,
+          3,
+          1,
+          0,
+          0
+        ],
+        "in_band_median": 3.0,
+        "in_dist_coverage_median": {
+          "poisson": 0.90234375,
+          "helmholtz": 0.90234375,
+          "diffusion": 0.90234375,
+          "advdiff": 0.90234375,
+          "darcy": 0.90234375
+        },
+        "in_dist_coverage_pooled_q_median": {
+          "poisson": 0.8203125,
+          "helmholtz": 0.8876953125,
+          "diffusion": 0.841796875,
+          "advdiff": 0.9921875,
+          "darcy": 0.96875
+        },
+        "top_features": [
+          "mu_spec10",
+          "mu_spec1",
+          "log_sigmax",
+          "a_spec10",
+          "log_mumax",
+          "a_spec9"
+        ]
+      },
+      "tau": {
+        "leak": false,
+        "held_out_mechanism": "tau",
+        "in_band_per_seed": [
+          3,
+          7,
+          5,
+          1,
+          3,
+          0,
+          5,
+          3
+        ],
+        "in_band_deployable_per_seed": [
+          1,
+          5,
+          3,
+          0,
+          2,
+          0,
+          3,
+          3
+        ],
+        "in_band_median": 3.0,
+        "in_dist_coverage_median": {
+          "poisson": 0.90234375,
+          "helmholtz": 0.90234375,
+          "diffusion": 0.90234375,
+          "advdiff": 0.90234375,
+          "darcy": 0.90234375
+        },
+        "in_dist_coverage_pooled_q_median": {
+          "poisson": 0.888671875,
+          "helmholtz": 0.8037109375,
+          "diffusion": 0.88671875,
+          "advdiff": 0.9326171875,
+          "darcy": 1.0
+        },
+        "top_features": [
+          "mu_spec3",
+          "log_sigmax",
+          "mu_spec10",
+          "a_spec10",
+          "mu_spec4",
+          "a_spec1"
+        ]
+      }
+    },
+    "lomo": {
+      "note": "each shard scored only by the fold that never saw its shift mechanism; the insample_leak fold is excluded by construction",
+      "n_shards": 32,
+      "in_band_per_seed": [
+        1,
+        3,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      "in_band_deployable_per_seed": [
+        0,
+        3,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      "in_band_median": 1.0,
+      "in_band_range": [
+        0,
+        3
+      ],
+      "ungated_baseline_per_seed": [
+        2,
+        2,
+        1,
+        1,
+        2,
+        2,
+        1,
+        0
+      ],
+      "vs_ungated": {
+        "diff_per_seed": [
+          -1,
+          1,
+          0,
+          0,
+          -1,
+          -1,
+          0,
+          0
+        ],
+        "exact_sign_flip_p": 0.625
+      },
+      "vs_insample_ceiling": {
+        "leak_per_seed": [
+          2,
+          5,
+          3,
+          4,
+          4,
+          3,
+          0,
+          0
+        ],
+        "diff_per_seed": [
+          -1,
+          -2,
+          -2,
+          -3,
+          -3,
+          -2,
+          1,
+          0
+        ],
+        "exact_sign_flip_p": 0.046875
+      },
+      "underprediction_factor__uses_truth": {
+        "min": 0.3428757583174339,
+        "max": 76.76460784176113,
+        "median": 1.308470592154472
+      },
+      "shards": {
+        "input_shift/poisson_rough/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.02603029366582632,
+          "scaled_median": 0.0,
+          "ungated_median": 0.0,
+          "width_ratio_median": 1.1862460842766973,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/poisson_smooth/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.0024303975515067577,
+          "scaled_median": 0.0,
+          "ungated_median": 0.9931640625,
+          "width_ratio_median": 0.3280549413193852,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/poisson_tau/N64": {
+          "mechanism": "tau",
+          "parent": "poisson",
+          "rel_l2_mean": 0.008523493073880672,
+          "scaled_median": 0.9912109375,
+          "ungated_median": 0.0,
+          "width_ratio_median": 3.1720631717588503,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 8
+        },
+        "input_shift/poisson_amp2/N64": {
+          "mechanism": "amp",
+          "parent": "poisson",
+          "rel_l2_mean": 0.0030271140858531,
+          "scaled_median": 1.0,
+          "ungated_median": 0.7314453125,
+          "width_ratio_median": 2.527041067595175,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/helmholtz_rough/N64": {
+          "mechanism": "alpha",
+          "parent": "helmholtz",
+          "rel_l2_mean": 0.009966602083295584,
+          "scaled_median": 0.529296875,
+          "ungated_median": 0.0,
+          "width_ratio_median": 2.294763721845847,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/helmholtz_smooth/N64": {
+          "mechanism": "alpha",
+          "parent": "helmholtz",
+          "rel_l2_mean": 0.004548600409179926,
+          "scaled_median": 0.0,
+          "ungated_median": 0.9990234375,
+          "width_ratio_median": 0.30643966540350637,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/helmholtz_tau/N64": {
+          "mechanism": "tau",
+          "parent": "helmholtz",
+          "rel_l2_mean": 0.009106519166380167,
+          "scaled_median": 0.91796875,
+          "ungated_median": 0.015625,
+          "width_ratio_median": 2.0430955383907605,
+          "in_band_seeds": 3,
+          "in_band_deployable_seeds": 3,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/helmholtz_amp2/N64": {
+          "mechanism": "amp",
+          "parent": "helmholtz",
+          "rel_l2_mean": 0.0033841864205896854,
+          "scaled_median": 1.0,
+          "ungated_median": 0.5751953125,
+          "width_ratio_median": 2.3148848654004643,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/diffusion_rough/N64": {
+          "mechanism": "alpha",
+          "parent": "diffusion",
+          "rel_l2_mean": 0.05255131982266903,
+          "scaled_median": 0.0,
+          "ungated_median": 0.0,
+          "width_ratio_median": 1.5846048529322911,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 1
+        },
+        "input_shift/diffusion_smooth/N64": {
+          "mechanism": "alpha",
+          "parent": "diffusion",
+          "rel_l2_mean": 0.0023494302295148373,
+          "scaled_median": 0.0,
+          "ungated_median": 1.0,
+          "width_ratio_median": 0.4432295595432229,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/diffusion_tau/N64": {
+          "mechanism": "tau",
+          "parent": "diffusion",
+          "rel_l2_mean": 0.01181588415056467,
+          "scaled_median": 0.8505859375,
+          "ungated_median": 0.0,
+          "width_ratio_median": 3.730180507493844,
+          "in_band_seeds": 1,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 8
+        },
+        "input_shift/diffusion_amp2/N64": {
+          "mechanism": "amp",
+          "parent": "diffusion",
+          "rel_l2_mean": 0.002566174720413983,
+          "scaled_median": 1.0,
+          "ungated_median": 0.9091796875,
+          "width_ratio_median": 1.7936903222136662,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/advdiff_rough/N64": {
+          "mechanism": "alpha",
+          "parent": "advdiff",
+          "rel_l2_mean": 0.06134593300521374,
+          "scaled_median": 0.0,
+          "ungated_median": 0.0,
+          "width_ratio_median": 2.925909629395048,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 2
+        },
+        "input_shift/advdiff_smooth/N64": {
+          "mechanism": "alpha",
+          "parent": "advdiff",
+          "rel_l2_mean": 0.0023679706500843167,
+          "scaled_median": 0.0,
+          "ungated_median": 0.998046875,
+          "width_ratio_median": 0.3695443975359347,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/advdiff_tau/N64": {
+          "mechanism": "tau",
+          "parent": "advdiff",
+          "rel_l2_mean": 0.01454008324071765,
+          "scaled_median": 0.0068359375,
+          "ungated_median": 0.0,
+          "width_ratio_median": 2.2540784006861423,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/advdiff_amp2/N64": {
+          "mechanism": "amp",
+          "parent": "advdiff",
+          "rel_l2_mean": 0.0026077250950038433,
+          "scaled_median": 0.9990234375,
+          "ungated_median": 0.919921875,
+          "width_ratio_median": 1.749461357006025,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/darcy_rough/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.07747634127736092,
+          "scaled_median": 0.5693359375,
+          "ungated_median": 0.546875,
+          "width_ratio_median": 1.0018668147126752,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/darcy_smooth/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.02974011842161417,
+          "scaled_median": 0.001953125,
+          "ungated_median": 0.99609375,
+          "width_ratio_median": 0.059413626568175414,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/darcy_tau/N64": {
+          "mechanism": "tau",
+          "parent": "darcy",
+          "rel_l2_mean": 0.10546930506825447,
+          "scaled_median": 1.0,
+          "ungated_median": 0.2548828125,
+          "width_ratio_median": 4.907759231223939,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 8
+        },
+        "input_shift/darcy_amp2/N64": {
+          "mechanism": "amp",
+          "parent": "darcy",
+          "rel_l2_mean": 0.7611617147922516,
+          "scaled_median": 0.0,
+          "ungated_median": 0.0,
+          "width_ratio_median": 3.185729982056932,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 6
+        },
+        "graded_rough/poisson_dam0p1/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.003245459869503975,
+          "scaled_median": 0.958984375,
+          "ungated_median": 0.818359375,
+          "width_ratio_median": 1.1985369714388825,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/poisson_dam0p2/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.0035523668630048633,
+          "scaled_median": 0.970703125,
+          "ungated_median": 0.5986328125,
+          "width_ratio_median": 1.3908003673610403,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/poisson_dam0p3/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.003976842388510704,
+          "scaled_median": 0.974609375,
+          "ungated_median": 0.333984375,
+          "width_ratio_median": 1.5350031438936962,
+          "in_band_seeds": 1,
+          "in_band_deployable_seeds": 1,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/poisson_dam0p5/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.005763947498053312,
+          "scaled_median": 0.7998046875,
+          "ungated_median": 0.00390625,
+          "width_ratio_median": 1.7651867040139506,
+          "in_band_seeds": 1,
+          "in_band_deployable_seeds": 1,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/poisson_dam0p7/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.009976205881685019,
+          "scaled_median": 0.2099609375,
+          "ungated_median": 0.0,
+          "width_ratio_median": 1.693804854757252,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/poisson_dam1/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.026561571285128593,
+          "scaled_median": 0.0,
+          "ungated_median": 0.0,
+          "width_ratio_median": 1.180847372651807,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/darcy_dam0p1/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.054161787033081055,
+          "scaled_median": 0.94921875,
+          "ungated_median": 0.8466796875,
+          "width_ratio_median": 1.2809722413995854,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/darcy_dam0p2/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.05793454684317112,
+          "scaled_median": 0.94921875,
+          "ungated_median": 0.822265625,
+          "width_ratio_median": 1.314756386550361,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/darcy_dam0p3/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.06534850597381592,
+          "scaled_median": 0.9150390625,
+          "ungated_median": 0.732421875,
+          "width_ratio_median": 1.3436295184895028,
+          "in_band_seeds": 3,
+          "in_band_deployable_seeds": 3,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/darcy_dam0p5/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.07701592147350311,
+          "scaled_median": 0.5615234375,
+          "ungated_median": 0.5712890625,
+          "width_ratio_median": 0.9877518104441605,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/darcy_dam0p7/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.101691123098135,
+          "scaled_median": 0.0419921875,
+          "ungated_median": 0.1982421875,
+          "width_ratio_median": 0.4811558388358384,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/darcy_dam1/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.16974668949842453,
+          "scaled_median": 0.0,
+          "ungated_median": 0.0,
+          "width_ratio_median": 0.052050205055028956,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        }
+      }
+    },
+    "vs_h15": {
+      "h18_per_seed": [
+        1,
+        3,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      "h15_per_seed": [
+        3,
+        2,
+        5,
+        4,
+        4,
+        2,
+        8,
+        7
+      ],
+      "diff_per_seed": [
+        -2,
+        1,
+        -4,
+        -3,
+        -3,
+        -1,
+        -7,
+        -7
+      ],
+      "exact_sign_flip_p": 0.0234375,
+      "note": "paired by checkpoint: both arms use runs/u{k} and an identical dev suite, so the only difference is the equivariant wrapper"
+    }
+  },
   "wtol": {
     "n_seeds": 8,
     "seeds": [

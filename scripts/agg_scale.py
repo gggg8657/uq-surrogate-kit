@@ -226,6 +226,10 @@ def main():
     ap.add_argument("--h15-glob", default="runs/scale_u*_het.json")
     ap.add_argument("--wtol-base-glob", default="runs/wtol_base_u*_het.json")
     ap.add_argument("--wtol-eq-glob", default="runs/wtol_eq_u*_het.json")
+    ap.add_argument("--h18-glob", default="runs/scaleq_u*_het.json",
+                    help="H18: the same width model fitted on top of the H17 "
+                         "equivariant predictor. Paired to the H15 arm by "
+                         "checkpoint, so the sign-flip test is exact.")
     ap.add_argument("--out", default="runs/scale.json")
     args = ap.parse_args()
 
@@ -241,6 +245,24 @@ def main():
         print(f"[H15] in-sample ceiling {L['vs_insample_ceiling']['leak_per_seed']}"
               f", LOMO vs ceiling p="
               f"{L['vs_insample_ceiling']['exact_sign_flip_p']:.4f}")
+    h18 = _load(args.h18_glob)
+    if h18 and h15:
+        res["h18"] = agg_h15(h18)
+        a = res["h18"]["lomo"]["in_band_per_seed"]
+        b = res["h15"]["lomo"]["in_band_per_seed"]
+        if len(a) == len(b):
+            d = [x - y for x, y in zip(a, b)]
+            res["h18"]["vs_h15"] = {
+                "h18_per_seed": a, "h15_per_seed": b, "diff_per_seed": d,
+                "exact_sign_flip_p": (sign_flip(d) if any(d) else 1.0),
+                "note": ("paired by checkpoint: both arms use runs/u{k} and "
+                         "an identical dev suite, so the only difference is "
+                         "the equivariant wrapper"),
+            }
+            print(f"[H18] LOMO {a} vs H15 {b}, diff {d}, "
+                  f"p={res['h18']['vs_h15']['exact_sign_flip_p']:.4f}")
+            print(f"[H18] in-sample ceiling "
+                  f"{res['h18']['lomo']['vs_insample_ceiling']['leak_per_seed']}")
     base, eq = _load(args.wtol_base_glob), _load(args.wtol_eq_glob)
     w = agg_wtol(base, eq)
     if w:
