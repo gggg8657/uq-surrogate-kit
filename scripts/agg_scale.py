@@ -275,6 +275,11 @@ def main():
                     help="H18: the same width model fitted on top of the H17 "
                          "equivariant predictor. Paired to the H15 arm by "
                          "checkpoint, so the sign-flip test is exact.")
+    ap.add_argument("--h19-glob", default="runs/scalena_u*_het.json",
+                    help="H19: the H15 arm with the two input-amplitude "
+                         "features ablated. Paired against BOTH the H15 and "
+                         "the H18 arms by checkpoint, because the question is "
+                         "which of the two it resembles.")
     ap.add_argument("--out", default="runs/scale.json")
     args = ap.parse_args()
 
@@ -308,6 +313,36 @@ def main():
                   f"p={res['h18']['vs_h15']['exact_sign_flip_p']:.4f}")
             print(f"[H18] in-sample ceiling "
                   f"{res['h18']['lomo']['vs_insample_ceiling']['leak_per_seed']}")
+    h19 = _load(args.h19_glob)
+    if h19 and h15:
+        res["h19"] = agg_h15(h19)
+        a = res["h19"]["lomo"]["in_band_per_seed"]
+        cmp = {}
+        for name, other in (("h15", res.get("h15")), ("h18", res.get("h18"))):
+            if not other:
+                continue
+            b = other["lomo"]["in_band_per_seed"]
+            if len(a) != len(b):
+                continue
+            d = [x - y for x, y in zip(a, b)]
+            cmp[name] = {"other_per_seed": b, "diff_per_seed": d,
+                         "exact_sign_flip_p": (sign_flip(d) if any(d)
+                                               else 1.0)}
+        res["h19"]["vs"] = {
+            "h19_per_seed": a, "comparisons": cmp,
+            "dropped_features": h19[0].get("dropped_features"),
+            "n_features": h19[0].get("n_features"),
+            "note": ("H19 answers which explanation of H18 holds: resembling "
+                     "H18 means amplitude was the only large learnable signal "
+                     "and H17 removes it exactly; resembling H15 means the "
+                     "equivariant fit merely lost dynamic range in its "
+                     "target."),
+        }
+        print(f"[H19] LOMO {a} (dropped {res['h19']['vs']['dropped_features']},"
+              f" {res['h19']['vs']['n_features']} features)")
+        for k, v in cmp.items():
+            print(f"[H19] vs {k.upper()} {v['other_per_seed']}: diff "
+                  f"{v['diff_per_seed']}, p={v['exact_sign_flip_p']:.4f}")
     base, eq = _load(args.wtol_base_glob), _load(args.wtol_eq_glob)
     w = agg_wtol(base, eq)
     if w:

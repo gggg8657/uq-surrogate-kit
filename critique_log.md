@@ -3191,3 +3191,41 @@ and H15's headline needs re-reading.
 Note on naming: `a4-h19` was taken by a concurrently running feature ablation
 (dropping `a_spec9,a_spec10`, the two largest coefficients), so this is H20 and
 runs on GPU 3 of the lease while that one uses GPU 2. Neither oversubscribes.
+
+### Correction to the H18 mechanism above: the crisp statement is a double count, and it is verified
+
+I attributed H18's regression to "loss mass" — that the amplitude rows dominate
+the pinball loss and removing them changes what h learns everywhere. That is
+the *cause*, but the sharp and checkable statement is narrower: **h was mostly
+an amplitude model, and H17 does the same correction in closed form, so
+composing them double-counts it.**
+
+Verified from the 8-seed runs rather than asserted. Median coefficient over
+`runs/scale_u0..u7_het.json`, fold `all`:
+
+| feature | what it is | median coef | in top-12 on |
+|---|---|---|---|
+| `a_spec9` | **log₁₀(std of input channel 0) — the amplitude** | **+2.8946** | 8/8 seeds |
+| `log_sigrel` | ‖σ‖/‖μ‖ | −0.5011 | 8/8 seeds |
+| `a_spec10` | max\|input channel 0\| — also amplitude | −0.4631 | 8/8 seeds |
+
+The top term is **5.78×** the next. `spectral_features` packs 11 features per
+channel in channel-major order, so indices 9 and 10 of channel 0 are its log
+standard deviation and its absolute maximum; I checked that against the
+function rather than counting the docstring — `f[0,9]` reproduces
+`log10(a[0,0].std())` to the last digit.
+
+So H15's learned width model and H17's closed-form equivariance repair **are
+the same correction**, one fitted and one exact, and applying both inflates the
+amplitude shards to 0.999–1.000. That also explains the over-coverage in the
+H18 table above, which "loss mass" alone does not.
+
+**What this costs H15.** Its headline — 0/32 → 4/32 at p = 0.0078 — stands as a
+measurement, but its *interpretation* narrows sharply: it is largely an
+amplitude correction learned from data, and H17 shows the same correction is
+available exactly, for free, with no fitting and no development suite. A
+concurrently running ablation drops exactly `a_spec9,a_spec10` from the feature
+set (`runs/scalena_u*_het.json`), which settles what is left of H15 once
+amplitude is removed. My separate claim — that the Darcy-ladder win was
+spillover — is what H20's per-family fit tests. Both are running; neither is
+being written up before its numbers exist.

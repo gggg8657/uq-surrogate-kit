@@ -69,6 +69,7 @@ reasons it is too low.
 | — **what the clause demands** (H16, no method in the loop) | — | width must be predicted to **±2.2%** (`field_max`; `norm_ratio` is tighter at 4.22%), against a required range of **107.6×** | — |
 | — after the **equivariance repair** (H17, test-time, no retraining) | — | linear `*_amp2` shards **54.7–107.6× → 0.96–1.19×**; required range **107.6× → 68.4×**; ungated in-band 0/32 → median 1/32, p = 0.0156 | ❌ clause, ✅ repair |
 | **H17 read as a surrogate result: accuracy on the amplitude shifts** | rel-L2 **0.3111–0.4711** | **0.00257–0.00338**, i.e. **0.981–0.997×** the in-distribution error of the same checkpoints; control `darcy_amp2` unchanged at ratio 1.0000; every non-amplitude shard moves ≤ 2.4e-05 | ✅ |
+| — what the H17 wrapper costs (eager path, measured) | claimed "untouched" | **+11.95%** at batch 1, +9.74% at batch 8, **+3.93%** at batch 64; the naive host-side version was **+206%/+857%**. Effect on the clause-2 CUDA-graph reading: **`[not measured]`** | ⚠ claim withdrawn |
 | speedup, GPU, trained families (ensemble) | **0/10 rows ≥100×**, range 0.004×–27× | unchanged | ❌ |
 | speedup, batch 1, CUDA graph, **one favourable field (sample 0)** | not possible | **267.5×** — *not* the clause verdict | ✅ |
 | **— over 24 distinct fields — THE batch-1 verdict** | — | **24/24** clear 100×, worst field **117.0×**, median **187.4×** | ✅ |
@@ -380,6 +381,20 @@ reading always available and mis-set by us) or out-of-band coverage (a real
 statement about the estimator). Both are worth having.
 
 ## The things I got wrong, and caught
+
+**H17's cost claim, withdrawn the same turn it was made.** I wrote that the
+scale wrapper was "one extra reduction per sample, so the 100× row is
+untouched". The arithmetic was one reduction; the implementation cloned the
+input on the *host* and copied it to the GPU twice, measuring **+206% at batch
+1 and +857% at batch 64**. On-device it is +3.9–12.0%. Worse, the benchmark's
+first version divided the clause-2 figure by (1 + overhead) and printed an
+"implied speedup" — overhead measured on the eager path, 117.0× measured under
+CUDA-graph replay, so that was arithmetic across two protocols. The clause-2
+impact is now the literal string `[not measured]` in the JSON and stays there
+until `bench_fair.py` runs with the wrapper inside the captured graph. The
+claim was plausible, the mechanism correct, the arithmetic correct, and the
+implementation 20× off; only running it caught that.
+
 
 - **Our own 40.8× headline** was an H100 clock-ramp artefact (±36% run-to-run,
   now ±1%). Corrected to 23.5× before it was published.

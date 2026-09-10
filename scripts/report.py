@@ -1046,7 +1046,7 @@ def sec_h16(sc, out):
                 f"| {n} | {v['bare']['median_s']*1e3:.3f} ms | "
                 f"{v['wrapped']['median_s']*1e3:.3f} ms | "
                 f"**{v['overhead_frac']*100:+.2f}%** | "
-                f"{v['scale_reduction_only']['median_s']*1e6:.1f} \u03bcs |")
+                f"{v['scale_reduction_only']['median_s']*1e3:.3f} ms |")
         out.append(
             f"\nThe H17 write-up originally argued the wrapper was \u201cone "
             f"extra reduction per sample, so the 100\u00d7 row is "

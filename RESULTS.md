@@ -693,9 +693,9 @@ This is the more useful half of H17: read as a surrogate result rather than a UQ
 
 | batch | unwrapped forward | wrapped | overhead | scale reduction alone |
 |---|---|---|---|---|
-| 1 | 2.270 ms | 2.542 ms | **+11.95%** | 78.4 μs |
-| 8 | 2.516 ms | 2.761 ms | **+9.74%** | 77.9 μs |
-| 64 | 5.257 ms | 5.464 ms | **+3.93%** | 78.2 μs |
+| 1 | 2.270 ms | 2.542 ms | **+11.95%** | 0.078 ms |
+| 8 | 2.516 ms | 2.761 ms | **+9.74%** | 0.078 ms |
+| 64 | 5.257 ms | 5.464 ms | **+3.93%** | 0.078 ms |
 
 The H17 write-up originally argued the wrapper was “one extra reduction per sample, so the 100× row is untouched”. **That was an argument, and measuring it withdrew part of it.** The first implementation computed the scale and cloned the input on the *host* — shards load with `map_location="cpu"` — and then copied the raw input to the GPU a second time: **+206% at batch 1 and +857% at batch 64**. Moving the rescale on-device brings it to the table above. The arithmetic had always been one reduction; the implementation was not.
 
