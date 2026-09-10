@@ -129,6 +129,20 @@ def agg_h15(runs):
     return out
 
 
+def in_dist_rel_l2(pat="runs/conf_u*_het.json"):
+    """Per-family in-distribution rel-L2 for the same checkpoints.
+
+    Read from the conformal runs rather than recomputed, so the reference the
+    H17 accuracy claim is compared against comes from a run on disk and is
+    cited as such.
+    """
+    rs = _load(pat)
+    if not rs:
+        return None
+    return {t: st.median([r["error"][t]["rel_l2_mean"] for r in rs])
+            for t in rs[0]["error"]}
+
+
 def agg_wtol(base, eq):
     """H16 tolerance and the H17 equivariant arm, paired seed by seed."""
     if not base:
@@ -163,6 +177,8 @@ def agg_wtol(base, eq):
             rec["required_factor"][n] = {
                 "base_median": st.median(
                     [1.0 / c["deployed_width_over_ideal"] for c in cells]),
+                "rel_l2_base_median": st.median([c["rel_l2_mean"]
+                                                 for c in cells]),
                 "tol_rel_median": st.median([c["tol_rel"] for c in cells]),
                 "coverage_ungated_median": st.median(
                     [c["coverage_ungated"] for c in cells]),
@@ -202,8 +218,37 @@ def agg_wtol(base, eq):
                 f["eq_coverage_ungated_median"] = st.median(
                     [c["coverage_ungated"] for c in cells])
                 f["eq_in_band_seeds"] = sum(1 for c in cells if c["in_band"])
+                f["rel_l2_eq_median"] = st.median([c["rel_l2_mean"]
+                                                   for c in cells])
+                f["rel_l2_ratio"] = (f["rel_l2_eq_median"]
+                                     / f["rel_l2_base_median"]
+                                     if f["rel_l2_base_median"] else None)
                 f["factor_change"] = (f["eq_median"] / f["base_median"]
                                       if f["base_median"] else None)
+            # H17 turned out to be an ACCURACY result as well as a width one,
+            # and that was free: the shard rel-L2 is already recorded in both
+            # arms, so no rerun was needed to notice it.
+            idl = in_dist_rel_l2()
+            if idl:
+                rec["equivariant"]["in_dist_rel_l2_same_ckpts"] = idl
+                acc = {}
+                for n in names:
+                    f = rec["required_factor"][n]
+                    ref = idl.get(b[0]["shards"][n]["parent"])
+                    acc[n] = {
+                        "rel_l2_base": f["rel_l2_base_median"],
+                        "rel_l2_eq": f["rel_l2_eq_median"],
+                        "ratio": f["rel_l2_ratio"],
+                        "in_dist_reference": ref,
+                        # equal to the in-distribution error is the strong
+                        # claim scale-equivariance predicts; 1.15x of it is
+                        # the loose reading, and both are recorded
+                        "eq_over_in_dist": (f["rel_l2_eq_median"] / ref
+                                            if ref else None)}
+                rec["equivariant"]["accuracy"] = acc
+                rec["equivariant"]["max_abs_rel_l2_change_off_amp"] = max(
+                    abs((acc[n]["ratio"] or 1.0) - 1.0)
+                    for n in names if "amp2" not in n)
             # the required dynamic range is the headline of H16/H17
             rec["equivariant"]["required_range_base"] = max(
                 f["base_median"] for f in rec["required_factor"].values())

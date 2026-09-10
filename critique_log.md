@@ -2909,3 +2909,104 @@ statement, and it is the opposite of where I was looking for three turns.
 
 None of these changed a reported number. All four cost time, and (3) would have
 shipped a repository whose report script did not run.
+
+## H18 result — the composition is significantly WORSE, and it withdraws my reading of H15
+
+Prediction 1 said LOMO in-band would exceed H15's 4/32. It is **0–1/32**.
+8 seeds, paired by checkpoint (`runs/scale.json → h18.vs_h15`):
+
+| arm | LOMO in band /32, per seed | median |
+|---|---|---|
+| H15 (width model alone) | 3, 2, 5, 4, 4, 2, 8, 7 | **4.0** |
+| H18 (width model ∘ equivariance) | 1, 3, 1, 1, 1, 1, 1, 0 | **1.0** |
+| difference | −2, +1, −4, −3, −3, −1, −7, −7 | **exact sign-flip p = 0.0234** |
+
+The two arms share checkpoints and an identical development suite, so the
+wrapper is the only difference. In-distribution coverage is 0.9023 in *both*
+arms for all five families — conformal validity is intact and this is not a
+calibration bug.
+
+### Why, and it is not "the composition interferes" — it is that I was counting one gain twice
+
+The fitted coefficients say it outright. Median over 8 seeds, `fold=all`:
+
+| feature | H15 | H18 |
+|---|---|---|
+| **`a_spec9`** — log-std of input channel 0, i.e. **the input amplitude** | **+2.895** | *not in the top 12* |
+| `log_sigrel` | −0.501 | not in top 12 |
+| `a_spec10` (abs max of channel 0) | −0.463 | +0.520 |
+| largest H18 coefficient (`mu_spec10`) | — | **−0.673** |
+
+**H15's width model is, to first order, an amplitude detector.** Its dominant
+coefficient is 5.8× the next largest, and it multiplies the interval by a large
+power of the input amplitude. That is *exactly* the correction the H17 wrapper
+performs in closed form. Once H17 does it properly, `a_spec9` falls out of the
+model entirely and nothing replaces it: no H18 coefficient exceeds 0.673, and
+the weight spreads thinly over prediction-side spectral features that
+generalize badly across mechanisms.
+
+So **H15's 4/32 and H17's gain were the same gain.** H15 did not learn
+"difficulty"; it learned "amplitude", and amplitude only mattered because of a
+bug in our own input standardization. I reported H15 as "the width model beats
+the baseline significantly" — the measurement stands (0/32 → 4/32,
+p = 0.0078) but that reading of it does not, and it is withdrawn.
+
+### The per-mechanism decomposition, which is what makes this legible
+
+H18 is not uniformly worse. It is a redistribution (median coverage, 8 seeds):
+
+| shard group | H15 | H18 | H18 width ratio |
+|---|---|---|---|
+| the four **linear** `*_amp2` | 0.000 | **0.999–1.000** | 1.75–2.53 |
+| `darcy_amp2` (the control) | 0.000 | 0.000 | 3.19 |
+| `*_tau` | 0.000–0.508 | **0.851–1.000** | 2.04–4.91 |
+| `*_smooth` | 0.011–0.853 | **0.000–0.002** | **0.06–0.44** |
+| `darcy_dam0p5/0p7/1` | 0.907/0.896/0.943 | **0.562/0.042/0.000** | 0.99/0.48/0.05 |
+| `poisson_dam0p2/0p3/0p5` | 0.852/0.781/0.513 | 0.971/0.975/0.800 | 1.39/1.54/1.77 |
+
+The `amp2` and `tau` shards go from catastrophic *under*-coverage to
+*over*-coverage — still out of band, now from the other side, at 1.75–4.91×
+width. The `smooth` shards and the far darcy rungs collapse because h now
+predicts widths 0.05–0.44× the ungated one. **H18 does not fail by being
+uninformative; it fails by being wrong in both directions at once**, which is
+the signature of a model with no dominant direction left.
+
+### The alternative I cannot exclude yet, and the one change that separates them
+
+Two explanations fit the coefficient collapse equally well:
+
+- **(a) Nothing left to learn.** Amplitude was the only large, learnable
+  signal; H17 removes it in closed form; the residual axes (roughness,
+  correlation length) are not predictable from these features.
+- **(b) Lost dynamic range.** Flattening the amplitude axis shrinks the spread
+  of h's *training targets*, so the fit is signal-starved for a reason that is
+  about estimation, not about what is learnable.
+
+These make opposite recommendations — (a) says stop, (b) says give h a richer
+target — so guessing between them is not acceptable.
+
+## H19 — written before the run: ablate the amplitude feature out of the H15 arm
+
+**The change (one):** refit the H15 arm — no equivariant wrapper, everything
+else identical — with `a_spec9` and `a_spec10` (the two amplitude features of
+input channel 0) **removed from z**. Nothing else moves.
+
+**The logic.** If H15's gain was the amplitude coefficient, then H15-minus-
+amplitude should land at H18's 0–1/32, because both arms then lack the
+amplitude correction — one because the feature is gone, the other because the
+wrapper already applied it. If instead H15-minus-amplitude stays near 4/32,
+the amplitude feature was *not* what carried H15 and explanation (b) is live.
+
+**Predictions, registered now:**
+
+1. H15-minus-amplitude lands within one shard of H18's median (1.0/32), and
+   the paired sign-flip against H18 is **not** significant (p > 0.05). This is
+   explanation (a).
+2. Its surviving coefficients look like H18's, not like H15's: no coefficient
+   above ~0.7, weight spread over `mu_spec*`.
+3. The `*_amp2` shards go to 0.000 coverage, as in H15 — the feature removal
+   cannot fix them and the wrapper is absent.
+4. Falsified if it stays ≥3/32: then amplitude was not the carrier, (b) is the
+   explanation, and the next move is a richer target rather than stopping.
+
+8 seeds, same checkpoints, paired sign-flip against both the H15 and H18 arms.
