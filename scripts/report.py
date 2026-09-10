@@ -717,6 +717,47 @@ def sec_fair(fa, sr, out):
                 f"depending on how much of the solver's batch-1 dispatch "
                 f"inefficiency you charge to the solver.\n")
 
+    sw = fa.get("sample_sweep")
+    if sw:
+        g = sw["ratio_graph_conservative"]
+        sv = sw["solver_median_s"]
+        out.append(
+            f"**Every batch-1 cell above repeats ONE coefficient field.** That "
+            f"measures timing noise, not the spread of solve difficulty, and "
+            f"PCG iteration count depends on the contrast of the field being "
+            f"solved — so a ratio from one sample is not a measurement of the "
+            f"family. An adversarial review raised this "
+            f"(`logs/critic_codex_graph.log`) and it was its strongest "
+            f"objection. Sweeping {sw['n_samples']} **distinct** samples at "
+            f"`check_every={sw['check_every']}`:\n")
+        out.append("| quantity | min | median | max | spread |")
+        out.append("|---|---|---|---|---|")
+        out.append(f"| solver latency | {sv['min']*1e3:.1f} ms | "
+                   f"{sv['median']*1e3:.1f} ms | {sv['max']*1e3:.1f} ms | "
+                   f"**{sv['spread_ratio']:.2f}×** |")
+        out.append(f"| `graph` ratio (conservative) | **{g['min']:.1f}×** | "
+                   f"{g['median']:.1f}× | {g['max']:.1f}× | "
+                   f"{g['max']/g['min']:.2f}× |")
+        rn = sw["ratio_nograd_conservative"]
+        out.append(f"| `nograd` ratio (conservative) | {rn['min']:.1f}× | "
+                   f"{rn['median']:.1f}× | {rn['max']:.1f}× | "
+                   f"{rn['max']/rn['min']:.2f}× |")
+        out.append("")
+        out.append(
+            f"Solve difficulty varies **{sv['spread_ratio']:.2f}×** across "
+            f"fields, which is the real reason a single batch-1 row was not "
+            f"trustworthy. The clause survives it: "
+            f"**{g['n_ge_100x']}/{g['n']} individual problems clear 100×**, "
+            f"worst case **{g['min']:.1f}×** — a "
+            f"{g['min']/100:.2f}× margin on the hardest field swept, not on an "
+            f"average. `n_ge_100x` is the honest form of this clause at batch "
+            f"1: the fraction of problems that clear it, not the ratio of one "
+            f"field.\n")
+        if sw["n_admissible"] < sw["n_samples"]:
+            out.append(f"{sw['n_samples'] - sw['n_admissible']} of "
+                       f"{sw['n_samples']} samples were inadmissible on "
+                       f"residual and are excluded.\n")
+
     if sr is not None:
         out.append("**The denominator interval no previous row in this repo "
                    "carried.** Repeated trials of identical work:\n")
@@ -987,6 +1028,19 @@ def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
                 f"{rr['ratio_vs_check_every_1_median']:.1f}\u00d7) | "
                 f"`runs/bench_fair.json` | "
                 f"{MARK[rr['meets_100x_conservative']]} |")
+        sw = fa.get("sample_sweep")
+        if sw:
+            g = sw["ratio_graph_conservative"]
+            lines.append(
+                f"| — the same batch-1 clause over {sw['n_samples']} "
+                f"**distinct** coefficient fields, not one repeated | "
+                f"\u2265100\u00d7 on every problem | "
+                f"**{g['n_ge_100x']}/{g['n']}** clear it; worst field "
+                f"{g['min']:.1f}\u00d7, median {g['median']:.1f}\u00d7, best "
+                f"{g['max']:.1f}\u00d7, while solver difficulty itself spans "
+                f"{sw['solver_median_s']['spread_ratio']:.2f}\u00d7 | "
+                f"`runs/bench_fair.json` | "
+                f"{MARK[g['n_ge_100x'] == g['n']]} |")
         b1 = fa["batches"].get("1", {}).get("ratios", {}).get("eager")
         if b1:
             lines.append(

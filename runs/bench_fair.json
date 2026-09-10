@@ -1,0 +1,717 @@
+{
+  "env": {
+    "torch": "2.8.0+cu128",
+    "python": "3.11.16",
+    "platform": "Linux-6.8.0-58-generic-x86_64-with-glibc2.39",
+    "torch_num_threads": 96,
+    "torch_interop_threads": 96,
+    "OMP_NUM_THREADS": "<unset>",
+    "MKL_NUM_THREADS": "<unset>",
+    "cpu_count": 192,
+    "cuda": "12.8",
+    "gpu": "NVIDIA H100 NVL",
+    "visible_devices": "3",
+    "tf32_matmul": false
+  },
+  "clock_ramp": {
+    "ramped": true,
+    "seconds": 6.0,
+    "matmuls": 1800
+  },
+  "task": "darcy",
+  "uq_source": "het",
+  "seed": 0,
+  "surrogate_rel_l2": 0.05062808841466904,
+  "tol": 1e-10,
+  "trials": 5,
+  "iters_per_trial": 10,
+  "forward_passes_per_interval": 1,
+  "batches": {
+    "1": {
+      "batch": 1,
+      "solver": {
+        "check_every=1": {
+          "trial_median_s": [
+            0.21846405416727066,
+            0.21934824623167515,
+            0.22005335800349712,
+            0.22102396935224533,
+            0.22808155603706837
+          ],
+          "min_s": 0.21846405416727066,
+          "max_s": 0.22808155603706837,
+          "median_s": 0.22005335800349712,
+          "spread_ratio": 1.044023269212215,
+          "achieved_residual": 9.021433710579946e-11,
+          "admissible": true,
+          "check_every": 1
+        },
+        "check_every=10": {
+          "trial_median_s": [
+            0.19598235748708248,
+            0.20174693688750267,
+            0.2021587062627077,
+            0.33897295966744423,
+            0.357518820092082
+          ],
+          "min_s": 0.19598235748708248,
+          "max_s": 0.357518820092082,
+          "median_s": 0.2021587062627077,
+          "spread_ratio": 1.8242398176868888,
+          "achieved_residual": 6.8297463163439e-11,
+          "admissible": true,
+          "check_every": 10
+        },
+        "check_every=50": {
+          "trial_median_s": [
+            0.19101767800748348,
+            0.191938953474164,
+            0.19427071325480938,
+            0.1945628896355629,
+            0.21903147734701633
+          ],
+          "min_s": 0.19101767800748348,
+          "max_s": 0.21903147734701633,
+          "median_s": 0.19427071325480938,
+          "spread_ratio": 1.146655532784957,
+          "achieved_residual": 6.8297463163439e-11,
+          "admissible": true,
+          "check_every": 50
+        },
+        "check_every=100": {
+          "trial_median_s": [
+            0.20259813405573368,
+            0.2026588786393404,
+            0.20439722388982773,
+            0.25309442169964314,
+            0.2723354175686836
+          ],
+          "min_s": 0.20259813405573368,
+          "max_s": 0.2723354175686836,
+          "median_s": 0.20439722388982773,
+          "spread_ratio": 1.3442148361236417,
+          "achieved_residual": 1.42003828642916e-11,
+          "admissible": true,
+          "check_every": 100
+        }
+      },
+      "surrogate": {
+        "eager": {
+          "trial_median_s": [
+            0.0020699501037597656,
+            0.002071911469101906,
+            0.00207563117146492,
+            0.0020766612142324448,
+            0.0021234843879938126
+          ],
+          "min_s": 0.0020699501037597656,
+          "max_s": 0.0021234843879938126,
+          "median_s": 0.00207563117146492,
+          "spread_ratio": 1.0258625964639485,
+          "rel_l2": 0.05062808841466904
+        },
+        "nograd": {
+          "trial_median_s": [
+            0.001651957631111145,
+            0.0016589313745498657,
+            0.0016756746917963028,
+            0.0016786977648735046,
+            0.0016813986003398895
+          ],
+          "min_s": 0.001651957631111145,
+          "max_s": 0.0016813986003398895,
+          "median_s": 0.0016756746917963028,
+          "spread_ratio": 1.017821867022668,
+          "rel_l2": 0.05062808841466904
+        },
+        "graph": {
+          "trial_median_s": [
+            0.0005795825272798538,
+            0.0005797315388917923,
+            0.0005807355046272278,
+            0.0005811210721731186,
+            0.0005815606564283371
+          ],
+          "min_s": 0.0005795825272798538,
+          "max_s": 0.0005815606564283371,
+          "median_s": 0.0005807355046272278,
+          "spread_ratio": 1.0034130241257742,
+          "rel_l2": 0.05062808841466904,
+          "graph_vs_eager_rel_dev": 0.0
+        }
+      },
+      "graph_gate": {
+        "rel_dev_same_input": 0.0,
+        "rel_dev_after_input_mutation": 0.0,
+        "output_movement_from_mutation": 0.07042252704301717,
+        "rel_dev_after_restore": 0.0,
+        "why": "a replay that returned a cached tensor would show rel_dev_after_input_mutation ~= output_movement_from_mutation instead of ~0, so this distinguishes a live graph from a stale buffer"
+      },
+      "fair_denominator": {
+        "check_every": 50,
+        "min_s": 0.19101767800748348,
+        "median_s": 0.19427071325480938,
+        "achieved_residual": 6.8297463163439e-11,
+        "why": "fastest solver setting that still meets tol; using a slower admissible setting would inflate every ratio below"
+      },
+      "ratios": {
+        "eager": {
+          "ratio_conservative": 89.95483041339887,
+          "ratio_median": 93.5959701923819,
+          "ratio_vs_check_every_1_median": 106.01756276775795,
+          "meets_100x_conservative": false,
+          "solver_s_to_erase_100x": 0.21234843879938126,
+          "solver_speedup_needed_to_erase_100x": 0.8995483041339887,
+          "arm_semantics": "autograd ENABLED, eager dispatch",
+          "dispatch_only_gain_vs_nograd": 0.8073085020271981
+        },
+        "nograd": {
+          "ratio_conservative": 113.60642144514088,
+          "ratio_median": 115.93581630486617,
+          "ratio_vs_check_every_1_median": 131.32224236650768,
+          "meets_100x_conservative": true,
+          "solver_s_to_erase_100x": 0.16813986003398895,
+          "solver_speedup_needed_to_erase_100x": 1.1360642144514088,
+          "arm_semantics": "autograd disabled, eager dispatch",
+          "dispatch_only_gain_vs_nograd": 1.0
+        },
+        "graph": {
+          "ratio_conservative": 328.45701629924764,
+          "ratio_median": 334.52529026877926,
+          "ratio_vs_check_every_1_median": 378.92182628776703,
+          "meets_100x_conservative": true,
+          "solver_s_to_erase_100x": 0.05815606564283371,
+          "solver_speedup_needed_to_erase_100x": 3.2845701629924764,
+          "arm_semantics": "autograd disabled, CUDA-graph replay",
+          "dispatch_only_gain_vs_nograd": 2.8854352427994097
+        }
+      }
+    },
+    "64": {
+      "batch": 64,
+      "solver": {
+        "check_every=1": {
+          "trial_median_s": [
+            0.2826767396181822,
+            0.28268185444176197,
+            0.45513379387557507,
+            0.45905428752303123,
+            0.4665773082524538
+          ],
+          "min_s": 0.2826767396181822,
+          "max_s": 0.4665773082524538,
+          "median_s": 0.45513379387557507,
+          "spread_ratio": 1.6505684510252603,
+          "achieved_residual": 9.931360467563641e-11,
+          "admissible": true,
+          "check_every": 1
+        },
+        "check_every=10": {
+          "trial_median_s": [
+            0.25329234451055527,
+            0.25337501615285873,
+            0.25341542810201645,
+            0.25402214378118515,
+            0.2545433007180691
+          ],
+          "min_s": 0.25329234451055527,
+          "max_s": 0.2545433007180691,
+          "median_s": 0.25341542810201645,
+          "spread_ratio": 1.0049387841149762,
+          "achieved_residual": 7.187026918975123e-11,
+          "admissible": true,
+          "check_every": 10
+        },
+        "check_every=50": {
+          "trial_median_s": [
+            0.26035406440496445,
+            0.413947394117713,
+            0.41516293957829475,
+            0.4168781526386738,
+            0.4176357313990593
+          ],
+          "min_s": 0.26035406440496445,
+          "max_s": 0.4176357313990593,
+          "median_s": 0.41516293957829475,
+          "spread_ratio": 1.6041068241187626,
+          "achieved_residual": 3.324850180016879e-11,
+          "admissible": true,
+          "check_every": 50
+        },
+        "check_every=100": {
+          "trial_median_s": [
+            0.4342185650020838,
+            0.4365225415676832,
+            0.43702907115221024,
+            0.4408129081130028,
+            0.47423779405653477
+          ],
+          "min_s": 0.4342185650020838,
+          "max_s": 0.47423779405653477,
+          "median_s": 0.43702907115221024,
+          "spread_ratio": 1.0921637909568858,
+          "achieved_residual": 1.3725858282205451e-11,
+          "admissible": true,
+          "check_every": 100
+        }
+      },
+      "surrogate": {
+        "eager": {
+          "trial_median_s": [
+            0.004894569516181946,
+            0.004897652193903923,
+            0.00490194745361805,
+            0.004902308806777,
+            0.0049134474247694016
+          ],
+          "min_s": 0.004894569516181946,
+          "max_s": 0.0049134474247694016,
+          "median_s": 0.00490194745361805,
+          "spread_ratio": 1.0038569088711569,
+          "rel_l2": 0.05062808841466904
+        },
+        "nograd": {
+          "trial_median_s": [
+            0.004862507805228233,
+            0.004867544397711754,
+            0.0048682112246751785,
+            0.004869174212217331,
+            0.004892891272902489
+          ],
+          "min_s": 0.004862507805228233,
+          "max_s": 0.004892891272902489,
+          "median_s": 0.0048682112246751785,
+          "spread_ratio": 1.0062485180263538,
+          "rel_l2": 0.05062808841466904
+        },
+        "graph": {
+          "trial_median_s": [
+            0.004512825980782509,
+            0.004536708816885948,
+            0.004980798810720444,
+            0.005011815577745438,
+            0.005013987421989441
+          ],
+          "min_s": 0.004512825980782509,
+          "max_s": 0.005013987421989441,
+          "median_s": 0.004980798810720444,
+          "spread_ratio": 1.1110526848012943,
+          "rel_l2": 0.05062808841466904,
+          "graph_vs_eager_rel_dev": 0.0
+        }
+      },
+      "graph_gate": {
+        "rel_dev_same_input": 0.0,
+        "rel_dev_after_input_mutation": 0.0,
+        "output_movement_from_mutation": 0.08571438078217819,
+        "rel_dev_after_restore": 0.0,
+        "why": "a replay that returned a cached tensor would show rel_dev_after_input_mutation ~= output_movement_from_mutation instead of ~0, so this distinguishes a live graph from a stale buffer"
+      },
+      "fair_denominator": {
+        "check_every": 10,
+        "min_s": 0.25329234451055527,
+        "median_s": 0.25341542810201645,
+        "achieved_residual": 7.187026918975123e-11,
+        "why": "fastest solver setting that still meets tol; using a slower admissible setting would inflate every ratio below"
+      },
+      "ratios": {
+        "eager": {
+          "ratio_conservative": 51.550840502265636,
+          "ratio_median": 51.69688792052933,
+          "ratio_vs_check_every_1_median": 92.84754644598404,
+          "meets_100x_conservative": false,
+          "solver_s_to_erase_100x": 0.49134474247694016,
+          "solver_speedup_needed_to_erase_100x": 0.5155084050226564,
+          "arm_semantics": "autograd ENABLED, eager dispatch",
+          "dispatch_only_gain_vs_nograd": 0.9931177905797479
+        },
+        "nograd": {
+          "ratio_conservative": 51.7674173373366,
+          "ratio_median": 52.055142311316835,
+          "ratio_vs_check_every_1_median": 93.49097088652782,
+          "meets_100x_conservative": false,
+          "solver_s_to_erase_100x": 0.48928912729024887,
+          "solver_speedup_needed_to_erase_100x": 0.5176741733733661,
+          "arm_semantics": "autograd disabled, eager dispatch",
+          "dispatch_only_gain_vs_nograd": 1.0
+        },
+        "graph": {
+          "ratio_conservative": 50.51714796884241,
+          "ratio_median": 50.87847105098417,
+          "ratio_vs_check_every_1_median": 91.37767076557397,
+          "meets_100x_conservative": false,
+          "solver_s_to_erase_100x": 0.5013987421989441,
+          "solver_speedup_needed_to_erase_100x": 0.5051714796884241,
+          "arm_semantics": "autograd disabled, CUDA-graph replay",
+          "dispatch_only_gain_vs_nograd": 0.9773956768133383
+        }
+      }
+    }
+  },
+  "note": "Surrogate: CUDA-graph replay, gated against eager on a MUTATED input so a stale captured buffer cannot pass. Solver: the PCG convergence test amortized over `check_every`. `ratio_conservative` divides the fastest admissible solver trial by the slowest surrogate trial.\n\nTHREE THINGS THIS DOES NOT CLAIM, each found by an adversarial review (`logs/critic_codex_graph.log`) and corrected here:\n(1) This is NOT 'both sides equally optimized'. The PCG iteration is still a Python loop launching individual kernels, and `_darcy_apply` (uqkit/sims/pde2d.py:198) recomputes four coefficient-face arrays every iteration although `a` is fixed for the whole solve. Those are real, named, UNMEASURED solver optimizations. `solver_s_to_erase_100x` below is the latency an optimized reference solver would have to reach to take the batch-1 clause back under 100x.\n(2) `check_every` is the fastest of FOUR convergence-check strides of this repo's FP64 PCG -- not a globally optimal reference. A discrete-Laplacian or multigrid preconditioner, mixed-precision inner iterations with FP64 refinement, or a sparse direct factorization are all admissible alternatives and none has been measured.\n(3) Admissibility is the PRE-CAST FP64 residual, which does not certify the delivered lower-precision field to `tol`. And a later convergence check does not in general return a more converged iterate -- CG's Euclidean residual is not monotone; what licenses each admission is the explicit final residual recorded per setting, not that argument.",
+  "sample_sweep": {
+    "check_every": 50,
+    "n_samples": 24,
+    "n_admissible": 24,
+    "trials_per_cell": 2,
+    "cells": [
+      {
+        "sample_index": 0,
+        "solver_median_s": 0.19688982237130404,
+        "solver_min_s": 0.19616675190627575,
+        "achieved_residual": 6.8297463163439e-11,
+        "admissible": true,
+        "nograd_median_s": 0.001643054187297821,
+        "nograd_max_s": 0.0016465634107589722,
+        "graph_median_s": 0.0006375601515173912,
+        "graph_max_s": 0.0006375815719366074,
+        "ratio_graph_conservative": 307.6731833864545,
+        "ratio_graph_median": 308.8176416024541,
+        "ratio_nograd_conservative": 119.13707703237134
+      },
+      {
+        "sample_index": 1,
+        "solver_median_s": 0.34538832772523165,
+        "solver_min_s": 0.33533837273716927,
+        "achieved_residual": 5.907104983570625e-11,
+        "admissible": true,
+        "nograd_median_s": 0.0016558244824409485,
+        "nograd_max_s": 0.0016604512929916382,
+        "graph_median_s": 0.0006378535181283951,
+        "graph_max_s": 0.0006378889083862305,
+        "ratio_graph_conservative": 525.7002721453933,
+        "ratio_graph_median": 541.4853377914702,
+        "ratio_nograd_conservative": 201.95616345541188
+      },
+      {
+        "sample_index": 2,
+        "solver_median_s": 0.10412460286170244,
+        "solver_min_s": 0.10178457014262676,
+        "achieved_residual": 5.192413532335388e-12,
+        "admissible": true,
+        "nograd_median_s": 0.0016291560605168343,
+        "nograd_max_s": 0.0016342680901288986,
+        "graph_median_s": 0.0006383033469319344,
+        "graph_max_s": 0.0006388109177350998,
+        "ratio_graph_conservative": 159.334424814628,
+        "ratio_graph_median": 163.12714536464085,
+        "ratio_nograd_conservative": 62.2814400877146
+      },
+      {
+        "sample_index": 3,
+        "solver_median_s": 0.1624695472419262,
+        "solver_min_s": 0.14716511592268944,
+        "achieved_residual": 1.7282185830672412e-11,
+        "admissible": true,
+        "nograd_median_s": 0.0021835556253790855,
+        "nograd_max_s": 0.0022093690931797028,
+        "graph_median_s": 0.0006386237218976021,
+        "graph_max_s": 0.0006386581808328629,
+        "ratio_graph_conservative": 230.42860850975714,
+        "ratio_graph_median": 254.4057504772377,
+        "ratio_nograd_conservative": 66.60956577014971
+      },
+      {
+        "sample_index": 4,
+        "solver_median_s": 0.10336506459861994,
+        "solver_min_s": 0.1018152367323637,
+        "achieved_residual": 6.450479560202857e-11,
+        "admissible": true,
+        "nograd_median_s": 0.0016474761068820953,
+        "nograd_max_s": 0.0016525369137525558,
+        "graph_median_s": 0.0006374968215823174,
+        "graph_max_s": 0.0006375852972269058,
+        "ratio_graph_conservative": 159.68880897222036,
+        "ratio_graph_median": 162.1420862021864,
+        "ratio_nograd_conservative": 61.61147499039111
+      },
+      {
+        "sample_index": 5,
+        "solver_median_s": 0.1130719417706132,
+        "solver_min_s": 0.1130578126758337,
+        "achieved_residual": 2.3975375249210658e-11,
+        "admissible": true,
+        "nograd_median_s": 0.0016413973644375801,
+        "nograd_max_s": 0.0016501136124134064,
+        "graph_median_s": 0.0006378181278705597,
+        "graph_max_s": 0.0006381794810295105,
+        "ratio_graph_conservative": 177.15676551281302,
+        "ratio_graph_median": 177.2792851594213,
+        "ratio_nograd_conservative": 68.5151687891834
+      },
+      {
+        "sample_index": 6,
+        "solver_median_s": 0.31639765575528145,
+        "solver_min_s": 0.22817516326904297,
+        "achieved_residual": 4.207156097048209e-11,
+        "admissible": true,
+        "nograd_median_s": 0.0028982264921069145,
+        "nograd_max_s": 0.0029211007058620453,
+        "graph_median_s": 0.0006404388695955276,
+        "graph_max_s": 0.0006408244371414185,
+        "ratio_graph_conservative": 356.0650156958493,
+        "ratio_graph_median": 494.03256231949814,
+        "ratio_nograd_conservative": 78.11273428921591
+      },
+      {
+        "sample_index": 7,
+        "solver_median_s": 0.2183362916111946,
+        "solver_min_s": 0.21816313453018665,
+        "achieved_residual": 1.7174023080589108e-11,
+        "admissible": true,
+        "nograd_median_s": 0.001680818386375904,
+        "nograd_max_s": 0.0016808956861495972,
+        "graph_median_s": 0.0006383815780282021,
+        "graph_max_s": 0.0006392896175384521,
+        "ratio_graph_conservative": 341.2586854925178,
+        "ratio_graph_median": 342.0153386718642,
+        "ratio_nograd_conservative": 129.7898116628104
+      },
+      {
+        "sample_index": 8,
+        "solver_median_s": 0.10311001725494862,
+        "solver_min_s": 0.1018400751054287,
+        "achieved_residual": 7.116157132503359e-11,
+        "admissible": true,
+        "nograd_median_s": 0.0016602762043476105,
+        "nograd_max_s": 0.0016638636589050293,
+        "graph_median_s": 0.0006372714415192604,
+        "graph_max_s": 0.0006372835487127304,
+        "ratio_graph_conservative": 159.80339569590137,
+        "ratio_graph_median": 161.79921229348278,
+        "ratio_nograd_conservative": 61.206983252731504
+      },
+      {
+        "sample_index": 9,
+        "solver_median_s": 0.13780682999640703,
+        "solver_min_s": 0.13571827113628387,
+        "achieved_residual": 1.905789498708001e-11,
+        "admissible": true,
+        "nograd_median_s": 0.0016753673553466797,
+        "nograd_max_s": 0.0016931463032960892,
+        "graph_median_s": 0.0006379419937729836,
+        "graph_max_s": 0.0006384067237377167,
+        "ratio_graph_conservative": 212.58903781853405,
+        "ratio_graph_median": 216.0178062293335,
+        "ratio_nograd_conservative": 80.15743877069443
+      },
+      {
+        "sample_index": 10,
+        "solver_median_s": 0.11611603107303381,
+        "solver_min_s": 0.1144054215401411,
+        "achieved_residual": 1.8501593370081455e-11,
+        "admissible": true,
+        "nograd_median_s": 0.001671445555984974,
+        "nograd_max_s": 0.0016775447875261307,
+        "graph_median_s": 0.0006371121853590012,
+        "graph_max_s": 0.0006371457129716873,
+        "ratio_graph_conservative": 179.55927382222677,
+        "ratio_graph_median": 182.25366543194357,
+        "ratio_nograd_conservative": 68.19813240804997
+      },
+      {
+        "sample_index": 11,
+        "solver_median_s": 0.2400076799094677,
+        "solver_min_s": 0.23745677433907986,
+        "achieved_residual": 2.585728236119672e-11,
+        "admissible": true,
+        "nograd_median_s": 0.0016510505229234695,
+        "nograd_max_s": 0.0016514342278242111,
+        "graph_median_s": 0.0006378497928380966,
+        "graph_max_s": 0.0006384477019309998,
+        "ratio_graph_conservative": 371.92830927401945,
+        "ratio_graph_median": 376.2761744290291,
+        "ratio_nograd_conservative": 143.78821168792936
+      },
+      {
+        "sample_index": 12,
+        "solver_median_s": 0.12483431678265333,
+        "solver_min_s": 0.12447123229503632,
+        "achieved_residual": 1.978369209035002e-11,
+        "admissible": true,
+        "nograd_median_s": 0.0016371700912714005,
+        "nograd_max_s": 0.0016459822654724121,
+        "graph_median_s": 0.0006377054378390312,
+        "graph_max_s": 0.0006377380341291428,
+        "ratio_graph_conservative": 195.17611563658244,
+        "ratio_graph_median": 195.75545287127355,
+        "ratio_nograd_conservative": 75.62124751041101
+      },
+      {
+        "sample_index": 13,
+        "solver_median_s": 0.10380358342081308,
+        "solver_min_s": 0.10179175809025764,
+        "achieved_residual": 7.807157571313556e-12,
+        "admissible": true,
+        "nograd_median_s": 0.001681358553469181,
+        "nograd_max_s": 0.0017136204987764359,
+        "graph_median_s": 0.0006387615576386452,
+        "graph_max_s": 0.0006400644779205322,
+        "ratio_graph_conservative": 159.03359989756484,
+        "ratio_graph_median": 162.50756198377232,
+        "ratio_nograd_conservative": 59.40157588155562
+      },
+      {
+        "sample_index": 14,
+        "solver_median_s": 0.14794774167239666,
+        "solver_min_s": 0.1467281449586153,
+        "achieved_residual": 5.584374884662235e-11,
+        "admissible": true,
+        "nograd_median_s": 0.001677209511399269,
+        "nograd_max_s": 0.001689394935965538,
+        "graph_median_s": 0.0006375806406140327,
+        "graph_max_s": 0.0006377603858709335,
+        "ratio_graph_conservative": 230.06782517268067,
+        "ratio_graph_median": 232.04553627900793,
+        "ratio_nograd_conservative": 86.85248300141016
+      },
+      {
+        "sample_index": 15,
+        "solver_median_s": 0.197991993278265,
+        "solver_min_s": 0.19202613271772861,
+        "achieved_residual": 3.5491698343162045e-11,
+        "admissible": true,
+        "nograd_median_s": 0.0016657542437314987,
+        "nograd_max_s": 0.0016735605895519257,
+        "graph_median_s": 0.0006380705162882805,
+        "graph_max_s": 0.0006388258188962936,
+        "ratio_graph_conservative": 300.59231646193365,
+        "ratio_graph_median": 310.29798153032374,
+        "ratio_nograd_conservative": 114.74106997771807
+      },
+      {
+        "sample_index": 16,
+        "solver_median_s": 0.1780353421345353,
+        "solver_min_s": 0.17783313803374767,
+        "achieved_residual": 5.040776495673125e-11,
+        "admissible": true,
+        "nograd_median_s": 0.0016347039490938187,
+        "nograd_max_s": 0.001638231799006462,
+        "graph_median_s": 0.0006373561918735504,
+        "graph_max_s": 0.0006375256925821304,
+        "ratio_graph_conservative": 278.942700040027,
+        "ratio_graph_median": 279.3341374956894,
+        "ratio_nograd_conservative": 108.55187778774534
+      },
+      {
+        "sample_index": 17,
+        "solver_median_s": 0.09585438016802073,
+        "solver_min_s": 0.09582813084125519,
+        "achieved_residual": 9.873599925970482e-12,
+        "admissible": true,
+        "nograd_median_s": 0.0016553457826375961,
+        "nograd_max_s": 0.0016599632799625397,
+        "graph_median_s": 0.0006376104429364204,
+        "graph_max_s": 0.0006378591060638428,
+        "ratio_graph_conservative": 150.23400925103957,
+        "ratio_graph_median": 150.33376763181226,
+        "ratio_nograd_conservative": 57.72906665948523
+      },
+      {
+        "sample_index": 18,
+        "solver_median_s": 0.09596115909516811,
+        "solver_min_s": 0.09583094529807568,
+        "achieved_residual": 2.0882856252305623e-11,
+        "admissible": true,
+        "nograd_median_s": 0.001646602526307106,
+        "nograd_max_s": 0.0016490556299686432,
+        "graph_median_s": 0.0006374409422278404,
+        "graph_max_s": 0.0006378516554832458,
+        "ratio_graph_conservative": 150.24017649601103,
+        "ratio_graph_median": 150.54125447258883,
+        "ratio_nograd_conservative": 58.11262128245965
+      },
+      {
+        "sample_index": 19,
+        "solver_median_s": 0.1204734742641449,
+        "solver_min_s": 0.11929417960345745,
+        "achieved_residual": 2.937407175990815e-11,
+        "admissible": true,
+        "nograd_median_s": 0.0020302264019846916,
+        "nograd_max_s": 0.0024242866784334183,
+        "graph_median_s": 0.0006374586373567581,
+        "graph_max_s": 0.0006375983357429504,
+        "ratio_graph_conservative": 187.0992644051556,
+        "ratio_graph_median": 188.99026102100032,
+        "ratio_nograd_conservative": 49.20795080247924
+      },
+      {
+        "sample_index": 20,
+        "solver_median_s": 0.37461604084819555,
+        "solver_min_s": 0.37453199550509453,
+        "achieved_residual": 3.0228178259104766e-11,
+        "admissible": true,
+        "nograd_median_s": 0.002894580364227295,
+        "nograd_max_s": 0.002896176651120186,
+        "graph_median_s": 0.0006398605182766914,
+        "graph_max_s": 0.0006401818245649338,
+        "ratio_graph_conservative": 585.0400325870321,
+        "ratio_graph_median": 585.4651602151242,
+        "ratio_nograd_conservative": 129.31945824514284
+      },
+      {
+        "sample_index": 21,
+        "solver_median_s": 0.19945100601762533,
+        "solver_min_s": 0.16138366609811783,
+        "achieved_residual": 2.2812878536935202e-11,
+        "admissible": true,
+        "nograd_median_s": 0.0017145304009318352,
+        "nograd_max_s": 0.0017569158226251602,
+        "graph_median_s": 0.0006380015984177589,
+        "graph_max_s": 0.0006387457251548767,
+        "ratio_graph_conservative": 252.65713685831264,
+        "ratio_graph_median": 312.6183484685037,
+        "ratio_nograd_conservative": 91.85623125471118
+      },
+      {
+        "sample_index": 22,
+        "solver_median_s": 0.21806315053254366,
+        "solver_min_s": 0.16014142706990242,
+        "achieved_residual": 6.403145058283682e-11,
+        "admissible": true,
+        "nograd_median_s": 0.0028981147333979607,
+        "nograd_max_s": 0.0029326677322387695,
+        "graph_median_s": 0.0006405171006917953,
+        "graph_max_s": 0.0006406940519809723,
+        "ratio_graph_conservative": 249.94992005116725,
+        "ratio_graph_median": 340.4486005089058,
+        "ratio_nograd_conservative": 54.606058950855655
+      },
+      {
+        "sample_index": 23,
+        "solver_median_s": 0.1918296255171299,
+        "solver_min_s": 0.17848289385437965,
+        "achieved_residual": 3.15140388045231e-11,
+        "admissible": true,
+        "nograd_median_s": 0.0029319459572434425,
+        "nograd_max_s": 0.0029422473162412643,
+        "graph_median_s": 0.000640220008790493,
+        "graph_max_s": 0.0006406567990779877,
+        "ratio_graph_conservative": 278.5936153510685,
+        "ratio_graph_median": 299.63078767178087,
+        "ratio_nograd_conservative": 60.6620975976936
+      }
+    ],
+    "solver_median_s": {
+      "min": 0.09585438016802073,
+      "max": 0.37461604084819555,
+      "median": 0.15520864445716143,
+      "spread_ratio": 3.9081786371320804
+    },
+    "ratio_graph_conservative": {
+      "min": 150.23400925103957,
+      "max": 585.0400325870321,
+      "median": 230.2482168412189,
+      "n_ge_100x": 24,
+      "n": 24
+    },
+    "ratio_nograd_conservative": {
+      "min": 49.20795080247924,
+      "max": 201.95616345541188,
+      "median": 72.06820814979721,
+      "n_ge_100x": 7,
+      "n": 24
+    },
+    "note": "Distinct coefficient fields, one per cell, so the denominator is a distribution over solve difficulty rather than one repeated sample. `n_ge_100x` is the honest form of the clause at batch 1: the fraction of individual problems that clear it, not the ratio of one field."
+  }
+}

@@ -14,6 +14,8 @@ jobs:
         run: PYTHONPATH=. python tests/test_api.py
       - name: vendored physics and the residual floor
         run: PYTHONPATH=. python tests/test_sims.py
+      - name: clause-2 gates (stale graph replay, inadmissible denominator)
+        run: PYTHONPATH=. python tests/test_bench_fair.py
       - name: report regenerates without run JSONs present
         run: PYTHONPATH=. python scripts/report.py --out /tmp/RESULTS.md
       - name: prose numbers still match the run JSONs

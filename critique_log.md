@@ -1232,3 +1232,47 @@ gate into decoration; the actual fix is an exact restore from a saved clone.
 Second, a gate strict enough to reject a real row on its first outing is a gate
 that would have caught a stale buffer, which is what it is for. The batch-64
 graph timings from that run are discarded rather than reported.
+
+### The per-sample sweep — the critic's strongest objection, answered, and it strengthens the clause
+
+24 distinct coefficient fields at batch 1, `check_every=50`, every one
+admissible on residual (`runs/bench_fair.json:sample_sweep`):
+
+| quantity | min | median | max | spread |
+|---|---|---|---|---|
+| solver latency | 95.9 ms | ~180 ms | 374.6 ms | **3.91×** |
+| `graph` ratio (conservative) | **150.2×** | 230.2× | 585.0× | 3.89× |
+
+**24/24 individual problems clear 100×.** The worst field swept reads 150.2×, a
+1.5× margin, and the clause is met on every problem rather than on an average.
+
+Two things this changes about what I believed an hour ago.
+
+First, solve difficulty varies **3.91×** across coefficient fields — 95.9 to
+374.6 ms — which is a much bigger effect than the 1.71× run-to-run timing noise
+I had been worrying about. The dominant uncertainty in this denominator was
+never the clock; it was *which problem you solve*. Every speedup row in this
+repo's history was one sample, repeated, and nobody had looked.
+
+Second, sample 0 — the field every previous batch-1 row in this repo used, by
+the accident of `blob["a"][:1]` — reads 307.7×, against a median of 230.2×.
+So the historical single-sample choice was **mildly favourable to us**, sitting
+above the median. Not fatally: the worst field still clears the clause by 1.5×.
+But the direction is the flattering one, and I would not have known that without
+running this.
+
+**What the sweep does not fix.** It is 24 of the test split's fields, and the
+`check_every=50` denominator is still this repo's FP64 PCG with the solver-side
+optimizations named and unmeasured. A reference solver reaching 63.9 ms would
+take the batch-1 clause back under 100× — and the sweep now shows that
+*seventeen of the twenty-four fields already solve in under 200 ms*, so a 2.96×
+solver improvement is not an outlandish target. That is the honest state: the
+clause is met against the reference I have, and the reference has known
+headroom I have not attacked.
+
+**One negative result from the same run, recorded because it went against the
+technique I have been advocating.** At batch 64 the graph arm is *slower* than
+eager — 4.981 ms vs 4.902 ms, and 50.5× vs 51.6×. Graph capture is not free and
+at compute-bound sizes it is neutral-to-negative. So "CUDA-graph the surrogate"
+is a batch-1 latency technique specifically, not a general speedup, and the
+table shows it losing where it loses.

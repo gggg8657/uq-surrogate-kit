@@ -1,4 +1,5 @@
-# When a surrogate cannot know it is wrong: three walls in surrogate uncertainty
+# When a surrogate cannot know it is wrong: three walls, and which two we built
+ourselves
 
 *Working draft. Every number is produced by a run in this repository and
 regenerated into `RESULTS.md` by `scripts/report.py`; nothing here is typed by
@@ -12,16 +13,36 @@ and covariate-shift-weighted conformal calibration, deep-ensemble and
 physics-residual scores, and a timing harness — and evaluate it against a
 three-clause target: 90±2% conformal coverage, ≥100× inference speedup, and
 ≥0.9 OOD detection AUROC. In-distribution coverage is met (88.6%, [87.7, 89.5]).
-The other two clauses fail, and the failures are structural rather than
-budgetary. **(i)** Speedup and calibrated uncertainty are contested by a single
+We first report all three clauses as failing, then show that **two of the three
+failures were consequences of our own design decisions and dissolve when those
+decisions are reversed** — which we regard as the paper's main result, because
+the two surviving walls are then the ones that are actually about the problem.
+**(i)** Speedup and calibrated uncertainty appear to be contested by a single
 knob: the M-member ensemble that produces the interval costs M forward passes,
 and the only configuration clearing 100× (M=1, 108.5×) has no spread and
-therefore no interval and no OOD score. **(ii)** Against a well-preconditioned
+therefore no interval and no OOD score. This is an artefact of building the
+interval out of disagreement. A heteroscedastic σ head calibrated by the same
+split conformal emits mean and interval in **one** forward pass and reaches
+**0.9026** mean coverage with 8 of 8 seeds in band — so the coverage row and the
+speedup row become the same row. We stress the control: a *constant* σ also
+lands 8/8 in band, because split conformal rescales any σ to ~90% marginal
+coverage, so coverage at M=1 is not evidence the head learned anything; the
+head's measurable effect is a 13.1% sharper interval. On the timing side, the
+clause turned out to be decided by a subsidy in our own benchmark — the
+reference solver was timed with a device-to-host synchronization on every
+iteration of up to 2000, and the surrogate was timed with autograd tracking
+left on. Removing both, the batch-1 ratio is **328.5×** under CUDA-graph replay
+(verified bit-exact against eager, then re-verified against a mutated input so a
+stale buffer cannot pass) and **90.0×** eager, against 106.0× eager on the
+subsidized denominator: *the subsidy alone was the difference between passing
+and failing.* The win is a batch-1 latency win only — at batch 64, where both
+sides are dispatch-efficient, the ratio is 51.8× and graph capture is slightly
+*slower* than eager. **(ii)** Against a well-preconditioned
 iterative solver at *matched accuracy*, the surrogate's advantage is 2.2×, not
 the 26.8× obtained against the over-converged tolerance the corpus was generated
 at; against exact spectral propagators the surrogate is 15–220× slower.
 **(iii)** When the governing operator changes but the input distribution does
-not, every unsupervised detector is at chance — measured at 0.486–0.503 across
+not, every unsupervised detector *of a certain family* is at chance — measured at 0.486–0.503 across
 ensemble spread, input-space Mahalanobis distance and PDE residual, on cases
 where the surrogate's relative error is 41 and 1,702 — because each is a
 function of the input and the *configured* operator, and such a shift changes
@@ -75,6 +96,39 @@ A surrogate speedup is a ratio, and the denominator is a choice.
 | the tolerance the corpus was generated at (1e-10) | 26.8× |
 | the same, repeated 8× under steady clocks | 23.5× [23.0, 23.7] |
 | the cheapest solver setting at matched accuracy | **2.2×** |
+
+A fourth denominator turned out to matter more than any of these, and it is one
+we had chosen without noticing. The reference solver's convergence test called
+`.max()` and compared it in Python on **every** PCG iteration, forcing a
+device-to-host synchronization up to 2000 times per solve, while the surrogate
+was timed with autograd tracking enabled. Neither is what a deployment runs.
+Amortizing the solver's test over 50 iterations (which returns an iterate whose
+*measured* final residual is 6.8e-11 against a 1e-10 tolerance, so it is the
+same solver) and removing the surrogate's autograd and per-kernel dispatch:
+
+| arm at batch 1 | fair denominator | subsidized denominator |
+|---|---|---|
+| eager, autograd on (the protocol above) | **90.0×** | 106.0× |
+| eager, no autograd | 113.6× | 131.3× |
+| CUDA-graph replay | **328.5×** | 378.9× |
+
+The eager row crosses the 100× threshold *in the subsidy alone*. We report this
+as the paper's most uncomfortable measurement: for the protocol under which
+every earlier number here was produced, the KPI verdict was determined by a
+defect in the reference, not by the surrogate.
+
+Two caveats keep the 328.5× honest. First, the batch-1 comparison is not
+symmetric: the reference solver is as dispatch-starved at batch 1 as the
+surrogate was — 215 ms for one system against 283 ms for sixty-four — and only
+the surrogate was graph-captured. `_darcy_apply` recomputes four coefficient-face
+arrays on every iteration although the coefficient field is fixed for the whole
+solve; that optimization is named and unmeasured. A reference reaching 63.9 ms
+would take the clause back under 100×. Second, every batch-1 row in the
+literature-style table above times *one* coefficient field. Solve difficulty
+varies 3.91× across fields, so we sweep 24 distinct ones: 24 of 24 clear 100×,
+worst field 150.2×, median 230.2×. The clause holds per problem, not on an
+average — and the single field used historically sat above the median, i.e. the
+accident was in our favour.
 
 The third is the honest one and it is an *upper bound*: the sweep never made the
 PCG as inaccurate as the surrogate. At a 10⁻¹ residual tolerance the solver still
