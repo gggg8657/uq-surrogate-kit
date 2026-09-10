@@ -1894,3 +1894,97 @@ exists because the cases where it matters do not announce themselves. Recorded
 rather than quietly left in the reflog. Going forward: heredoc-quote commit
 messages so the shell cannot touch them, and repair a bad message with a new
 commit.
+
+## H14 — written before the run: the deliberate-abstention reading of clause 1 under shift
+
+**Where clause 1 stands.** In distribution it passes on one forward pass
+(`het` head, 0.9026 mean over 8 seeds, 8/8 in band, `runs/uq_seeds.json`).
+Under covariate shift it fails at ~2/32 shards in band on the honest reading
+(`runs/h13_clip.json`), and H13 established *why*: coverage decays
+monotonically with shift strength on both calibrators and reaches zero on both,
+so past some strength the input shift takes the surrogate out of its competence,
+p(y|x) moves, and reweighting the inputs cannot reach it by construction.
+
+**The end of the H13 entry said this needs a human decision. That was wrong for
+this harness** — nobody answers over a weekend, and the brief's ladder rung 1
+already tells me what to do: report *both* readings side by side, each with its
+protocol, rather than replace one with the other. So I am running it and putting
+both in the table. The decision that remains for a human is which one to put on
+a slide, and that is a smaller question than the one I deferred.
+
+### The change (one)
+
+Gate the certificate on the model's own competence signal, calibrate on the
+accepted calibration points, and report the abstention rate as a first-class
+number beside every coverage. Nothing else moves: same 8 checkpoints, same
+`field_max`/`norm_ratio`/`rel_l2` scores, same alpha, same frozen sigma floor,
+same 32 covariate-shift shards, same `group` per-family calibrator underneath.
+
+**Two gate scores, and which one ships is fixed now, not after I see coverage:**
+
+- `sigma` — relative predicted spread `‖σ‖₂/‖μ‖₂` from the same forward pass
+  that produced the mean. **This is the shipped gate** because it costs nothing
+  and needs no operator apply, so it does not touch the 100× row.
+- `consistency` — `uqkit.ood.consistency_score` of the prediction under the
+  *configured* (parent) operator, one extra apply, no solve. Reported as the
+  alternative. It exists only for `poisson`, `helmholtz`, `darcy`
+  (`PDE2DSimulator.residual` returns `None` for the two time-stepped families),
+  so it covers 24 of the 32 shards and its rows say so.
+
+**Threshold, stateable in advance and never shown a coverage number:** τ is the
+(1−β) empirical quantile of the gate score on the parent family's **calibration**
+split, β = 0.05. Per family, matching the `group` calibrator the headline uses.
+So in distribution the gate abstains on 5% by construction, and that 5% is the
+price, quoted up front.
+
+**Calibration under selection:** the conformal quantile is fit on
+`{x ∈ cal : gate(x) ≤ τ}`, the same rule applied to the calibration split, so
+the certified population and the calibrated population are the same population.
+This is *not* a distribution-free guarantee — acceptance is a function of x, the
+distribution of x moved, and the accepted subpopulation therefore still differs
+between cal and test. It is a conditional-coverage claim about the accepted
+region, and it has to be labelled as one everywhere it appears.
+
+### The trap, named before the number exists
+
+H13's whole finding was that 30/32 shards reporting 100% coverage were
+**abstention wearing a coverage number**. A gated certificate is the same trap
+with a nicer name: as abstention → 1, selective coverage on the survivors
+becomes both meaningless and easy. So, pre-registered:
+
+- A shard counts toward the in-band tally **only if `n_accepted ≥ 100`** of its
+  512. Below that the cell is reported as `[not measured]`, not as in-band.
+- Every coverage cell carries `n_accepted`, the abstention rate, and the median
+  interval width. A coverage without its abstention rate is not quotable from
+  this run, and `scripts/check_prose_numbers.py` should be extended to enforce
+  that the way it already guards the clause-2 conditions.
+- The strict marginal reading (all 512 points, ungated, `group`) stays in the
+  same row. Not a footnote, the same row.
+
+### Predictions, registered now
+
+1. **Abstention tracks shift strength.** Spearman ρ ≥ 0.7 between abstention
+   rate and shard rel-L2 on the two graded `dam` ladders, for at least one gate.
+   If neither gate is monotone, the gate is not measuring competence, this route
+   dies here, and I say so.
+2. On the strong shards (`poisson_dam0p5/0p7/1`, `darcy_dam0p7/dam1`)
+   abstention > 0.8 — i.e. the gate mostly refuses, which is the correct
+   behaviour and also the thing that makes their coverage `[not measured]`.
+3. Shards in band (median over 8 seeds, `n_accepted ≥ 100`) exceeds the ungated
+   ~2/32. I will call ≥8/32 "the route moved". A PASS on the conventional
+   reading needs ~29/32 and I do **not** expect it.
+4. **Leak test.** The five `*_smooth` shards over-cover (0.999) because the
+   shift makes the problem *easier*. A competence gate cannot repair
+   over-coverage, so there abstention should sit near β = 5% and coverage should
+   stay ≈0.999, out of band on the high side. **If the smooth shards come into
+   band, the gate is selecting on something it must not see, and I look for the
+   leak before believing any other row.**
+5. Selective coverage will still under-cover on the accepted remnant of the
+   hard shards, because acceptance does not equalise the accepted
+   subpopulations. If instead it lands ≈0.90 wherever abstention < 0.95, that is
+   a better result than I expect and my first move is to hunt the leak, not to
+   publish it.
+
+8 seeds (`runs/u0..u7/best.pt`), exact two-sided sign-flip against the ungated
+`group` baseline on the paired per-shard in-band counts. Screen-vs-verdict rule
+applies: this is a verdict-grade comparison, so 8 arms, exact test.
