@@ -622,6 +622,155 @@ def sec_uq_seeds(u, out):
                    f"the effect, and it is much smaller than the clause.\n")
 
 
+def sec_h14(sv, out):
+    """H14: gating the certificate on competence, and its price curve."""
+    out.append("\n### 1d. H14 — the deliberate-abstention reading, and why no "
+               "gate delivers the clause (`runs/selective.json`)\n")
+    if sv is None:
+        out.append(f"{NM} — `runs/selective.json` absent.\n")
+        return
+    hs = sv["headline_score"]
+    out.append(
+        f"H13 left one route open for clause 1 under shift: certify where the "
+        f"model is still competent and abstain deliberately elsewhere. It is "
+        f"measured here over {sv['n_seeds']} seeds on the shipped M=1 "
+        f"`{sv['sigma_source']}` model, score `{hs}`, at a registered "
+        f"in-distribution false-abstention rate "
+        f"\u03b2 = {sv['beta']:g}. **The gate detects the shift almost "
+        f"perfectly and moves the clause not at all.**\n")
+    out.append(
+        f"A shard is only counted where at least {sv['min_accepted']} of its "
+        f"512 points survive the gate; below that its coverage is {NM}, not "
+        f"in-band, because \u201ccoverage on the survivors\u201d at high "
+        f"abstention is the exact mistake H13 caught this repo making. Every "
+        f"coverage below travels with its abstention rate.\n")
+    out.append("| gate | cost at deployment | in band /32, per seed | "
+               "median abstention | median \u03c1(gate score, conformity "
+               "score) |")
+    out.append("|---|---|---|---|---|")
+    COST = {"sigma": "free \u2014 same forward pass",
+            "consist": "one operator apply, no solve",
+            "oracle_err": "**not shippable** \u2014 uses ground truth"}
+    for g in ("sigma", "consist", "oracle_err"):
+        gv = sv["by_gate"].get(g)
+        if gv is None or hs not in gv["by_score"]:
+            continue
+        b = gv["by_score"][hs]
+        n = b["n_covariate_shards"]
+        per = ",".join(str(x) for x in b["in_band_selective_per_seed"])
+        tag = " (ORACLE)" if gv["uses_ground_truth"] else ""
+        out.append(
+            f"| `{g}`{tag} | {COST.get(g, '')} | **{per}** (of {n}) | "
+            f"{b['abstention_median_over_shards']:.3f} | "
+            f"**{b['spearman_gate_vs_score_median_over_shards']:+.3f}** |")
+    sig = sv["by_gate"]["sigma"]["by_score"][hs]
+    out.append(
+        f"| ungated marginal (`group`) | \u2014 | "
+        f"{','.join(str(x) for x in sig['in_band_marginal_per_seed'])} | "
+        f"\u2014 | \u2014 |")
+    out.append(
+        f"\nThe ungated column is bit-identical to the `group` column of "
+        f"`runs/conf_u*_het.json` on all 42 shards, so the gate is the only "
+        f"thing that differs between the two readings. The sign-flip test "
+        f"against the ungated arm is "
+        f"p = {sig['vs_ungated_marginal']['exact_sign_flip_p']:.4f} because "
+        f"both arms are 0 on every seed.\n")
+    lad = sig["ladders"]
+    out.append(
+        f"**The gate is not the weak part.** Abstention is monotone in shift "
+        f"strength: Spearman \u03c1(abstention, shard rel-L2) = "
+        + ", ".join(f"**{v['spearman_median']:.3f}** on the `{k}` ladder"
+                    for k, v in lad.items())
+        + f". In distribution it costs what it was calibrated to cost and "
+        f"disturbs nothing: selective coverage "
+        + ", ".join(f"{t} {v['selective_median']:.4f}"
+                    for t, v in sig["in_dist"].items())
+        + f" at abstention "
+        f"{min(v['abstention_median'] for v in sig['in_dist'].values()):.3f}"
+        f"\u2013"
+        f"{max(v['abstention_median'] for v in sig['in_dist'].values()):.3f}"
+        f".\n")
+    orc = sv["by_gate"]["oracle_err"]["by_score"][hs]
+    out.append(
+        f"**Why it cannot work, and why that is a statement about gating "
+        f"rather than about this gate.** Coverage fails on samples with a "
+        f"large *conformity* score; a gate selects on its own score, and the "
+        f"median within-shard rank correlation between the two is only "
+        f"{sig['spearman_gate_vs_score_median_over_shards']:+.3f}. Handing the "
+        f"gate the **true error** raises that to "
+        f"{orc['spearman_gate_vs_score_median_over_shards']:+.3f} and still "
+        f"yields 0/{orc['n_covariate_shards']}, because the conformity score "
+        f"is a *ratio* and an oracle on the error knows only its numerator. "
+        f"Under shift \u03c3 under-predicts the error at fixed error "
+        f"magnitude, so the ratio is inflated across the whole shard instead "
+        f"of in a selectable tail. Selection acts on the population; the "
+        f"failure is in the scale.\n")
+    amp = [(n, v) for n, v in sig["shards"].items() if "amp2" in n]
+    if amp:
+        out.append("The amplitude shift is where the two variables come "
+                   "apart. Median gate score as a multiple of its own refusal "
+                   "threshold:\n")
+        out.append("| shard | `sigma` q50/\u03c4 | `oracle_err` q50/\u03c4 | "
+                   "ungated coverage |")
+        out.append("|---|---|---|---|")
+        for n, v in sorted(amp):
+            ov = orc["shards"].get(n, {})
+            out.append(
+                f"| `{n.split('/')[1]}` | {v['gate_q50_over_tau_median']:.2f} "
+                f"| **{ov.get('gate_q50_over_tau_median', float('nan')):.2f}** "
+                f"| {v['marginal_ungated_median']:.3f} |")
+        out.append(
+            "\nThe true error's typical sample sits tens to over a hundred "
+            "times past the threshold that would refuse it; the predicted "
+            "spread's sits barely past its own. The heteroscedastic head "
+            "learned a difficulty model of the training input distribution, "
+            "and amplitude is the axis it extrapolates worst.\n")
+    pc = sv.get("price_curve")
+    if pc:
+        out.append(
+            f"#### H14b — the abstention price of the band "
+            f"(`runs/selective.json \u2192 price_curve`, "
+            f"{pc['n_seeds']} seeds)\n")
+        out.append(
+            f"\u03b2 swept over {pc['betas']}, with \u03c4 and the gated "
+            f"quantile refit from calibration at every \u03b2 and "
+            f"`n_accepted \u2265 {sv['min_accepted']}` still required. The "
+            f"registered operating point stays "
+            f"\u03b2 = {pc['registered_operating_beta']:g}; this curve is a "
+            f"price, and reading the best \u03b2 off it and quoting that "
+            f"coverage would be the threshold-tuning H13 already priced.\n")
+        out.append("| gate | shards reaching the band at **any** \u03b2 "
+                   "(majority of seeds) | which | median \u03b2 there |")
+        out.append("|---|---|---|---|")
+        for g, v in pc["by_gate"].items():
+            mb = v["min_beta_median_over_reachable"]
+            out.append(
+                f"| `{g}`{' (ORACLE)' if v['uses_ground_truth'] else ''} | "
+                f"**{v['n_reachable_majority_of_seeds']}/"
+                f"{v['n_covariate_shards']}** | "
+                + (", ".join(f"`{n.split('/')[1]}`"
+                             for n in v["reachable_shards"]) or "\u2014")
+                + f" | {mb if mb is None else f'{mb:g}'} |")
+        out.append("\nIn-band count by \u03b2, median over seeds:\n")
+        gs = list(pc["by_gate"])
+        out.append("| gate | " + " | ".join(f"\u03b2={b}" for b in
+                                            pc["by_gate"][gs[0]]
+                                            ["in_band_by_beta"]) + " |")
+        out.append("|---" * (len(pc["by_gate"][gs[0]]["in_band_by_beta"]) + 1)
+                   + "|")
+        for g, v in pc["by_gate"].items():
+            out.append(f"| `{g}` | " + " | ".join(
+                f"{x:g}" for x in v["in_band_by_beta"].values()) + " |")
+        out.append(
+            "\nSo the answer is not that the price is high. **There is no "
+            "\u03b2 on this grid that buys the clause** \u2014 refusing 95% "
+            "of samples still leaves at most one shard of 32 in band, with an "
+            "oracle gate. The shards that are ever reachable are the two that "
+            "need it least: the mildest rung of the graded ladder, and an "
+            "over-covering `smooth` shard that reaches 0.90 from above by "
+            "discarding most of itself.\n")
+
+
 def _mean_sharp(a):
     sh = [r["sharpness_rel"] for r in a["per_seed"]]
     return sum(sh) / len(sh)
@@ -1071,7 +1220,7 @@ def sec_degradation(cs, out):
 
 
 def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
-            csu=None, fa_src="bench_fair.json", h13=None):
+            csu=None, fa_src="bench_fair.json", h13=None, sv=None):
     """The KPI, clause by clause, with the JSON each verdict came from."""
     out.insert(0, "")
     lines = ["## KPI verdict\n",
@@ -1142,6 +1291,46 @@ def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
                 f"selection; the tuned {sel['tuned_in_band_mean']:.2f} is "
                 f"selected on the shards it is scored on) | "
                 f"`runs/h13_clip.json` | \u274c |")
+        if sv is not None:
+            hs = sv["headline_score"]
+            sig = sv["by_gate"]["sigma"]["by_score"][hs]
+            orc = sv["by_gate"]["oracle_err"]["by_score"][hs]
+            n = sig["n_covariate_shards"]
+            lines.append(
+                f"| — the same clause read as **deliberate abstention** (H14; "
+                f"certify where the model is competent, refuse elsewhere, "
+                f"\u03b2 = {sv['beta']:g} calibrated in distribution) | "
+                f"90\u00b12% on the certified points | **0/{n}** shards in "
+                f"band on {sv['n_seeds']}/{sv['n_seeds']} seeds at median "
+                f"abstention {sig['abstention_median_over_shards']:.3f}; the "
+                f"gate is a near-perfect shift detector "
+                f"(\u03c1(abstention, rel-L2) = "
+                + ", ".join(f"{v['spearman_median']:.3f}"
+                            for v in sig["ladders"].values())
+                + f") but \u03c1(gate, conformity score) is only "
+                f"{sig['spearman_gate_vs_score_median_over_shards']:+.3f} | "
+                f"`runs/selective.json` | \u274c |")
+            lines.append(
+                f"| — the ceiling of that reading: an **oracle** gate on the "
+                f"true error (not shippable) | 90\u00b12% | **0/"
+                f"{orc['n_covariate_shards']}** at median abstention "
+                f"{orc['abstention_median_over_shards']:.3f}; selection acts "
+                f"on the population and the failure is in the scale, so no "
+                f"gate is the right tool | `runs/selective.json` | \u274c |")
+            pc = sv.get("price_curve")
+            if pc:
+                sp = pc["by_gate"]["sigma"]
+                op = pc["by_gate"]["oracle_err"]
+                lines.append(
+                    f"| — the **abstention price** of that band (H14b; "
+                    f"\u03b2 swept to {max(pc['betas']):g}) | any \u03b2 "
+                    f"that reaches 90\u00b12% | **none does**: "
+                    f"{sp['n_reachable_majority_of_seeds']}/"
+                    f"{sp['n_covariate_shards']} shards reachable at any "
+                    f"\u03b2 with the shipped gate, "
+                    f"{op['n_reachable_majority_of_seeds']}/"
+                    f"{op['n_covariate_shards']} with the oracle | "
+                    f"`runs/selective.json` | \u274c |")
     # clause 2
     if b is None:
         lines.append(f"| inference speedup | ≥100× | {NM} | — | — |")
@@ -1398,6 +1587,7 @@ def main():
     sec_fair(fa, load('solver_repeat.json'), body, fa_src)
     sec_h12(fa_old, fa_new, body, load('packed_equivalence.json'))
     sec_h13(load('h13_clip.json'), body)
+    sec_h14(load('selective.json'), body)
     sec_consistency(csu, body, 'uq')
     sec_degradation(csu, body)
     sec_probe(lp, body)
@@ -1409,7 +1599,8 @@ def main():
             ""]
     Path(args.out).write_text(
         "\n".join(head + verdict(c, b, o, body, i, m, load('consistency_M1.json'), u, fa, csu,
-                    fa_src, load('h13_clip.json')) + body) + "\n")
+                    fa_src, load('h13_clip.json'),
+                    load('selective.json')) + body) + "\n")
     print(f"wrote {args.out}")
 
 

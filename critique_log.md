@@ -1988,3 +1988,159 @@ becomes both meaningless and easy. So, pre-registered:
 8 seeds (`runs/u0..u7/best.pt`), exact two-sided sign-flip against the ungated
 `group` baseline on the paired per-shard in-band counts. Screen-vs-verdict rule
 applies: this is a verdict-grade comparison, so 8 arms, exact test.
+
+## H14 result — the gate works and the clause does not move. Prediction 3 is dead, and an oracle kills it too
+
+`runs/selective.json`, 8 seeds (`runs/sel_u0..u7_het.json`), the shipped M=1
+`het` model, the same 32 covariate-shift shards H13 used, `field_max`.
+
+**First, the pipeline is verified against the runs it has to agree with.** The
+ungated column of this run is bit-identical to `runs/conf_u0_het.json`'s
+`group` column on all 42 shards, so the gate is the only thing that differs
+between the two readings.
+
+| gate | cost | in band /32, per seed | median abstention | median ρ(gate, conformity score) |
+|---|---|---|---|---|
+| `sigma` = ‖σ‖/‖μ‖ (shipped) | free, same forward pass | **0,0,0,0,0,0,0,0** | 0.390 | **+0.256** |
+| `consist` = residual under the configured operator | one apply | **0,0,0,0,0,0,0,0** (of 24) | 0.736 | +0.240 |
+| `oracle_err` = the **true** relative error | not shippable | **0,0,0,0,0,0,0,0** | 0.858 | +0.697 |
+| ungated marginal (`group`) | — | 0,0,0,0,0,0,0,0 | — | — |
+
+Sign-flip against the ungated arm is p = 1.0 because both arms are 0 on every
+seed. There is no seed-noise question to argue about here: the result is 0/32
+on 8 of 8 seeds for all three gates.
+
+### Scorecard against what I registered
+
+- **P1 ✅, and strongly.** Abstention is monotone in shift strength:
+  ρ(abstention, shard rel-L2) = **1.000** on the poisson ladder (8/8 seeds) and
+  **0.971** on the darcy ladder, for the shipped gate. The gate is a good shift
+  detector. That was never the question.
+- **P2 ✗ falsified.** I predicted abstention > 0.8 on the strong shards. The
+  shipped gate refuses 0.166 of `poisson_dam0p5` — a shard whose coverage is
+  0.021.
+- **P3 ✗ falsified, decisively.** I predicted ≥8/32 and called that "the route
+  moved". It is 0/32.
+- **P4 ✅ — the leak test passed, which is what makes the rest of this
+  trustworthy.** The `smooth` shards over-cover because the shift makes the
+  problem *easier*; a competence gate cannot repair that, and it did not:
+  abstention 0.000–0.031 on four of the five, coverage unchanged at 0.990–0.998,
+  still out of band on the high side. (`helmholtz_smooth` is the exception at
+  abstention 0.955 — σ is systematically large there for a reason I have not
+  established, so its cell is `[not measured]` and I am not explaining it.)
+- **P5 ✅.** Under-coverage survives gating everywhere.
+
+**In distribution the gate is free, as designed:** selective coverage
+0.890–0.911 across the five families at ~5% abstention, so nothing about the
+in-distribution pass is disturbed by shipping the gate. It just does not buy
+the shifted clause.
+
+### Why — and this is the part that generalizes past my gate
+
+Coverage fails on samples with a large **conformity score** S = max|μ−u|/σ̃. A
+gate selects on its own score. The median within-shard rank correlation between
+the two is **+0.256** for the shipped gate — so removing the worst 5% by gate
+score removes almost nothing in particular by conformity score, and selective
+coverage lands on top of marginal coverage on every shard (seed 0:
+`poisson_dam0p3` 0.460 vs 0.436, `darcy_dam0p5` 0.599 vs 0.572,
+`darcy_dam0p7` 0.219 vs 0.203).
+
+**The oracle is what makes this a statement about gating rather than about my
+gate.** Give the gate the true relative error — not shippable, fenced off in
+the code as `ORACLE_GATES`, reported as a ceiling — and it still gets 0/32. Its
+rank correlation with the conformity score is only **+0.697**, because S is a
+*ratio* and the oracle only knows the numerator. Under shift σ under-predicts
+the error at fixed error magnitude, so the ratio is inflated across the whole
+shard rather than in a selectable tail. **Selection acts on the population; the
+failure is in the scale.** No gate, however good, is the right shape of tool.
+
+The clearest instance is the amplitude shift, where the two variables diverge by
+two orders of magnitude. Median gate score as a multiple of its own refusal
+threshold:
+
+| shard | `sigma` q50/τ | `oracle_err` q50/τ | ungated coverage |
+|---|---|---|---|
+| `poisson_amp2` | 1.01 | **92.45** | 0.000 |
+| `helmholtz_amp2` | 1.25 | **77.11** | 0.000 |
+| `diffusion_amp2` | 1.26 | **132.91** | 0.000 |
+| `advdiff_amp2` | 1.41 | **147.02** | 0.000 |
+
+The true error's typical sample sits 77–147× past the threshold that would
+refuse it; the predicted spread's typical sample sits 1.01–1.41× past its own.
+**σ is nearly blind to an amplitude shift that raises the error by two orders of
+magnitude** — the heteroscedastic head learned a difficulty model of the
+training input distribution, and amplitude is the axis it extrapolates worst.
+
+### H14b — the price curve, so "at what abstention rate?" is answered rather than dodged
+
+`runs/selective.json → price_curve`, from `runs/selp_u0..u7_het.json`. β swept
+over {0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 0.95}, τ and the gated quantile refit
+from calibration at every β, `n_accepted ≥ 100` still required.
+
+| gate | shards reaching the band at **any** β (majority of 8 seeds) | median in-band count at the best β |
+|---|---|---|
+| `sigma` | **2/32** (`darcy_dam0p1`, `poisson_smooth`) | 1.0 at β = 0.7 and 0.9 |
+| `consist` | **1/24** (`darcy_dam0p1`) | 1.0 at β = 0.5 |
+| `oracle_err` | **2/32** | 1.0 at β = 0.5–0.9 |
+
+So the answer is not "the price is high", it is **there is no price on this grid
+that buys the clause**. Refusing 95% of samples still leaves ≤1/32 shards in
+band, with an oracle. And the two shards that are ever reachable are the two
+that need it least: the mildest rung of the ladder, and an over-covering
+`smooth` shard that reaches 0.90 from *above* by discarding 80% of itself.
+
+### Verdict on clause 1 under covariate shift, and what it costs me to say
+
+**Deliberate abstention is not the deliverable I thought it was.** The end of
+the H13 entry proposed conditional coverage as "the honest deliverable" for this
+clause and asked for a human decision. I no longer need the decision: the
+proposal is measured and it fails, at 8 seeds, at every abstention rate up to
+95%, and with a gate that cheats. Writing that down is worth more than the
+specification change would have been.
+
+What survives, and goes in the docs as a *product* claim rather than a clause
+claim: the gate is an excellent shift detector (ρ = 1.000 / 0.971 with shift
+strength, free, one forward pass) that costs 5% in distribution and disturbs
+nothing. "The surrogate says when not to trust it" is true. "…and then its
+interval is 90% correct where it does trust itself" is false, and the gate is
+not what makes it false.
+
+### The three readings of clause 1 that now exist, all measured, none replacing another
+
+| reading | number | protocol |
+|---|---|---|
+| in distribution, one forward pass | **0.9026**, 8/8 seeds in band ✅ | `runs/uq_seeds.json` |
+| under covariate shift, marginal, `group` | **0/32** shards in band, shipped M=1 model | `runs/selective.json` (= `runs/conf_u*_het.json`) |
+| under covariate shift, marginal, weighted at the pre-registered clip | **1.94/32** honest / 2.75 tuned | `runs/h13_clip.json` |
+| under covariate shift, **selective**, β = 0.05 | **0/32**, median abstention 0.390 | `runs/selective.json` |
+| — the same with an oracle competence gate | **0/32**, median abstention 0.858 | `runs/selective.json` |
+| — the abstention price of the band | **no β ≤ 0.95 reaches it** | `runs/selective.json → price_curve` |
+
+### H15, named now, and it is a different shape of tool
+
+The measured mechanism says: stop selecting the population, **rescale the
+interval**. Fit h(z) > 0 to predict the conditional 90th percentile of S from
+deployment-observable z, calibrate T = S/h(z), and emit q·h(z)·σ̃. If h captures
+how the shift inflates the ratio, T's quantile is shift-stable and coverage
+returns to the band *without* discarding anything — and the `smooth` shards get
+*narrower*, which is the direction no gate can move. That is normalized
+conformal with a learned difficulty model, and it is the one route that attacks
+the scale rather than the population. Registered properly, with its leakage
+discipline, in the next entry.
+
+### The test I wrote to guard H14 found a bug in H14's own instrument
+
+`test_spearman_identities` asserted that a constant series has no rank
+correlation. It failed: my `spearman` ranked ties by array order — an
+`argsort(argsort(·))` — so a constant series got the ranks `[0,1,2]` and a
+spurious ±1. On six-rung ladders where two rungs can share an abstention rate,
+that inflates exactly the number H14 leans on.
+
+Fixed in both copies (`scripts/agg_selective.py`, `scripts/eval_selective.py`)
+with average ranks and `None` on zero variance. **One reported number moved:**
+the `consist` gate's poisson ladder went 1.000 → **0.9411**. The shipped gate's
+headline correlations (1.000 poisson, 0.9714 darcy) are unchanged, and no
+verdict moves — but the tie handling was load-bearing and the earlier value was
+wrong. This is the third time in this repo that an instrument, not a model, was
+the thing that needed fixing, and the second time a test rather than a critic
+found it.
