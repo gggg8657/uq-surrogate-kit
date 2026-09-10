@@ -135,6 +135,58 @@ def test_wrapper_is_near_identity_at_the_reference_scale():
     assert float(rel.median()) < 0.25, float(rel.median())
 
 
+def test_scale_is_cuda_graph_capturable():
+    """The wrapper must capture inside a CUDA graph, or clause 2 is unmeasurable.
+
+    `sample_scale` originally gathered its channels with `a[:, list(ch)]`.
+    Advanced indexing builds the index tensor on the *host* and copies it to
+    the device on every call, which is illegal during capture -- it raised
+    `operation not permitted when stream is capturing` and took
+    `bench_fair.py --equivariant` down with it, leaving the wrapper's effect on
+    the >=100x clause as the literal string `[not measured]`.
+
+    This pins the property rather than the symptom: capture must succeed for
+    every family, and the sliced result must stay bit-identical to what the
+    advanced-indexing version computed, so the fix cannot have changed a number.
+    """
+    if not torch.cuda.is_available():
+        print("  no CUDA -- skipped")
+        return
+    a = torch.randn(4, 2, 32, 32, device="cuda")
+    with torch.no_grad():
+        for fam, ch in LINEAR_CHANNELS.items():
+            fn = lambda f=fam: sample_scale(a, f, 1.0)      # noqa: E731
+            s = torch.cuda.Stream()
+            s.wait_stream(torch.cuda.current_stream())
+            with torch.cuda.stream(s):
+                for _ in range(3):
+                    fn()
+            torch.cuda.current_stream().wait_stream(s)
+            g = torch.cuda.CUDAGraph()
+            with torch.cuda.graph(g):        # must not raise
+                fn()
+            # the slice path has to agree with the indexing path exactly
+            new = sample_scale(a, fam, 1.0)
+            old = a[:, list(ch)].flatten(1).pow(2).mean(dim=1).sqrt() \
+                .clamp_min(1e-12)
+            assert torch.equal(new, old), (fam,
+                                           float((new - old).abs().max()))
+        # and the full input rescale, which is what the closure actually calls
+        fn = lambda: rescale_inputs(a, "poisson",                # noqa: E731
+                                    sample_scale(a, "poisson", 1.0))
+        s = torch.cuda.Stream()
+        s.wait_stream(torch.cuda.current_stream())
+        with torch.cuda.stream(s):
+            for _ in range(3):
+                fn()
+        torch.cuda.current_stream().wait_stream(s)
+        g2 = torch.cuda.CUDAGraph()
+        with torch.cuda.graph(g2):
+            fn()
+    print(f"  captured for all {len(LINEAR_CHANNELS)} families, "
+          f"values bit-identical to the indexing path")
+
+
 if __name__ == "__main__":
     for name, fn in sorted(list(globals().items())):
         if name.startswith("test_"):

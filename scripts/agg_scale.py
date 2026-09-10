@@ -280,6 +280,14 @@ def main():
                          "features ablated. Paired against BOTH the H15 and "
                          "the H18 arms by checkpoint, because the question is "
                          "which of the two it resembles.")
+    ap.add_argument("--h20-glob", default="runs/scalepf_u*_het.json",
+                    help="H20: one width model PER FAMILY instead of one "
+                         "pooled fit with family one-hots. Paired against H15 "
+                         "(the arm it modifies) and against H19 (the "
+                         "amplitude ablation), because the diagnostic "
+                         "question is whether H15's Darcy-ladder gain "
+                         "survives a fit that never sees another family's "
+                         "amplitude rows.")
     ap.add_argument("--out", default="runs/scale.json")
     args = ap.parse_args()
 
@@ -342,6 +350,52 @@ def main():
               f" {res['h19']['vs']['n_features']} features)")
         for k, v in cmp.items():
             print(f"[H19] vs {k.upper()} {v['other_per_seed']}: diff "
+                  f"{v['diff_per_seed']}, p={v['exact_sign_flip_p']:.4f}")
+    h20 = _load(args.h20_glob)
+    if h20 and h15:
+        res["h20"] = agg_h15(h20)
+        a = res["h20"]["lomo"]["in_band_per_seed"]
+        cmp = {}
+        for name in ("h15", "h19"):
+            other = res.get(name)
+            if not other:
+                continue
+            b = other["lomo"]["in_band_per_seed"]
+            if len(a) != len(b):
+                continue
+            d = [x - y for x, y in zip(a, b)]
+            cmp[name] = {"other_per_seed": b, "diff_per_seed": d,
+                         "exact_sign_flip_p": (sign_flip(d) if any(d)
+                                               else 1.0)}
+        # the registered diagnostic: does the Darcy ladder keep the coverage
+        # the pooled fit gave it, once the fit cannot see another family?
+        LAD = [n for n in res["h20"]["lomo"]["shards"]
+               if res["h20"]["lomo"]["shards"][n]["parent"] == "darcy"
+               and res["h20"]["lomo"]["shards"][n]["mechanism"] == "alpha"]
+        res["h20"]["vs"] = {
+            "h20_per_seed": a, "comparisons": cmp,
+            "per_family_h": h20[0].get("per_family_h"),
+            "darcy_alpha_shards": {
+                n: {"ungated": res["h20"]["lomo"]["shards"][n]
+                    ["ungated_median"],
+                    "h20": res["h20"]["lomo"]["shards"][n]["scaled_median"],
+                    "h15": (res["h15"]["lomo"]["shards"][n]["scaled_median"]
+                            if n in res["h15"]["lomo"]["shards"] else None),
+                    "in_band_seeds": res["h20"]["lomo"]["shards"][n]
+                    ["in_band_seeds"]}
+                for n in sorted(LAD)},
+            "note": ("H20 tests whether H15's Darcy gain was a Darcy "
+                     "difficulty model or spillover from the loss mass of "
+                     "other families' amplitude rows. A per-family fit cannot "
+                     "see another family, so if the ladder holds it was the "
+                     "former."),
+        }
+        print(f"[H20] LOMO {a} (per_family_h="
+              f"{res['h20']['vs']['per_family_h']}), median "
+              f"{res['h20']['lomo']['in_band_median']}/"
+              f"{res['h20']['lomo']['n_shards']}")
+        for k, v in cmp.items():
+            print(f"[H20] vs {k.upper()} {v['other_per_seed']}: diff "
                   f"{v['diff_per_seed']}, p={v['exact_sign_flip_p']:.4f}")
     base, eq = _load(args.wtol_base_glob), _load(args.wtol_eq_glob)
     w = agg_wtol(base, eq)

@@ -3387,3 +3387,84 @@ replaces. If it does not, then this repo's third clause was substantially a
 measurement of its own defect — and given that this is now the *second* clause
 where that turned out to be true, that pattern is the most transferable thing
 the weekend has produced.
+
+## H20 result — a null. Per-family fitting changes nothing, and my diagnostic prediction was invalidated before it ran
+
+`runs/scalepf_u0..u7_het.json`, 8 seeds, same checkpoints as H15/H18/H19 so the
+pairing is exact. One `QuantileScale` per family (`uqkit.scale.PerFamilyScale`)
+instead of one pooled fit with family one-hots; nothing else changed.
+
+| arm | LOMO in band /32, per seed | median |
+|---|---|---|
+| H15, pooled h | 3,2,5,4,4,2,8,7 | **4** |
+| **H20, one h per family** | **4,1,5,7,1,4,2,8** | **4** |
+
+Paired diffs **+1,−1,0,+3,−3,+2,−6,+1**, exact two-sided sign-flip
+**p = 0.8438**. There is no effect. Prediction 1 said "≥ H15's 4/32 median" and
+it is met, but met trivially — the medians are identical and the per-seed
+scatter (1–8 against 2–8) is larger than any difference between the arms. This
+is the seed-count lesson in its plainest form: had I run 3 seeds and drawn
+seeds 3, 5 and 7 I would have reported per-family fitting as a clear win
+(+3, +2, +1), and drawing 1, 4 and 6 I would have reported it as a clear loss
+(−1, −3, −6). Both would have been noise.
+
+### Prediction 2 was the point of the run, and H19 had already invalidated its logic
+
+I wrote: "The Darcy ladder keeps the coverage H15 gave it. **This is the
+diagnostic prediction**: if it holds, H15's win was a real Darcy difficulty
+model; if the ladder collapses the way it did under H18, H15's win was loss-mass
+spillover." Measured — the ladder holds:
+
+| shard | ungated | H15 pooled | H20 per-family |
+|---|---|---|---|
+| `darcy_dam0p1` | 0.847 | 0.898 | 0.915 |
+| `darcy_dam0p3` | 0.732 | 0.901 | 0.903 |
+| `darcy_dam0p5` | 0.571 | 0.907 | 0.901 |
+| `darcy_dam0p7` | 0.198 | 0.896 | 0.847 |
+| `darcy_dam1` | 0.000 | 0.943 | 0.926 |
+| `darcy_rough` | 0.547 | 0.903 | 0.893 |
+
+**But the dichotomy I registered was already false when the run started**, and I
+should have withdrawn the prediction rather than let it be confirmed. H19
+established between the registration and the result that the carrier is the
+*amplitude feature*, not any family-level structure. A per-family Darcy fit
+still sees Darcy's own amplitude development shards, so it has the same carrier
+available — the ladder holding says nothing about a "Darcy difficulty model"
+either way. Both of my two branches were wrong, because both assumed the
+question was *which rows* drive the fit when the answer was *which feature*.
+
+Registering a two-outcome prediction and having reality supply a third is the
+same mistake I made in H13, where I framed the abstention result as a dichotomy
+and the truth was "the abstention was mine and the residual failure is not".
+Twice now, so it is a habit and not an accident: **a prediction with two
+branches is a prediction I have not thought hard enough about.** The fix that
+would have caught it here is procedural and cheap — re-read the registered
+predictions against anything measured since, before reading the result.
+
+### One thing did move, and it is the same shape as H18's
+
+The in-sample ceiling rose from H15's 4.0 median to **6.0** (per seed
+3,6,6,7,4,10,9,6), and the LOMO-vs-ceiling gap went from indistinguishable in
+H15 (p = 0.5156) to p = 0.125 here. So per-family fitting does buy capacity —
+it just buys it in-sample, where it cannot be spent. Combined with H18's
+identical finding, the pattern across three arms is consistent: **every change
+that raises what h could fit leaves what h can generalize where it was.**
+
+### Where this leaves the clause
+
+Routes tried and measured, all at 8 seeds with exact tests: weighted conformal
+(H13, 1.94/32), deliberate abstention at every price including with an oracle
+(H14/H14b, 0/32), a learned width model (H15, 4/32 — entirely the amplitude
+feature, H19), the closed-form amplitude repair (H17, real and worth shipping on
+its own accuracy merits), the two composed (H18, worse), and per-family fitting
+(H20, null). The residual requirement is H16's, stated without reference to any
+method: predict interval width to **±4.47%** median across **28.6–68.4×**.
+
+**I am now willing to say clause 1 under covariate shift is `UNREACHABLE` for
+this surrogate class**, with the ladder complete and H16 as the evidence rather
+than as an argument — and with the caveat that "UNREACHABLE" here means
+*unreachable by width prediction from deployment-observable features*, which is
+the only family of method anyone has tried, mine included. That distinction
+belongs in the board entry, because it is the difference between a bound and a
+failure to be clever. The decision on whether to re-scope the KPI text remains
+Option A/B in `WEEKEND.md`, which is a human's to make and not mine.

@@ -2238,6 +2238,831 @@
       "note": "H19 answers which explanation of H18 holds: resembling H18 means amplitude was the only large learnable signal and H17 removes it exactly; resembling H15 means the equivariant fit merely lost dynamic range in its target."
     }
   },
+  "h20": {
+    "n_seeds": 8,
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "leak_fold": "insample_leak",
+    "leak_note": "h fitted ON the evaluation shards: an in-sample ceiling for this feature set and model class, never a result",
+    "dev": {
+      "n_shards": 75,
+      "n_per_shard": 256,
+      "seed_base": 40000,
+      "by_mechanism": {
+        "alpha": {
+          "n_rows": 8960,
+          "n_shards": 35
+        },
+        "tau": {
+          "n_rows": 5120,
+          "n_shards": 20
+        },
+        "amp": {
+          "n_rows": 5120,
+          "n_shards": 20
+        }
+      },
+      "disjoint_checked": true
+    },
+    "band": [
+      0.88,
+      0.92
+    ],
+    "width_flag": 3.0,
+    "n_cal_fit": 2560,
+    "n_cal_q": 2560,
+    "by_fold": {
+      "all": {
+        "leak": false,
+        "held_out_mechanism": null,
+        "in_band_per_seed": [
+          6,
+          4,
+          4,
+          7,
+          5,
+          7,
+          2,
+          3
+        ],
+        "in_band_deployable_per_seed": [
+          5,
+          4,
+          4,
+          6,
+          4,
+          6,
+          2,
+          3
+        ],
+        "in_band_median": 4.5,
+        "in_dist_coverage_median": {
+          "poisson": 0.90234375,
+          "helmholtz": 0.90234375,
+          "diffusion": 0.90234375,
+          "advdiff": 0.90234375,
+          "darcy": 0.90234375
+        },
+        "in_dist_coverage_pooled_q_median": {
+          "poisson": 0.921875,
+          "helmholtz": 0.884765625,
+          "diffusion": 0.9365234375,
+          "advdiff": 0.98046875,
+          "darcy": 0.8115234375
+        },
+        "top_features": [
+          "a_spec9",
+          "log_sigmax",
+          "mu_spec1",
+          "log_sigmed",
+          "mu_spec4",
+          "mu_spec0"
+        ]
+      },
+      "alpha": {
+        "leak": false,
+        "held_out_mechanism": "alpha",
+        "in_band_per_seed": [
+          5,
+          1,
+          5,
+          7,
+          1,
+          5,
+          2,
+          9
+        ],
+        "in_band_deployable_per_seed": [
+          4,
+          1,
+          5,
+          7,
+          0,
+          4,
+          2,
+          7
+        ],
+        "in_band_median": 5.0,
+        "in_dist_coverage_median": {
+          "poisson": 0.90234375,
+          "helmholtz": 0.90234375,
+          "diffusion": 0.90234375,
+          "advdiff": 0.90234375,
+          "darcy": 0.90234375
+        },
+        "in_dist_coverage_pooled_q_median": {
+          "poisson": 0.990234375,
+          "helmholtz": 0.859375,
+          "diffusion": 0.9970703125,
+          "advdiff": 0.998046875,
+          "darcy": 0.6591796875
+        },
+        "top_features": [
+          "a_spec9",
+          "mu_spec2",
+          "log_sigmax",
+          "log_sigmed",
+          "mu_spec0",
+          "log_munorm"
+        ]
+      },
+      "amp": {
+        "leak": false,
+        "held_out_mechanism": "amp",
+        "in_band_per_seed": [
+          5,
+          7,
+          11,
+          4,
+          7,
+          5,
+          8,
+          5
+        ],
+        "in_band_deployable_per_seed": [
+          5,
+          7,
+          11,
+          4,
+          7,
+          5,
+          8,
+          5
+        ],
+        "in_band_median": 6.0,
+        "in_dist_coverage_median": {
+          "poisson": 0.90234375,
+          "helmholtz": 0.90234375,
+          "diffusion": 0.90234375,
+          "advdiff": 0.90234375,
+          "darcy": 0.90234375
+        },
+        "in_dist_coverage_pooled_q_median": {
+          "poisson": 0.8974609375,
+          "helmholtz": 0.841796875,
+          "diffusion": 0.9150390625,
+          "advdiff": 0.951171875,
+          "darcy": 0.8955078125
+        },
+        "top_features": [
+          "mu_spec4",
+          "mu_spec1",
+          "log_munorm",
+          "mu_spec9",
+          "mu_spec0",
+          "a_spec0"
+        ]
+      },
+      "insample_leak": {
+        "leak": true,
+        "held_out_mechanism": null,
+        "in_band_per_seed": [
+          3,
+          6,
+          6,
+          7,
+          4,
+          10,
+          9,
+          6
+        ],
+        "in_band_deployable_per_seed": [
+          3,
+          6,
+          6,
+          6,
+          4,
+          9,
+          8,
+          6
+        ],
+        "in_band_median": 6.0,
+        "in_dist_coverage_median": {
+          "poisson": 0.90234375,
+          "helmholtz": 0.90234375,
+          "diffusion": 0.90234375,
+          "advdiff": 0.90234375,
+          "darcy": 0.90234375
+        },
+        "in_dist_coverage_pooled_q_median": {
+          "poisson": 0.7275390625,
+          "helmholtz": 0.98828125,
+          "diffusion": 0.99609375,
+          "advdiff": 0.998046875,
+          "darcy": 0.7978515625
+        },
+        "top_features": [
+          "a_spec9",
+          "a_spec7",
+          "log_sigmed",
+          "log_sigmax",
+          "mu_spec1",
+          "mu_spec4"
+        ]
+      },
+      "tau": {
+        "leak": false,
+        "held_out_mechanism": "tau",
+        "in_band_per_seed": [
+          7,
+          2,
+          3,
+          3,
+          3,
+          4,
+          4,
+          2
+        ],
+        "in_band_deployable_per_seed": [
+          6,
+          2,
+          3,
+          3,
+          3,
+          3,
+          3,
+          1
+        ],
+        "in_band_median": 3.0,
+        "in_dist_coverage_median": {
+          "poisson": 0.90234375,
+          "helmholtz": 0.90234375,
+          "diffusion": 0.90234375,
+          "advdiff": 0.90234375,
+          "darcy": 0.90234375
+        },
+        "in_dist_coverage_pooled_q_median": {
+          "poisson": 0.9892578125,
+          "helmholtz": 0.91015625,
+          "diffusion": 0.97265625,
+          "advdiff": 0.953125,
+          "darcy": 0.6923828125
+        },
+        "top_features": [
+          "a_spec9",
+          "mu_spec2",
+          "log_sigmax",
+          "mu_spec1",
+          "log_sigmed",
+          "mu_spec0"
+        ]
+      }
+    },
+    "lomo": {
+      "note": "each shard scored only by the fold that never saw its shift mechanism; the insample_leak fold is excluded by construction",
+      "n_shards": 32,
+      "in_band_per_seed": [
+        4,
+        1,
+        5,
+        7,
+        1,
+        4,
+        2,
+        8
+      ],
+      "in_band_deployable_per_seed": [
+        4,
+        1,
+        5,
+        7,
+        0,
+        4,
+        2,
+        7
+      ],
+      "in_band_median": 4.0,
+      "in_band_range": [
+        1,
+        8
+      ],
+      "ungated_baseline_per_seed": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "vs_ungated": {
+        "diff_per_seed": [
+          4,
+          1,
+          5,
+          7,
+          1,
+          4,
+          2,
+          8
+        ],
+        "exact_sign_flip_p": 0.0078125
+      },
+      "vs_insample_ceiling": {
+        "leak_per_seed": [
+          3,
+          6,
+          6,
+          7,
+          4,
+          10,
+          9,
+          6
+        ],
+        "diff_per_seed": [
+          1,
+          -5,
+          -1,
+          0,
+          -3,
+          -6,
+          -7,
+          2
+        ],
+        "exact_sign_flip_p": 0.125
+      },
+      "underprediction_factor__uses_truth": {
+        "min": 0.014956239919299112,
+        "max": 2169538.7710969453,
+        "median": 0.9940666689606219
+      },
+      "shards": {
+        "input_shift/poisson_rough/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.026030229404568672,
+          "scaled_median": 1.0,
+          "ungated_median": 0.0,
+          "width_ratio_median": 9.050506917225349,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 8
+        },
+        "input_shift/poisson_smooth/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.0024303686805069447,
+          "scaled_median": 0.0,
+          "ungated_median": 0.9931640625,
+          "width_ratio_median": 0.19801794849475157,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/poisson_tau/N64": {
+          "mechanism": "tau",
+          "parent": "poisson",
+          "rel_l2_mean": 0.008523562457412481,
+          "scaled_median": 0.02734375,
+          "ungated_median": 0.0,
+          "width_ratio_median": 0.833725715252392,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/poisson_amp2/N64": {
+          "mechanism": "amp",
+          "parent": "poisson",
+          "rel_l2_mean": 0.4085468053817749,
+          "scaled_median": 0.0,
+          "ungated_median": 0.0,
+          "width_ratio_median": 0.0002868379483241056,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 3
+        },
+        "input_shift/helmholtz_rough/N64": {
+          "mechanism": "alpha",
+          "parent": "helmholtz",
+          "rel_l2_mean": 0.00996660627424717,
+          "scaled_median": 0.9677734375,
+          "ungated_median": 0.0,
+          "width_ratio_median": 6.563149021045319,
+          "in_band_seeds": 1,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 6
+        },
+        "input_shift/helmholtz_smooth/N64": {
+          "mechanism": "alpha",
+          "parent": "helmholtz",
+          "rel_l2_mean": 0.0045486930757761,
+          "scaled_median": 0.029296875,
+          "ungated_median": 0.9990234375,
+          "width_ratio_median": 0.4416239869003039,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/helmholtz_tau/N64": {
+          "mechanism": "tau",
+          "parent": "helmholtz",
+          "rel_l2_mean": 0.00910638552159071,
+          "scaled_median": 0.3154296875,
+          "ungated_median": 0.0166015625,
+          "width_ratio_median": 1.2877999121334833,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/helmholtz_amp2/N64": {
+          "mechanism": "amp",
+          "parent": "helmholtz",
+          "rel_l2_mean": 0.3110511004924774,
+          "scaled_median": 0.0,
+          "ungated_median": 0.0,
+          "width_ratio_median": 0.0003525630782986565,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 2
+        },
+        "input_shift/diffusion_rough/N64": {
+          "mechanism": "alpha",
+          "parent": "diffusion",
+          "rel_l2_mean": 0.05255140736699104,
+          "scaled_median": 0.955078125,
+          "ungated_median": 0.0,
+          "width_ratio_median": 33.33725311244288,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 8
+        },
+        "input_shift/diffusion_smooth/N64": {
+          "mechanism": "alpha",
+          "parent": "diffusion",
+          "rel_l2_mean": 0.00234945269767195,
+          "scaled_median": 1.0,
+          "ungated_median": 1.0,
+          "width_ratio_median": 2.6278664622539822,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 3
+        },
+        "input_shift/diffusion_tau/N64": {
+          "mechanism": "tau",
+          "parent": "diffusion",
+          "rel_l2_mean": 0.011815736535936594,
+          "scaled_median": 0.0068359375,
+          "ungated_median": 0.0,
+          "width_ratio_median": 0.9731166742895627,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/diffusion_amp2/N64": {
+          "mechanism": "amp",
+          "parent": "diffusion",
+          "rel_l2_mean": 0.418766587972641,
+          "scaled_median": 0.0,
+          "ungated_median": 0.0,
+          "width_ratio_median": 0.00022851392899545333,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 3
+        },
+        "input_shift/advdiff_rough/N64": {
+          "mechanism": "alpha",
+          "parent": "advdiff",
+          "rel_l2_mean": 0.061346061527729034,
+          "scaled_median": 0.935546875,
+          "ungated_median": 0.0,
+          "width_ratio_median": 15.070546886867227,
+          "in_band_seeds": 1,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 7
+        },
+        "input_shift/advdiff_smooth/N64": {
+          "mechanism": "alpha",
+          "parent": "advdiff",
+          "rel_l2_mean": 0.0023680225713178515,
+          "scaled_median": 0.0,
+          "ungated_median": 0.998046875,
+          "width_ratio_median": 0.5013129564092447,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/advdiff_tau/N64": {
+          "mechanism": "tau",
+          "parent": "advdiff",
+          "rel_l2_mean": 0.014540079981088638,
+          "scaled_median": 0.005859375,
+          "ungated_median": 0.0,
+          "width_ratio_median": 1.0205975124591,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/advdiff_amp2/N64": {
+          "mechanism": "amp",
+          "parent": "advdiff",
+          "rel_l2_mean": 0.47112175822257996,
+          "scaled_median": 0.5,
+          "ungated_median": 0.0,
+          "width_ratio_median": 995.0398006047117,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 4
+        },
+        "input_shift/darcy_rough/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.07747649773955345,
+          "scaled_median": 0.892578125,
+          "ungated_median": 0.546875,
+          "width_ratio_median": 1.3968292830436302,
+          "in_band_seeds": 4,
+          "in_band_deployable_seeds": 4,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/darcy_smooth/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.029740012250840664,
+          "scaled_median": 0.9931640625,
+          "ungated_median": 0.99609375,
+          "width_ratio_median": 1.0829270666277084,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/darcy_tau/N64": {
+          "mechanism": "tau",
+          "parent": "darcy",
+          "rel_l2_mean": 0.10546933487057686,
+          "scaled_median": 0.6337890625,
+          "ungated_median": 0.2548828125,
+          "width_ratio_median": 1.330653234719263,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/darcy_amp2/N64": {
+          "mechanism": "amp",
+          "parent": "darcy",
+          "rel_l2_mean": 0.7611617743968964,
+          "scaled_median": 0.998046875,
+          "ungated_median": 0.0,
+          "width_ratio_median": 408.3751390509907,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 6
+        },
+        "graded_rough/poisson_dam0p1/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.003245489322580397,
+          "scaled_median": 0.9189453125,
+          "ungated_median": 0.818359375,
+          "width_ratio_median": 1.244898191950158,
+          "in_band_seeds": 4,
+          "in_band_deployable_seeds": 4,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/poisson_dam0p2/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.0035523518454283476,
+          "scaled_median": 0.9326171875,
+          "ungated_median": 0.59765625,
+          "width_ratio_median": 1.4209196716356973,
+          "in_band_seeds": 2,
+          "in_band_deployable_seeds": 2,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/poisson_dam0p3/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.003976825391873717,
+          "scaled_median": 0.9462890625,
+          "ungated_median": 0.326171875,
+          "width_ratio_median": 1.634522342521834,
+          "in_band_seeds": 2,
+          "in_band_deployable_seeds": 2,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/poisson_dam0p5/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.005763811990618706,
+          "scaled_median": 0.9423828125,
+          "ungated_median": 0.0029296875,
+          "width_ratio_median": 2.367106861872111,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 1
+        },
+        "graded_rough/poisson_dam0p7/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.009976272005587816,
+          "scaled_median": 0.9482421875,
+          "ungated_median": 0.0,
+          "width_ratio_median": 3.6973770990814985,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 6
+        },
+        "graded_rough/poisson_dam1/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.026561281643807888,
+          "scaled_median": 1.0,
+          "ungated_median": 0.0,
+          "width_ratio_median": 9.239381915848352,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 8
+        },
+        "graded_rough/darcy_dam0p1/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.05416183918714523,
+          "scaled_median": 0.9150390625,
+          "ungated_median": 0.8466796875,
+          "width_ratio_median": 1.0963421939947127,
+          "in_band_seeds": 4,
+          "in_band_deployable_seeds": 4,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/darcy_dam0p2/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.05793433636426926,
+          "scaled_median": 0.9072265625,
+          "ungated_median": 0.822265625,
+          "width_ratio_median": 1.165595179488451,
+          "in_band_seeds": 4,
+          "in_band_deployable_seeds": 4,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/darcy_dam0p3/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.06534836441278458,
+          "scaled_median": 0.9033203125,
+          "ungated_median": 0.732421875,
+          "width_ratio_median": 1.2675502756647452,
+          "in_band_seeds": 3,
+          "in_band_deployable_seeds": 3,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/darcy_dam0p5/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.07701588794589043,
+          "scaled_median": 0.9013671875,
+          "ungated_median": 0.5712890625,
+          "width_ratio_median": 1.3891670676967338,
+          "in_band_seeds": 4,
+          "in_band_deployable_seeds": 4,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/darcy_dam0p7/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.1016911081969738,
+          "scaled_median": 0.8466796875,
+          "ungated_median": 0.1982421875,
+          "width_ratio_median": 1.6034780018747883,
+          "in_band_seeds": 2,
+          "in_band_deployable_seeds": 2,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/darcy_dam1/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.169746994972229,
+          "scaled_median": 0.92578125,
+          "ungated_median": 0.0,
+          "width_ratio_median": 2.787639661782503,
+          "in_band_seeds": 1,
+          "in_band_deployable_seeds": 1,
+          "width_inflated_seeds": 2
+        }
+      }
+    },
+    "vs": {
+      "h20_per_seed": [
+        4,
+        1,
+        5,
+        7,
+        1,
+        4,
+        2,
+        8
+      ],
+      "comparisons": {
+        "h15": {
+          "other_per_seed": [
+            3,
+            2,
+            5,
+            4,
+            4,
+            2,
+            8,
+            7
+          ],
+          "diff_per_seed": [
+            1,
+            -1,
+            0,
+            3,
+            -3,
+            2,
+            -6,
+            1
+          ],
+          "exact_sign_flip_p": 0.84375
+        },
+        "h19": {
+          "other_per_seed": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "diff_per_seed": [
+            4,
+            1,
+            5,
+            7,
+            1,
+            4,
+            2,
+            8
+          ],
+          "exact_sign_flip_p": 0.0078125
+        }
+      },
+      "per_family_h": true,
+      "darcy_alpha_shards": {
+        "graded_rough/darcy_dam0p1/N64": {
+          "ungated": 0.8466796875,
+          "h20": 0.9150390625,
+          "h15": 0.8984375,
+          "in_band_seeds": 4
+        },
+        "graded_rough/darcy_dam0p2/N64": {
+          "ungated": 0.822265625,
+          "h20": 0.9072265625,
+          "h15": 0.91796875,
+          "in_band_seeds": 4
+        },
+        "graded_rough/darcy_dam0p3/N64": {
+          "ungated": 0.732421875,
+          "h20": 0.9033203125,
+          "h15": 0.9013671875,
+          "in_band_seeds": 3
+        },
+        "graded_rough/darcy_dam0p5/N64": {
+          "ungated": 0.5712890625,
+          "h20": 0.9013671875,
+          "h15": 0.9072265625,
+          "in_band_seeds": 4
+        },
+        "graded_rough/darcy_dam0p7/N64": {
+          "ungated": 0.1982421875,
+          "h20": 0.8466796875,
+          "h15": 0.896484375,
+          "in_band_seeds": 2
+        },
+        "graded_rough/darcy_dam1/N64": {
+          "ungated": 0.0,
+          "h20": 0.92578125,
+          "h15": 0.943359375,
+          "in_band_seeds": 1
+        },
+        "input_shift/darcy_rough/N64": {
+          "ungated": 0.546875,
+          "h20": 0.892578125,
+          "h15": 0.9033203125,
+          "in_band_seeds": 4
+        },
+        "input_shift/darcy_smooth/N64": {
+          "ungated": 0.99609375,
+          "h20": 0.9931640625,
+          "h15": 0.78515625,
+          "in_band_seeds": 0
+        }
+      },
+      "note": "H20 tests whether H15's Darcy gain was a Darcy difficulty model or spillover from the loss mass of other families' amplitude rows. A per-family fit cannot see another family, so if the ladder holds it was the former."
+    }
+  },
   "wtol": {
     "n_seeds": 8,
     "seeds": [

@@ -56,11 +56,26 @@ LINEAR_CHANNELS = {
 
 
 def sample_scale(a, parent, ref=1.0, eps=1e-12):
-    """Per-sample scale of the linear channels, relative to `ref`."""
+    """Per-sample scale of the linear channels, relative to `ref`.
+
+    **The channels are gathered by slicing, not by advanced indexing, and that
+    is load bearing.** `a[:, list(ch)]` builds its index tensor on the host and
+    copies it to the device on every call, which is illegal inside a CUDA graph
+    capture: it raised `operation not permitted when stream is capturing` and
+    took `bench_fair.py --equivariant` down with it, which is why the wrapper's
+    effect on the clause-2 reading was `[not measured]`. A slice is a view and
+    captures like any other op. Isolated directly -- `a[:, [0]]` fails capture
+    and `a[:, 0:1]` succeeds -- and pinned by
+    `tests/test_equivar.py::test_scale_is_cuda_graph_capturable`.
+
+    `torch.cat` of single-channel slices is used rather than one slice so that
+    a family with non-contiguous linear channels stays correct; with today's
+    one channel per family it is a no-op copy of the same data.
+    """
     ch = LINEAR_CHANNELS.get(parent)
     if ch is None:
         return torch.ones(len(a), device=a.device, dtype=a.dtype)
-    sub = a[:, list(ch)].flatten(1)
+    sub = torch.cat([a[:, c:c + 1] for c in ch], dim=1).flatten(1)
     rms = sub.pow(2).mean(dim=1).sqrt()
     return (rms / ref).clamp_min(eps)
 
