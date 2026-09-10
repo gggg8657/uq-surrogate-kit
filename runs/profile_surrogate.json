@@ -1,0 +1,231 @@
+{
+ "env": {
+  "torch": "2.8.0+cu128",
+  "python": "3.11.16",
+  "platform": "Linux-6.8.0-58-generic-x86_64-with-glibc2.39",
+  "torch_num_threads": 96,
+  "torch_interop_threads": 96,
+  "OMP_NUM_THREADS": "<unset>",
+  "MKL_NUM_THREADS": "<unset>",
+  "cpu_count": 192,
+  "cuda": "12.8",
+  "gpu": "NVIDIA H100 NVL",
+  "visible_devices": "2",
+  "tf32_matmul": false
+ },
+ "clock_ramp": {
+  "ramped": true,
+  "seconds": 6.0,
+  "matmuls": 1820
+ },
+ "task": "darcy",
+ "batch": 1,
+ "ckpt": "runs/u0/best.pt",
+ "model": {
+  "width": 64,
+  "modes": 20,
+  "layers": 4,
+  "out_ch": 4
+ },
+ "note": "Diagnostic only -- no KPI number is derived here. `parts` times nested prefixes of the deployed closure, each under CUDA-graph replay, so the differences are attributable. `kernels` aggregates one profiled replay.",
+ "parts": {
+  "normalize": {
+   "median_s": 1.2740492820739746e-05,
+   "min_s": 1.2062489986419678e-05,
+   "p75_s": 1.3016164302825928e-05
+  },
+  "lift": {
+   "median_s": 4.325993359088898e-05,
+   "min_s": 4.279986023902893e-05,
+   "p75_s": 4.3410807847976685e-05
+  },
+  "trunk": {
+   "median_s": 0.0005582347512245178,
+   "min_s": 0.0005567930638790131,
+   "p75_s": 0.0005592517554759979
+  },
+  "forward": {
+   "median_s": 0.0006171036511659622,
+   "min_s": 0.0006153620779514313,
+   "p75_s": 0.0006180405616760254
+  },
+  "deployed_closure": {
+   "median_s": 0.000643659383058548,
+   "min_s": 0.0006409958004951477,
+   "p75_s": 0.0006446056067943573
+  },
+  "spectral_x1": {
+   "median_s": 8.643791079521179e-05,
+   "min_s": 8.550286293029785e-05,
+   "p75_s": 8.660554885864258e-05
+  },
+  "spectral_x4": {
+   "median_s": 0.0003159865736961365,
+   "min_s": 0.0003141239285469055,
+   "p75_s": 0.0003164447844028473
+  },
+  "blocks_x4": {
+   "median_s": 0.00048601627349853516,
+   "min_s": 0.000483587384223938,
+   "p75_s": 0.00048679858446121216
+  }
+ },
+ "kernels": {
+  "n_forward_calls_profiled": 10,
+  "total_self_cuda_us": 12619.60399999997,
+  "total_self_cuda_us_per_call": 1261.960399999997,
+  "n_launches_per_call": 300.1,
+  "top": [
+   {
+    "op": "aten::copy_",
+    "n_per_call": 56.0,
+    "self_cuda_us_per_call": 258.732499999999,
+    "frac": 0.20502426225101802
+   },
+   {
+    "op": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#9}::operator()() const::{lambda(c10::complex<float>)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#9}::operator()() const::{lambda(c10::complex<float>)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#9}::operator()() const::{lambda(c10::complex<float>)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#9}::operator()() const::{lambda(c10::complex<float>)#1} const&)::{lambda(int)#1})",
+    "n_per_call": 24.0,
+    "self_cuda_us_per_call": 191.42490000000015,
+    "frac": 0.15168851574106496
+   },
+   {
+    "op": "aten::native_group_norm",
+    "n_per_call": 4.0,
+    "self_cuda_us_per_call": 101.09949999999962,
+    "frac": 0.08011305267582078
+   },
+   {
+    "op": "void at::native::(anonymous namespace)::RowwiseMomentsCUDAKernel<float>(long, float, float const*, float*, float*)",
+    "n_per_call": 4.0,
+    "self_cuda_us_per_call": 77.51019999999862,
+    "frac": 0.06142046929523209
+   },
+   {
+    "op": "void at::native::vectorized_elementwise_kernel<8, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda(float)#1}, std::array<char*, 2ul>)",
+    "n_per_call": 26.0,
+    "self_cuda_us_per_call": 50.390899999998695,
+    "frac": 0.039930650755759696
+   },
+   {
+    "op": "aten::add_",
+    "n_per_call": 10.0,
+    "self_cuda_us_per_call": 37.82679999999955,
+    "frac": 0.02997463311843988
+   },
+   {
+    "op": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+    "n_per_call": 10.0,
+    "self_cuda_us_per_call": 37.82679999999955,
+    "frac": 0.02997463311843988
+   },
+   {
+    "op": "aten::bmm",
+    "n_per_call": 8.0,
+    "self_cuda_us_per_call": 36.264499999998954,
+    "frac": 0.028736638645712683
+   },
+   {
+    "op": "void gemv2N_kernel<int, int, float2, float2, float2, float2, 128, 4, 4, 4, 1, false, cublasGemvParamsEx<int, cublasGemvTensorStridedBatched<float2 const>, cublasGemvTensorStridedBatched<float2 const>, cublasGemvTensorStridedBatched<float2>, float2> >(cublasGemvParamsEx<int, cublasGemvTensorStridedBatched<float2 const>, cublasGemvTensorStridedBatched<float2 const>, cublasGemvTensorStridedBatched<float2>, float2>)",
+    "n_per_call": 8.0,
+    "self_cuda_us_per_call": 36.264499999998954,
+    "frac": 0.028736638645712683
+   },
+   {
+    "op": "aten::cudnn_convolution",
+    "n_per_call": 10.0,
+    "self_cuda_us_per_call": 34.72840000000042,
+    "frac": 0.02751940552175845
+   },
+   {
+    "op": "aten::add",
+    "n_per_call": 10.0,
+    "self_cuda_us_per_call": 31.96390000000174,
+    "frac": 0.025328766259227958
+   },
+   {
+    "op": "void regular_fft<64u, EPT<8u>, 32u, 6u, (padding_t)14, (twiddle_t)0, (loadstore_modifier_t)2, (layout_t)1, unsigned int, float, HostConfigPlaceholder>(kernel_arguments_t<unsigned int>)",
+    "n_per_call": 8.0,
+    "self_cuda_us_per_call": 29.33689999999824,
+    "frac": 0.023247084456848494
+   },
+   {
+    "op": "aten::_fft_c2r",
+    "n_per_call": 4.0,
+    "self_cuda_us_per_call": 26.706199999998624,
+    "frac": 0.021162470708271583
+   },
+   {
+    "op": "aten::_fft_r2c",
+    "n_per_call": 4.0,
+    "self_cuda_us_per_call": 25.656100000000425,
+    "frac": 0.020330352679846755
+   },
+   {
+    "op": "aten::mul",
+    "n_per_call": 12.0,
+    "self_cuda_us_per_call": 25.183000000001538,
+    "frac": 0.019955459775125747
+   },
+   {
+    "op": "void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>, 4, TrivialOffsetCalculator<2, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<2>, at::native::memory::StoreWithCast<1> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>, TrivialOffsetCalculator<2, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<2>, at::native::memory::StoreWithCast<1>)",
+    "n_per_call": 5.0,
+    "self_cuda_us_per_call": 21.49910000000118,
+    "frac": 0.017036271502656686
+   },
+   {
+    "op": "nvjet_tst_64x32_64x16_1x2_h_bz_NNT",
+    "n_per_call": 5.0,
+    "self_cuda_us_per_call": 17.811899999999603,
+    "frac": 0.014114468251142941
+   },
+   {
+    "op": "aten::gelu",
+    "n_per_call": 7.0,
+    "self_cuda_us_per_call": 16.647200000000247,
+    "frac": 0.013191539132289957
+   },
+   {
+    "op": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::GroupNormKernelImplInternal<float>(at::Tensor const&, at::Tensor const&, at::Tensor const&, long, long, long, long, float, at::Tensor&, at::Tensor&, at::Tensor&)::{lambda(float, float, float)#2}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::GroupNormKernelImplInternal<float>(at::Tensor const&, at::Tensor const&, at::Tensor const&, long, long, long, long, float, at::Tensor&, at::Tensor&, at::Tensor&)::{lambda(float, float, float)#2} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::GroupNormKernelImplInternal<float>(at::Tensor const&, at::Tensor const&, at::Tensor const&, long, long, long, long, float, at::Tensor&, at::Tensor&, at::Tensor&)::{lambda(float, float, float)#2}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::GroupNormKernelImplInternal<float>(at::Tensor const&, at::Tensor const&, at::Tensor const&, long, long, long, long, float, at::Tensor&, at::Tensor&, at::Tensor&)::{lambda(float, float, float)#2} const&)::{lambda(int)#1})",
+    "n_per_call": 4.0,
+    "self_cuda_us_per_call": 13.463400000001002,
+    "frac": 0.01066863904762862
+   },
+   {
+    "op": "void at::native::vectorized_elementwise_kernel<4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 2ul> >(int, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 2ul>)",
+    "n_per_call": 6.0,
+    "self_cuda_us_per_call": 11.703500000000076,
+    "frac": 0.009274062799434993
+   },
+   {
+    "op": "void vector_fft_r2c<64u, EPT<8u>, 8u, 32u, (padding_t)14, (twiddle_t)0, (loadstore_modifier_t)2, (layout_t)0, unsigned int, float>(kernel_arguments_t<unsigned int>)",
+    "n_per_call": 4.0,
+    "self_cuda_us_per_call": 11.604000000001543,
+    "frac": 0.009195217219178644
+   },
+   {
+    "op": "void vector_fft_c2r<64u, EPT<8u>, 8u, 24u, (padding_t)14, (twiddle_t)0, (loadstore_modifier_t)2, (layout_t)0, unsigned int, float>(kernel_arguments_t<unsigned int>)",
+    "n_per_call": 4.0,
+    "self_cuda_us_per_call": 11.421399999999267,
+    "frac": 0.009050521712091199
+   },
+   {
+    "op": "aten::cat",
+    "n_per_call": 3.0,
+    "self_cuda_us_per_call": 10.976799999999367,
+    "frac": 0.00869821271729239
+   },
+   {
+    "op": "void at::native::(anonymous namespace)::ComputeFusedParamsCUDAKernel<float>(long, long, long, float const*, float const*, float const*, float const*, at::AccumulateType<float, true>::type*, at::AccumulateType<float, true>::type*)",
+    "n_per_call": 4.0,
+    "self_cuda_us_per_call": 10.125900000000001,
+    "frac": 0.008023944332960073
+   },
+   {
+    "op": "Memcpy DtoD (Device -> Device)",
+    "n_per_call": 4.0,
+    "self_cuda_us_per_call": 9.623300000000745,
+    "frac": 0.007625675100423728
+   }
+  ]
+ }
+}

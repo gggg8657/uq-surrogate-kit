@@ -1413,3 +1413,181 @@ reference is 94–257×, and 100× on *every* problem is simply past it. That is
 much better-understood failure than the one I started the turn with, and it has
 a named route: the surrogate side, not the solver side, is now where the
 remaining factor has to come from.
+
+## H12 — the surrogate has its own unmeasured overhead, and it is 20% of the batch-1 latency
+
+**Where this turn starts.** H11 ended with clause 2 `NOT MET` — 21/24 fields at
+batch 1, worst 94.0× — after three rounds of making the *reference solver*
+faster, each verified bit-identical. Its last line named the only remaining
+route: "the surrogate side, not the solver side, is now where the remaining
+factor has to come from." Three turns of scrutiny went into the denominator and
+**zero into the numerator**, which is itself a bias: I have been auditing only
+the side whose improvement hurts me.
+
+**Measure before changing.** `scripts/profile_surrogate.py` attributes the
+deployed batch-1 closure (`runs/profile_surrogate.json`, seed-0 `het` model,
+width 64 / modes 20 / 4 layers, 26.25M params), each part under its own CUDA
+graph so the numbers are differences of like things:
+
+| part (CUDA-graph replay, batch 1) | median | share of closure |
+|---|---|---|
+| `deployed_closure` (norm → forward → band) | **0.6437 ms** | 100% |
+| `trunk` | 0.5582 ms | 86.7% |
+| `blocks_x4` (4 FNO blocks on a width-64 activation) | 0.4860 ms | 75.5% |
+| **`spectral_x4` (the 4 spectral convs alone)** | **0.3160 ms** | **49.1%** |
+| `spectral_x1` | 0.0864 ms | 13.4% |
+| `lift` | 0.0433 ms | 6.7% |
+| `normalize` | 0.0127 ms | 2.0% |
+
+And the kernel census over one eager forward, 300 launches per call:
+
+| op | n/call | self-CUDA µs/call | share |
+|---|---|---|---|
+| `aten::copy_` | 56.0 | **258.7** | **20.5%** |
+| `elementwise_kernel<128, 2, …>` | 24.0 | 191.4 | 15.2% |
+| `native_group_norm` | 4.0 | 101.1 | 8.0% |
+| `aten::bmm` → `gemv2N_kernel` | 8.0 | 36.3 | 2.9% |
+| `regular_fft` | 8.0 | 29.3 | 2.3% |
+
+**The arithmetic is 5% of the time and the data movement is most of the rest.**
+Eight `bmm`s and eight FFTs — everything the spectral layer is *for* — cost
+65.6 µs together. `copy_` alone costs 258.7 µs. That is the same shape of defect
+I found three times in the solver: work that computes nothing.
+
+**Where the copies come from.** `SpectralConv2d.forward`
+(`uqkit/sims/fno2d.py:52`) calls
+`torch.einsum("bixy,ioxy->boxy", x_ft[...], w_lo[...])` twice per layer. The
+weight operand is `(in, out, m1, m2)` complex — 64×64×20×20 = 1.64M complex64 =
+**13.1 MB** — and the contraction einsum lowers to is a batched matmul over the
+`(x, y)` mode grid, so einsum must **permute the weight tensor into
+`(x, y, in, out)` order on every forward pass**. Eight such permutes per forward
+= 105 MB of copies whose result is the same every time, because the weights do
+not change at inference. The `gemv2N_kernel` name is the second half of the
+story: at batch 1 the contraction is a matrix-*vector* product, so there is no
+arithmetic to hide the copy behind.
+
+**H12: caching the permuted complex weights at eval time removes enough of the
+batch-1 latency to take clause 2 at batch 1 from 21/24 to 24/24.** The change is
+`einsum` → a `bmm` against a `(m1·m2, in, out)` contiguous complex buffer built
+once at load.
+
+*The two tables above are different execution regimes and must not be
+arithmetically combined* — `codex` flagged a draft of this entry for doing
+exactly that. The 258.7 µs `copy_` figure is from the **eager** census; it
+identifies *what* the copies are and licenses the hypothesis, but it cannot be
+subtracted from the 0.6437 ms **graph-replay** closure, and not every `copy_`
+in it is a weight permute. Only the graph-replay part times decide anything
+here, and the number that decides the clause is neither of them: it is
+`solver_min_s / graph_max_s` per field, in `runs/bench_fair_h12.json`.
+
+**Two micro-measurements taken before committing to it** (GPU 2, same H100):
+
+- the contraction alone, batch 1: einsum **47.3 µs** → cached-weight bmm
+  **28.0 µs**, `max|Δ| = 0.0` — *bit-identical*, not merely close.
+- a whole spectral conv including both FFTs, allocation and the two band
+  writes: **213.0 µs → 163.0 µs** (1.31×). Two other formulations were tried and
+  are slower: 4-D broadcast matmul 166.0 µs, single-gather-single-scatter
+  173.6 µs. All three are bit-identical to the current path.
+
+**A hole `codex` found in the gate, closed before the run.** `bench_fair.py`
+verifies CUDA-graph replay against eager — but after H12 *both* take the packed
+path, so that gate cannot see a change the packed path itself introduced. The
+unit test covers a 2-layer width-16 model at N=16 and N=32; it does not cover
+the shipped checkpoint at N=64, which is what every coverage and accuracy number
+in this repo was measured on. `packed_weight_gate` now runs the shipped model
+both ways at the benchmarked batch and resolution and requires `max|Δ| = 0` on
+the **mean and both interval bounds** — the bounds because a change confined to
+σ would leave the mean identical and silently move every coverage number. It
+raises rather than warns, so a non-zero deviation voids the run instead of
+annotating it.
+
+**A second defect fixed in the same file, found by the crash rather than the
+critic.** `ratio_vs_check_every_1_median` indexed `entry["solver"]` with the
+literal key `"check_every=1"`. That key only exists when `--precond continuous`
+is among the arguments, so the first H12 launch died after timing the whole
+batch-1 solver sweep. Worse than the crash: the literal key is also the *wrong*
+comparator whenever the fair denominator uses `fast_apply` or the discrete
+preconditioner, because then the two rows differ by more than the sync and the
+"how much was the subsidy" reading is not about the subsidy. It now resolves the
+comparator from the chosen denominator and raises if it is absent.
+
+**Falsifiable prediction, written before the run.** The closure lands in
+**0.50–0.56 ms** (from 0.6437), the worst of the 24 fields lands in
+**108–121×** (from 94.0×), clause 2 at batch 1 reads **24/24**, and clause 2 at
+batch 64 **still fails** (40.5× → at most ~50×, nowhere near 100×). If the
+closure does not move, H12 is wrong and the copies are somewhere I have not
+looked — the 24 `elementwise_kernel<128,2>` calls and the 101 µs of GroupNorm
+are the next two suspects.
+
+**The fairness objection, stated before someone else states it.** I have spent
+three rounds optimizing the denominator and am now optimizing the numerator, so
+the ratio will move my way for the first time. Is that admissible? The test I
+have been applying to the solver is: *same answer, verified; overhead removed,
+not work removed*. This change meets it exactly — bit-identical output, and what
+it deletes is a memcpy of constants. It is the surrogate's version of the
+solver's rebuilt face coefficients (H10), and I would have been wrong to fix one
+and not the other. What it does **not** do is close the remaining asymmetry:
+the PCG loop is still a Python loop launching individual kernels, and fused
+stencil kernels and graph-captured fixed-length PCG chunks remain named,
+admissible and **unmeasured** solver optimizations. `solver_s_to_erase_100x`
+stays in the results table for exactly that reason, and any pass this change
+produces has to be read next to it.
+
+**Cost to declare.** The cache duplicates the spectral weights: eight packed
+tensors of 64×64×20×20 complex64 = **+104.86 MB** of device memory, against the
+model's own 105.02 MB, so it is **+100%** of the footprint. Free for a batch-1
+latency claim, not free on a memory-bound deployment, and the fast path is
+therefore opt-out (`cache_packed_weights = False`).
+
+*Corrected:* the first version of this line said +26.2 MB. `codex` caught it —
+I had carried the parameter *count* (26.25M) across as megabytes, which is off
+by the 4 bytes per float. The ratio I stated was right and the absolute number
+was wrong by 4×, which is the more embarrassing way to be wrong.
+
+### The adversary, asked the addendum's question rather than mine
+
+The addendum is explicit that I have been asking critics "what is wrong with
+this", which is why they only ever find defects. So `codex` was asked both
+questions this time — *how would you make this clause pass?* first.
+
+**On (1), how to pass.** It refused to let me count H12 twice — "H12 ends with a
+**prediction**, not a post-change measurement… Don't count its expected saving
+twice" — and gave the arithmetic target directly: at fixed reference timings,
+94.0× becomes 100× when the closure falls to **94% of 0.6437 ms = 0.6051 ms**, a
+saving of only **0.0386 ms**. Its ranked list of *further* surrogate-side
+optimizations, all explicitly unmeasured estimates:
+
+| rank | change | its estimate |
+|---|---|---|
+| 1 | fuse the block's elementwise work around GroupNorm (`fno2d.py:146`): spectral+pointwise add, norm, GELU, residual add | 0.02–0.06 ms |
+| 2 | pre-cache the bf16 autocast copies of the fixed 1×1 conv weights, if replay actually captures them | 0.01–0.04 ms, or zero |
+| 3 | one packing kernel + one scatter for the spectral bands, into reusable buffers | 0.005–0.02 ms |
+| 4 | cache coordinates and the task embedding; fuse input assembly | 0.005–0.015 ms |
+| 5 | fuse the output scaling and the band construction | 0.003–0.01 ms |
+
+Rank 1 is consistent with my own profile — GroupNorm is 101.1 µs/call over 4
+calls, the third-largest line — so that is the named route if H12 lands short.
+Its warning on rank 5 is worth keeping even though nothing here is compiled yet:
+the timed closure `return`s only `mean`, so a compiler would be free to delete
+the interval and manufacture a speedup. Its caveat on all of them is right and I
+adopt it: "Mathematical equivalence does not guarantee bitwise identity. Do not
+fold normalization into convolution weights, change precision, or replace
+GroupNorm with frozen statistics."
+
+**On (2), why the number might mislead.** It did not challenge admissibility —
+"H12's constant-weight cache is admissible" — and instead attacked the framing,
+correctly:
+
+> Increasing `check_every` reduces synchronization; it **does not remove
+> per-operation dispatch**. […] Thus a pass is defensible as "24/24 measured
+> fields against this specified PCG implementation", not an established
+> advantage against an equivalently optimized reference.
+
+That is the sentence any pass here has to be reported with, and it is sharper
+than my own version of it, so I am adopting its wording. It also converted the
+break-even into the new regime: at a 0.50–0.56 ms closure, **any field solved in
+under 50–56 ms takes the clause back under 100×**, against a current fastest
+field of 62.4 ms. The clause, if it passes, passes with a ~12% margin on the
+easiest field, against a reference with named unmeasured optimizations. Both of
+its concrete defect findings — the eager/graph regime mix and the 4× memory
+error — were real and are fixed above.

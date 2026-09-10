@@ -45,6 +45,7 @@ from uqkit.sims.predict import (load_members, load_shard,  # noqa: E402
                                 predict_shard_single)
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from uqkit.sims.fno2d_uq import sigma_from, split_heads  # noqa: E402
 from bench_speedup import graph_wrap, make_uq_fn, no_grad_wrap  # noqa: E402
 
 TOL = 1e-10
@@ -59,6 +60,48 @@ def trials(fn, n_trials, iters, device="cuda"):
     return {"trial_median_s": meds, "min_s": meds[0], "max_s": meds[-1],
             "median_s": statistics.median(meds),
             "spread_ratio": meds[-1] / max(meds[0], 1e-12)}
+
+
+def packed_weight_gate(model, a_raw, st, tid, source, q_hat=1.0):
+    """max|delta| between the packed-weight path and the einsum path.
+
+    Returns the deviation of the mean and of both conformal bounds, and raises
+    if any is non-zero. Both paths are run through `make_uq_fn`, so what is
+    compared is what is timed, not a reimplementation of it.
+    """
+    specs = [b.spectral for b in model.blocks]
+
+    def run(fast):
+        for sp in specs:
+            sp.cache_packed_weights = fast
+            sp.clear_packed_cache()
+        a_mean, a_std = st["a_mean"].to(a_raw.device), st["a_std"].to(a_raw.device)
+        u_mean, u_std = st["u_mean"].to(a_raw.device), st["u_std"].to(a_raw.device)
+        with torch.no_grad():
+            a_norm = (a_raw - a_mean) / a_std
+            with torch.autocast("cuda", dtype=torch.bfloat16):
+                y = model(a_norm, tid).float()
+            mean = split_heads(y)[0] * u_std + u_mean
+            sigma = sigma_from(y, source) * u_std
+            return (mean.clone(), (mean - q_hat * sigma).clone(),
+                    (mean + q_hat * sigma).clone())
+
+    slow = run(False)
+    fast = run(True)              # leaves the fast path ON, which is shipped
+    devs = {k: float((f - s_).abs().max())
+            for k, f, s_ in zip(("mean", "lo", "hi"), fast, slow)}
+    scale = float(slow[0].abs().max())
+    bad = {k: v for k, v in devs.items() if v != 0.0}
+    if bad:
+        raise RuntimeError(
+            f"packed-weight spectral path is NOT bit-identical to einsum "
+            f"{bad} (field scale {scale:.3e}); every timing below would be "
+            f"measuring a different model")
+    return {"max_abs_dev": devs, "field_scale": scale,
+            "bar": "exact equality, not a tolerance",
+            "why": ("the graph gate compares graph vs eager and both take the "
+                    "fast path, so it cannot see a change introduced by the "
+                    "fast path itself")}
 
 
 def main():
@@ -192,6 +235,19 @@ def main():
                   f"{n_it:5d} it resid={resid:.2e} "
                   f"{'OK' if t['admissible'] else 'INADMISSIBLE'}", flush=True)
 
+        # H12 gate. `SpectralConv2d` caches its permuted weights at eval time
+        # and contracts with `bmm` instead of `einsum`. The graph gate below
+        # compares graph against eager -- but BOTH now take the fast path, so
+        # it cannot establish equivalence to the pre-H12 model, which is what
+        # every published coverage and accuracy number in this repo was
+        # measured on. (`codex`, 2026-09-10, named exactly this hole.) So
+        # compare the shipped checkpoint at this resolution and batch, on the
+        # mean AND both interval bounds, against the einsum path, and demand
+        # bit-identity -- the same bar `fast_apply` had to clear on the solver
+        # side. A tolerance here would admit a real numerical change.
+        entry["packed_weight_gate"] = packed_weight_gate(
+            model, a_raw, st, tid, args.uq_source)
+
         eager = make_uq_fn(model, a_raw, st, tid, args.uq_source, autocast=True)
         arms = {"eager": eager, "nograd": no_grad_wrap(eager)}
         with torch.no_grad():
@@ -267,6 +323,24 @@ def main():
         adm = [v for v in entry["solver"].values() if v["admissible"]]
         if adm:
             fastest = min(adm, key=lambda v: v["min_s"])
+            # The `check_every=1` reading is kept only to show how much of any
+            # ratio was the per-iteration device-to-host sync. It must be the
+            # SAME solver configuration as the fair denominator in every other
+            # respect, or the difference between the two rows stops being the
+            # sync. Hard-coding the key crashed when `--precond` was given
+            # without `continuous` (H12); resolving it from `fastest` is both
+            # robust and the semantically correct comparator.
+            subsidized_key = ("check_every=1"
+                              + ("+fast_apply" if fastest.get("fast_apply")
+                                 else "")
+                              + ("" if fastest.get("precond", "continuous")
+                                 == "continuous"
+                                 else f"+{fastest['precond']}_precond"))
+            subsidized = entry["solver"].get(subsidized_key)
+            if subsidized is None:
+                raise RuntimeError(
+                    f"no {subsidized_key!r} row to quote the subsidized "
+                    f"reading against; pass check_every=1 in --check-every")
             entry["fair_denominator"] = {
                 "check_every": fastest["check_every"],
                 "fast_apply": fastest.get("fast_apply", False),
@@ -284,8 +358,8 @@ def main():
                     "ratio_conservative": fastest["min_s"] / max(s["max_s"], 1e-12),
                     "ratio_median": fastest["median_s"] / max(s["median_s"], 1e-12),
                     "ratio_vs_check_every_1_median": (
-                        entry["solver"]["check_every=1"]["median_s"]
-                        / max(s["median_s"], 1e-12)),
+                        subsidized["median_s"] / max(s["median_s"], 1e-12)),
+                    "subsidized_denominator_key": subsidized_key,
                     "meets_100x_conservative": bool(
                         fastest["min_s"] / max(s["max_s"], 1e-12) >= 100.0),
                     # What an optimized reference solver would have to reach to

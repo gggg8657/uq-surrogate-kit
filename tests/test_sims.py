@@ -163,6 +163,62 @@ def test_operator_is_resolution_invariant():
     print("ok  FNO2d runs at 32^2 and 64^2 with one set of weights")
 
 
+
+
+def test_spectral_cache_is_bit_identical():
+    """The eval-mode packed-weight path must equal the einsum path exactly.
+
+    H12 replaced `einsum("bixy,ioxy->boxy", ...)` with a `bmm` against weights
+    permuted once at load, because einsum re-permuted 13.1 MB of fixed weights
+    on every forward (`runs/profile_surrogate.json`: `copy_` 258.7 us/call vs
+    65.6 us for all the matmuls and FFTs combined). It is the same contraction
+    in the same order, so the bar is `max|delta| == 0`, not a tolerance -- the
+    same bar the solver's `fast_apply` had to clear before it was admitted as a
+    denominator. A tolerance here would let a real numerical change through.
+    """
+    import torch
+
+    from uqkit.sims.fno2d import FNO2d
+
+    torch.manual_seed(0)
+    dev = "cuda" if torch.cuda.is_available() else "cpu"
+    m = FNO2d(in_ch=2, out_ch=1, width=16, modes=6, n_layers=2,
+              n_tasks=3).to(dev).eval()
+    task = torch.zeros(2, dtype=torch.long, device=dev)
+
+    for N in (16, 32):  # N=16 exercises m1 = min(modes, H//2) < modes
+        a = torch.randn(2, 2, N, N, device=dev)
+        with torch.no_grad():
+            for blk in m.blocks:
+                blk.spectral.cache_packed_weights = False
+            slow = m(a, task)
+            for blk in m.blocks:
+                blk.spectral.cache_packed_weights = True
+                blk.spectral.clear_packed_cache()
+            fast = m(a, task)
+            fast_again = m(a, task)  # second call hits the cache
+        assert (slow - fast).abs().max().item() == 0.0, N
+        assert (fast - fast_again).abs().max().item() == 0.0, N
+
+    # The fast path must not engage where gradients are wanted, and must not
+    # survive a weight change.
+    a = torch.randn(2, 2, 32, 32, device=dev, requires_grad=True)
+    out = m(a, task).sum()
+    out.backward()
+    assert a.grad is not None and torch.isfinite(a.grad).all()
+
+    with torch.no_grad():
+        m(torch.randn(2, 2, 32, 32, device=dev), task)          # fills cache
+        assert m.blocks[0].spectral._packed_cache is not None
+        m.blocks[0].spectral.w_lo.mul_(2.0)
+        m.blocks[0].spectral.clear_packed_cache()               # explicit drop
+        assert m.blocks[0].spectral._packed_cache is None
+    m.train()
+    assert m.blocks[0].spectral._packed_cache is None
+    print("ok  packed-weight spectral path is bit-identical to einsum "
+          "(max|delta| = 0 at N=16 and N=32), grads flow, cache invalidates")
+
+
 if __name__ == "__main__":
     test_operator_key_partitions_the_ood_suite()
     test_consistency_score_is_scale_free_and_zero_on_the_truth()
@@ -171,4 +227,5 @@ if __name__ == "__main__":
     test_time_families_have_no_cheap_residual()
     test_shift_configs_change_the_input_not_the_operator()
     test_operator_is_resolution_invariant()
+    test_spectral_cache_is_bit_identical()
     print("all sim tests passed")

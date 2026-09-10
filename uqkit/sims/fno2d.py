@@ -45,6 +45,61 @@ class SpectralConv2d(nn.Module):
         scale = 1.0 / (in_ch * out_ch)
         self.w_lo = nn.Parameter(scale * torch.randn(in_ch, out_ch, modes1, modes2, 2))
         self.w_hi = nn.Parameter(scale * torch.randn(in_ch, out_ch, modes1, modes2, 2))
+        # Inference-only cache of the permuted weights; see `_packed`.
+        self.cache_packed_weights = True
+        self._packed_cache = None
+
+    # -- inference weight cache ------------------------------------------
+    # `einsum("bixy,ioxy->boxy", ...)` lowers to a batched matmul over the
+    # (x, y) mode grid, so it must permute the (in, out, m1, m2) weight into
+    # (x, y, in, out) order -- 13.1 MB per weight at width 64 / modes 20 --
+    # on EVERY forward pass, although the weights are fixed at inference.
+    # `runs/profile_surrogate.json` measures the consequence: at batch 1,
+    # `aten::copy_` is 258.7 us/call (20.5% of the forward) while the eight
+    # matmuls and eight FFTs together are 65.6 us. This cache does the permute
+    # once and hands `bmm` the layout it wants.
+    #
+    # It is used only when the module is in eval mode AND grad is disabled, so
+    # training, gradients and the fp64 discretization-invariance path are
+    # untouched. The contraction is the same contraction in the same order:
+    # `tests/test_sims.py::test_spectral_cache_is_bit_identical` pins the
+    # output to `max|delta| == 0` against the einsum path, and the cache is
+    # dropped whenever the weights could have changed (`train()`, a
+    # `load_state_dict`).
+    #
+    # Cost: it duplicates the spectral weights on device (+26.2 MB for the
+    # shipped model, roughly 2x its own footprint). Set
+    # `cache_packed_weights = False` to opt out.
+
+    def _packed(self, m1, m2, cdtype, device):
+        key = (m1, m2, cdtype, device)
+        cached = self._packed_cache
+        if cached is not None and cached[0] == key:
+            return cached[1], cached[2]
+        w_lo = torch.view_as_complex(self.w_lo.detach().contiguous())
+        w_hi = torch.view_as_complex(self.w_hi.detach().contiguous())
+        pk = [w[:, :, :m1, :m2].permute(2, 3, 0, 1).contiguous()
+              .reshape(m1 * m2, self.in_ch, self.out_ch).to(cdtype)
+              for w in (w_lo, w_hi)]
+        self._packed_cache = (key, pk[0], pk[1])
+        return pk[0], pk[1]
+
+    def clear_packed_cache(self):
+        self._packed_cache = None
+
+    def train(self, mode: bool = True):
+        self.clear_packed_cache()
+        return super().train(mode)
+
+    def _load_from_state_dict(self, *a, **kw):
+        self.clear_packed_cache()
+        return super()._load_from_state_dict(*a, **kw)
+
+    def _band(self, x_band, w_packed, m1, m2, B):
+        """sum_i x[b,i,x,y] * w[i,o,x,y] as one bmm over the (x, y) grid."""
+        lhs = x_band.permute(2, 3, 0, 1).reshape(m1 * m2, B, self.in_ch)
+        out = torch.bmm(lhs, w_packed)                    # (m1*m2, B, out)
+        return out.reshape(m1, m2, B, self.out_ch).permute(2, 3, 0, 1)
 
     def forward(self, x):  # (B, C, H, W)
         with torch.autocast(device_type=x.device.type, enabled=False):
@@ -62,12 +117,21 @@ class SpectralConv2d(nn.Module):
             out_ft = torch.zeros(
                 B, self.out_ch, H, W // 2 + 1, dtype=out_dtype, device=x.device
             )
-            out_ft[:, :, :m1, :m2] = torch.einsum(
-                "bixy,ioxy->boxy", x_ft[:, :, :m1, :m2], w_lo[:, :, :m1, :m2]
-            )
-            out_ft[:, :, -m1:, :m2] = torch.einsum(
-                "bixy,ioxy->boxy", x_ft[:, :, -m1:, :m2], w_hi[:, :, :m1, :m2]
-            )
+            fast = (self.cache_packed_weights and not self.training
+                    and not torch.is_grad_enabled())
+            if fast:
+                p_lo, p_hi = self._packed(m1, m2, out_dtype, x.device)
+                out_ft[:, :, :m1, :m2] = self._band(
+                    x_ft[:, :, :m1, :m2], p_lo, m1, m2, B)
+                out_ft[:, :, -m1:, :m2] = self._band(
+                    x_ft[:, :, -m1:, :m2], p_hi, m1, m2, B)
+            else:
+                out_ft[:, :, :m1, :m2] = torch.einsum(
+                    "bixy,ioxy->boxy", x_ft[:, :, :m1, :m2], w_lo[:, :, :m1, :m2]
+                )
+                out_ft[:, :, -m1:, :m2] = torch.einsum(
+                    "bixy,ioxy->boxy", x_ft[:, :, -m1:, :m2], w_hi[:, :, :m1, :m2]
+                )
             return torch.fft.irfft2(out_ft, s=(H, W), norm="ortho").to(x.dtype)
 
 
