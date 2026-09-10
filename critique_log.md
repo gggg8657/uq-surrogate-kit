@@ -3229,3 +3229,96 @@ set (`runs/scalena_u*_het.json`), which settles what is left of H15 once
 amplitude is removed. My separate claim — that the Darcy-ladder win was
 spillover — is what H20's per-family fit tests. Both are running; neither is
 being written up before its numbers exist.
+
+## H19 result — explanation (a), and it is stronger than (a) predicted
+
+8 seeds, `runs/scale.json → h19`, the H15 arm with `a_spec9` and `a_spec10`
+(the two amplitude features of input channel 0) removed from z. 42 features
+instead of 44; nothing else changed.
+
+| arm | LOMO in band /32, per seed | median | vs H19 |
+|---|---|---|---|
+| ungated `group` | 0,0,0,0,0,0,0,0 | 0 | — |
+| **H19** (h, no amplitude features) | **0,0,0,0,0,0,0,0** | **0** | — |
+| H18 (h ∘ equivariance) | 1,3,1,1,1,1,1,0 | 1 | p = **0.0156** |
+| H15 (h with amplitude) | 3,2,5,4,4,2,8,7 | 4 | p = **0.0078** |
+
+**Removing two features out of 44 removes the entire H15 effect.** H19 lands
+exactly on the ungated baseline, 0/32 on all 8 seeds. So the amplitude
+coefficient was not *part* of what H15 did — it was the whole of it.
+
+### Scorecard, including a prediction that was wrong in the useful direction
+
+- **P1 partly right, and the way it was wrong matters.** I predicted H19 within
+  one shard of H18's median with p > 0.05. It is within one shard (0 vs 1) but
+  p = 0.0156. **An exact sign-flip at 8 seeds calls a consistent one-shard
+  difference significant** — the difference is −1 on six seeds, −3 on one, 0 on
+  one. The p-value is a statement about the *sign* being reliable, not about
+  the effect being large, and quoting "p = 0.0156" without "the effect is one
+  shard" would be exactly the over-reading this log exists to prevent.
+- **P2 falsified, and this is the real finding.** I predicted H19's surviving
+  coefficients would look like H18's — nothing above ~0.7, weight spread
+  thinly. They are *larger*: `a_spec1` **−1.605**, `log_sigmax` **+1.360**,
+  `mu_spec4` **−1.233**, against H18's largest of 0.673. So H19's h is **not
+  signal-starved**. It finds substantial structure in the development shifts,
+  fits it confidently, and transfers **none** of it. That is much stronger than
+  "amplitude was the only signal": the other axes carry learnable structure
+  that is *mechanism-specific*, so a model fitted on roughness and correlation
+  length at development strengths predicts the wrong width at evaluation
+  strengths.
+- **P3 confirmed.** All five `*_amp2` shards sit at 0.000 coverage in both H15
+  and H19 — the feature removal cannot fix them and the wrapper is absent.
+- **P4 not falsified.** 0/32 is far below the 3/32 that would have kept
+  explanation (b) alive.
+- In-distribution coverage is **0.9023** for all five families in H19 too, as
+  in H15 and H18. Conformal validity is untouched in every arm; only the
+  out-of-distribution width is at issue.
+
+**And the in-sample ceiling collapses with it:** H19's `insample_leak` fold
+scores 1,0,1,1,0,3,2,0 against H15's 4,3,4,4,3,3,5,5. Fitting h *on the
+evaluation shards themselves*, without the amplitude features, still reaches
+only ~1/32. **Amplitude is the only axis of this shift suite that this feature
+set can express — in-sample or out.**
+
+## Where clause 1 under covariate shift now stands, with the ladder attacked at all four rungs
+
+The four arms are a complete decomposition, all 8 seeds, all paired by
+checkpoint, all with in-distribution coverage held at 0.9023:
+
+| arm | in band /32 | what it establishes |
+|---|---|---|
+| ungated `group` | **0** | the baseline |
+| h **with** amplitude features (H15) | **4** | p = 0.0078 vs baseline — but see the next two rows |
+| equivariance alone, no h (H17) | **2–4** | the *same* correction, in closed form, no fitting |
+| h ∘ equivariance (H18) | **1** | double-corrected: p = 0.0234 *worse* than H15 |
+| h **without** amplitude features (H19) | **0** | h contributes nothing else, in-sample or out |
+
+**Every gain this repo has ever measured on clause 1 under covariate shift
+traces to a single axis — input amplitude — and that axis was our own broken
+equivariance, not a fact about uncertainty quantification.** Once it is handled
+exactly (H17, a ten-line test-time wrapper, no retraining), no method here
+moves the clause at all.
+
+What remains is H16's specification: predict the interval width to within
+**4.22–6.34%** across a residual **28.6–68.4×** dynamic range, with no labels.
+The rungs:
+
+1. **Both readings.** Marginal, selective-with-abstention (H14), weighted
+   (H13), and the tolerance framing (H16) are all reported side by side, per
+   score, never substituted for one another.
+2. **Architecture/algorithm changed**, five times: ensemble → single-network σ
+   head, gate on σ, gate on the solver residual, learned width model, test-time
+   equivariance, and the composition. Recorded outcome for each.
+3. **Own setup fixed**, four times, and each fix *cost* us a number: the
+   weighted-conformal clip constant (H13), the pooled-vs-per-family calibrator
+   mismatch (H15's first run), the broken input equivariance (H17), and a
+   report generator that hid two sections and carried a typed-in range.
+4. **Adversary asked "how would you make this pass"** — its top-ranked
+   proposal *is* H15, implemented and measured, and its second was declined
+   with a reason (residual inversion is the spectral solve itself for the
+   elliptic families, so it is either circular or a crippled solver).
+
+I am not aware of a further route that does not either change what is
+certified or need labels, and both of those are reportable only as a
+*different* guarantee, never as this one. The one thing I will not do is loosen
+the score to make the tolerance look survivable.

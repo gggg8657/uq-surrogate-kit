@@ -37,6 +37,8 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from uqkit.bench import env_report, timeit, warmup_device  # noqa: E402
+from uqkit.equivar import (predict_equivariant,  # noqa: E402
+                           reference_scale)
 from uqkit.metrics import rel_l2  # noqa: E402
 from uqkit.sims import pde2d as P  # noqa: E402
 from uqkit.sims.pde2d import PARENT, TASK_ID  # noqa: E402
@@ -136,6 +138,12 @@ def main():
                          "denominator.")
     ap.add_argument("--sweep-trials", type=int, default=2)
     ap.add_argument("--out", default="runs/bench_fair.json")
+    ap.add_argument("--equivariant", action="store_true",
+                    help="H17: put the test-time scale wrapper INSIDE the "
+                         "timed region and the captured graph, so its cost to "
+                         "the clause-2 reading is measured on the same "
+                         "protocol as the 117.0x rather than extrapolated "
+                         "from the eager path.")
     args = ap.parse_args()
 
     if args.task != "darcy":
@@ -151,10 +159,29 @@ def main():
     sim = PDE2DSimulator(args.task, device="cuda")
     blob = load_shard(args.root, args.task, "test", 64)
 
+    # H17 reference scale, from the CALIBRATION split only, so the wrapper is
+    # near-identity in distribution and nothing about the timing depends on the
+    # evaluation data.
+    eq_ref = (reference_scale(load_shard(args.root, args.task, "cal", 64)["a"],
+                              args.task)
+              if args.equivariant else None)
+
     # Accuracy of the timed model, in the configuration it is timed in.
-    mean, _, truth, _ = predict_shard_single(
-        model, {"a": blob["a"], "u": blob["u"], "task": args.task}, stats,
-        "cuda", autocast=True, sigma_source=args.uq_source)
+    _acc_blob = {"a": blob["a"], "u": blob["u"], "task": args.task,
+                 "N": 64, "split": "test", "parent": args.task}
+    if args.equivariant:
+        # the accuracy line must describe the model in the configuration it is
+        # TIMED in, or the speedup and the error it is quoted at come from
+        # different models
+        mean, _, truth, _ = predict_equivariant(
+            lambda b: predict_shard_single(
+                model, b, stats, "cuda", autocast=True,
+                sigma_source=args.uq_source),
+            _acc_blob, args.task, eq_ref, device="cuda")
+    else:
+        mean, _, truth, _ = predict_shard_single(
+            model, _acc_blob, stats, "cuda", autocast=True,
+            sigma_source=args.uq_source)
     surrogate_rel_l2 = float(rel_l2(mean, truth).mean())
     del mean, truth
     torch.cuda.empty_cache()
@@ -248,7 +275,11 @@ def main():
         entry["packed_weight_gate"] = packed_weight_gate(
             model, a_raw, st, tid, args.uq_source)
 
-        eager = make_uq_fn(model, a_raw, st, tid, args.uq_source, autocast=True)
+        eager = make_uq_fn(model, a_raw, st, tid, args.uq_source,
+                           autocast=True,
+                           equivar_parent=(args.task if args.equivariant
+                                           else None),
+                           equivar_ref=eq_ref)
         arms = {"eager": eager, "nograd": no_grad_wrap(eager)}
         with torch.no_grad():
             ref = eager().clone()

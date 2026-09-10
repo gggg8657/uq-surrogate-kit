@@ -35,6 +35,7 @@ from uqkit.bench import env_report, timeit, warmup_device  # noqa: E402
 from uqkit.metrics import rel_l2  # noqa: E402
 from uqkit.sims.pde2d import PARENT, TASK_ID  # noqa: E402
 from uqkit.sims.pde2d_sim import PDE2DSimulator  # noqa: E402
+from uqkit.equivar import rescale_inputs, sample_scale  # noqa: E402
 from uqkit.sims.fno2d_uq import sigma_from, split_heads  # noqa: E402
 from uqkit.sims.predict import (load_members, load_shard,  # noqa: E402
                                 predict_shard, predict_shard_single)
@@ -54,7 +55,12 @@ def make_surrogate_fn(models, a_raw, st, tid, k, residual=None, autocast=True):
     u_mean, u_std = st["u_mean"].to(a_raw.device), st["u_std"].to(a_raw.device)
 
     def fn():
-        a_norm = (a_raw - a_mean) / a_std
+        if equivar_parent is None:
+            a_in, s_eq = a_raw, None
+        else:
+            s_eq = sample_scale(a_raw, equivar_parent, equivar_ref)
+            a_in = rescale_inputs(a_raw, equivar_parent, s_eq)
+        a_norm = (a_in - a_mean) / a_std
         preds = []
         for m in ms:
             if autocast and a_raw.is_cuda:
@@ -72,7 +78,7 @@ def make_surrogate_fn(models, a_raw, st, tid, k, residual=None, autocast=True):
 
 
 def make_uq_fn(model, a_raw, st, tid, source, q_hat=1.0, residual=None,
-               autocast=True):
+               autocast=True, equivar_parent=None, equivar_ref=None):
     """Closure timing ONE forward pass that emits the mean *and* the interval.
 
     The ensemble path pays M forward passes for a quantity this head produces in
@@ -87,12 +93,25 @@ def make_uq_fn(model, a_raw, st, tid, source, q_hat=1.0, residual=None,
 
     sigma is scaled by `u_std` and not shifted by `u_mean`: it is a spread, not
     a field value. Same rule as `predict_shard_single`.
+
+    `equivar_parent`/`equivar_ref` put the H17 scale wrapper **inside the timed
+    region and inside the captured graph**: the per-sample scale reduction, the
+    input rescale and the output rescale are all ordinary device tensor ops, so
+    they capture like everything else. This is what makes the wrapper's effect
+    on the clause-2 reading measurable rather than extrapolated -- the earlier
+    figure came from the eager `predict_shard_single` path and could not be
+    multiplied into a CUDA-graph number.
     """
     a_mean, a_std = st["a_mean"].to(a_raw.device), st["a_std"].to(a_raw.device)
     u_mean, u_std = st["u_mean"].to(a_raw.device), st["u_std"].to(a_raw.device)
 
     def fn():
-        a_norm = (a_raw - a_mean) / a_std
+        if equivar_parent is None:
+            a_in, s_eq = a_raw, None
+        else:
+            s_eq = sample_scale(a_raw, equivar_parent, equivar_ref)
+            a_in = rescale_inputs(a_raw, equivar_parent, s_eq)
+        a_norm = (a_in - a_mean) / a_std
         if autocast and a_raw.is_cuda:
             with torch.autocast("cuda", dtype=torch.bfloat16):
                 y = model(a_norm, tid).float()
@@ -100,6 +119,10 @@ def make_uq_fn(model, a_raw, st, tid, source, q_hat=1.0, residual=None,
             y = model(a_norm, tid)
         mean = split_heads(y)[0] * u_std + u_mean
         sigma = sigma_from(y, source) * u_std
+        if s_eq is not None:
+            v = s_eq.view(-1, *([1] * (mean.dim() - 1)))
+            mean = mean * v
+            sigma = sigma * v
         _ = mean - q_hat * sigma
         _ = mean + q_hat * sigma
         if residual is not None:
