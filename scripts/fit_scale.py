@@ -98,6 +98,16 @@ def main():
                          "dynamic range in the fitting target'. The names are "
                          "checked against FEAT_NAMES and an unknown one is an "
                          "error, not a silent no-op.")
+    ap.add_argument("--restrict-families", default="",
+                    help="comma-separated families to keep. Exists so the H22 "
+                         "residual arm has a CONTROL: --residual-features "
+                         "forces a restriction to families with a cheap "
+                         "operator apply, and comparing that against the "
+                         "5-family H15 arm would change two things at once "
+                         "(the features and the fitting set). Running this "
+                         "flag alone reproduces the restriction without the "
+                         "features, so the pair differs in exactly the two "
+                         "residual columns.")
     ap.add_argument("--residual-features", action="store_true",
                     help="H22: add two scalars per sample derived from ONE "
                          "residual evaluation r = L(mu) - f: log10 of the "
@@ -141,6 +151,15 @@ def main():
     # H22: which families have a cheap operator apply is a property of the
     # problem, not a choice. Ask the simulator rather than hardcoding a list,
     # so the restriction cannot drift away from what `residual()` can do.
+    if args.restrict_families:
+        want = [t.strip() for t in args.restrict_families.split(",")
+                if t.strip()]
+        unknown = [t for t in want if t not in in_tasks]
+        if unknown:
+            raise SystemExit(f"--restrict-families: unknown {unknown}; "
+                             f"have {in_tasks}")
+        print(f"--restrict-families: {want}", flush=True)
+        in_tasks = want
     if args.residual_features:
         import torch as _t
         probe = _t.zeros(1, 2, 64, 64)
@@ -349,6 +368,11 @@ def main():
            "equivariant": bool(args.equivariant),
            "per_family_h": bool(args.per_family_h),
            "residual_features": bool(args.residual_features),
+           # which families this arm ran on. With --residual-features the set
+           # is FORCED by whether the simulator has a cheap operator apply, so
+           # it is recorded per run: a 24-shard arm and a 32-shard arm are not
+           # comparable and the JSON has to say which one it is.
+           "families": list(in_tasks),
            "dropped_features": [d for d in args.drop_features.split(",")
                                 if d.strip()],
            "n_features": len(KEEP),
@@ -371,6 +395,9 @@ def main():
             specs += [(kind, t, 64) for t in tasks
                       if PARENT.get(t, t) in in_tasks]
 
+    # recorded only now that `specs` exists: a 24-shard arm and a 32-shard arm
+    # are not comparable, so the count travels in the JSON with the arm.
+    res["n_covariate_shards_evaluated"] = len(specs)
     _tick(f"scoring {len(specs)} evaluation shards")
     eval_cache = {}
     for kind, task, N in specs:

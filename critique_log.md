@@ -3644,3 +3644,66 @@ registered predictions against everything measured since, immediately before
 reading the result. This is the second time a two-branch prediction of mine has
 had reality supply a third branch (H13 was the first), so it is a habit rather
 than an accident.
+
+## H20 result (per-family width model) — a null, and it buries my H18 explanation for good
+
+`runs/scalepf_u0..u7_het.json`, 8 seeds, same checkpoints as H15 so the pairing
+is exact. One `QuantileScale` per family instead of one pooled fit with family
+one-hots; nothing else changed.
+
+| arm | LOMO in band /32, per seed | median |
+|---|---|---|
+| ungated `group` baseline | 0,0,0,0,0,0,0,0 | 0 |
+| H15, pooled h | 3,2,5,4,4,2,8,7 | **4** |
+| **H20, one h per family** | 4,1,5,7,1,4,2,8 | **4** |
+
+Paired against H15 seed by seed: diffs **+1,−1,0,+3,−3,+2,−6,+1**, exact
+sign-flip **p = 0.8438**. Against the ungated arm p = 0.0078, so the arm still
+works — it just works exactly as well as the pooled fit and no better.
+**Isolating the families changes nothing.**
+
+### The prediction I registered was right and, worse, uninformative
+
+I wrote prediction 2 as the diagnostic: "the Darcy ladder keeps the coverage
+H15 gave it — *if it holds*, H15's win was a real Darcy difficulty model; if it
+collapses the way it did under H18, H15's win was loss-mass spillover." It held:
+
+| shard | ungated | H15 | H20 per-family |
+|---|---|---|---|
+| `darcy_dam0p3` | 0.732 | 0.901 | 0.903 |
+| `darcy_dam0p5` | 0.571 | 0.907 | 0.901 |
+| `darcy_dam0p7` | 0.198 | 0.896 | 0.847 |
+| `darcy_dam1` | **0.000** | 0.943 | 0.926 |
+
+**But my dichotomy was false, and H19 had already shown why.** The ladder holds
+in both arms because the *amplitude features* are in both arms — H19 measured
+that deleting `a_spec9`/`a_spec10` takes the pooled arm to 0/32 on 8/8 seeds.
+There was never a Darcy difficulty model to preserve, and there was never
+cross-family contamination to remove. I offered two explanations and the truth
+was a third that I had already measured one entry earlier; writing a two-way
+prediction made me stop enumerating too early, which is the *second* time this
+log records that exact mistake (the first was H13).
+
+So my H18 "loss-mass spillover" story is now dead twice over: H19 killed it
+directly, and H20 confirms that the contamination it postulated does not exist,
+because removing it by construction moves nothing.
+
+### The one new thing, and it points at the features
+
+The per-family arm's **in-sample ceiling rose** — median 6/32 (per seed
+3,6,6,7,4,10,9,6) against the pooled arm's 4/32 — while its held-out result
+stayed at 4/32. LOMO against its own ceiling is p = 0.1250, so the gap is not
+established at 8 seeds, but the direction is the classic signature of added
+capacity that does not transfer: five separate linear fits can bend closer to
+the evaluation shards they are shown, and none of that reaches the shards they
+are not.
+
+That is one more piece of evidence for the same conclusion H15's own ceiling
+gave (p = 0.5156, indistinguishable) and H19 gave (two features carry
+everything): **the binding constraint on clause 1 under shift is the feature
+set, not the fit.** Adding flexibility to the model does not help; the
+information is not in z.
+
+**Verdict on H20: null.** Prediction 1 (≥ H15's median) is technically met at
+4 vs 4 and means nothing at p = 0.8438. Prediction 3 (not 29/32) holds. The
+route is closed and I am not spending another arm on the shape of h.
