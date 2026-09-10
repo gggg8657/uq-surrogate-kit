@@ -108,6 +108,7 @@ def claims():
     # but no hand-written prose should still be quoting it.
     fa = load("bench_fair_h12.json") or load("bench_fair.json")
     pe = load("packed_equivalence.json")
+    h13 = load("h13_clip.json")
     if u:
         arms = {k: v for k, v in u["arms"].items() if k != "const"}
         best = min(arms, key=lambda k: sum(
@@ -161,6 +162,23 @@ def claims():
                 for f in ("WEEKEND.md", "README.md"):
                     out.append((f, f"{ng['n_ge_100x']}/{ng['n']}",
                                 "the same fields WITHOUT CUDA-graph capture"))
+    if h13:
+        sel = h13["selection"]
+        for f in ("WEEKEND.md", "README.md"):
+            out.append((f, f"{h13['no_inf_bound']:.2f}",
+                        "the no-infinity bound on the density-ratio clip"))
+            out.append((f, f"{h13['summary']['20']['mean_abstention_rate']*100:.1f}%",
+                        "abstention rate at the shipped clip of 20"))
+            out.append((f, f"{sel['held_out']['in_band_equivalent_of_n']:.2f}/"
+                           f"{h13['n_eligible_shards']}",
+                        "shifted shards in band, held-out clip selection"))
+            out.append((f, f"{sel['failure_mode_by_clip'][sel['tuned_clip']]['under_0p88']}/"
+                           f"{sel['failure_mode_by_clip'][sel['tuned_clip']]['n_cells']}",
+                        "cells UNDER-covering once the abstention is removed"))
+            out.append((f, f"p = {sel['vs_group_calibrator']['exact_sign_flip_p']:.4f}"
+                        if False else
+                        f"{sel['vs_group_calibrator']['exact_sign_flip_p']:.4f}",
+                        "exact sign-flip p, weighted@clip vs the group calibrator"))
     if pe:
         su = pe["summary"]
         for f in ("WEEKEND.md", "README.md"):

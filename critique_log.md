@@ -1763,3 +1763,120 @@ remember to edit it.
 > (achieved 5.0e-11), under CUDA-graph replay, on one H100 NVL, one forward pass
 > emitting the mean and the conformal interval together.**
 > **NOT met at batch 64 (41.1×), and not met without graph capture (2/24).**
+
+## H13 result — the abstention was ours, the failure underneath it is not, and clause 1 under shift stays unmet
+
+**The structural claim was right and is now measured, not derived.** 8 seeds ×
+32 covariate-shift shards × 6 clips (`runs/h13_clip.json`; operator-shift shards
+excluded throughout, since they change p(y|x) and no reweighting of x is even
+the right tool):
+
+| `clip` | ≤ bound 10.67? | shards in band /32 (mean over 8 seeds) | abstention rate | median finite q vs unweighted |
+|---|---|---|---|---|
+| 2 | ✅ | 0.12 [0, 1] | **0.0%** | 1.01× |
+| 4 | ✅ | 1.62 [0, 3] | **0.0%** | 1.03× |
+| 8 | ✅ | 2.75 [2, 4] | **0.0%** | 1.14× |
+| 10 | ✅ | 2.00 [0, 4] | **0.0%** | 1.37× |
+| **20 (shipped)** | ❌ | 0.50 [0, 2] | **89.9%** | 1.30× |
+| 50 | ❌ | 0.38 [0, 2] | **91.3%** | 1.35× |
+
+The abstention flips from ~0% to ~90% exactly at the analytic bound
+`clip² > n_cal·α/(1−α)` = 10.67, on every one of 8 seeds. **So 30 of 32 shards
+returning "no certificate" was a constant I chose, not a fact about the shifts,
+and this repo has been reporting it as the latter.** The distinguishing test I
+wrote down before the run — "if the shifts were the binding constraint,
+abstention would track shift strength" — resolves cleanly: abstention does not
+track shift strength at all. It is ~90% at clip 20 on a shard with rel-L2 0.003
+and ~90% on one with rel-L2 0.76.
+
+**Fixing it is a real improvement and it is not bought with width.** Against the
+shipped clip 20, in-band count per seed goes [0,1,0,0,0,1,0,2] → [4,3,2,3,2,2,3,3],
+**exact two-sided sign-flip p = 2/256 = 0.0078** — the smallest p attainable at
+8 seeds. Against the `group` calibrator the in-distribution headline uses,
+weighted conformal at clip 8 is closer to 0.90 on **113 of 256** shard-seed
+cells and farther on 27, mean improvement in `|coverage − 0.90|` of **0.0725**,
+same exact p = 0.0078. Median finite quantile is **1.14×** the unweighted one,
+so it is not covering by widening.
+
+**And the clause still fails, with the failure mode inverted.** This is the part
+that matters:
+
+| `clip` | cells over 0.92 | in band | cells under 0.88 | median coverage |
+|---|---|---|---|---|
+| 20 (shipped) | **252/256 (98%)** | 4 | 0 | **1.000** |
+| 8 | 50 | 22 | **184/256 (72%)** | **0.116** |
+
+At clip 20 the repo was reporting near-universal *over*-coverage that was
+abstention wearing a coverage number. Remove the abstention and what is
+underneath is near-universal **under**-coverage at a median of 0.116. Clause 1
+under covariate shift is **not met**, and it was never as close as the 100%
+cells made it look — they were hiding the gap, not narrowing it.
+
+**I have to price my own selection, because I picked clip 8 after seeing the
+sweep.** That is threshold-tuning on the evaluation set and it inflates the
+number by about a third:
+
+| reading | in band /32 |
+|---|---|
+| clip 8, **selected and scored on the same 32 shards** — do not quote this | 2.75 |
+| clip selected on a random half, scored on the other half, 200 splits | **1.94** |
+| a rule stateable in advance — "largest swept clip ≤ the no-infinity bound" → clip 10, never looks at a coverage number | **2.00** |
+
+The honest headline is **~2/32**, not 2.75/32. Note the two honest readings
+agree with each other and disagree with the tuned one, which is the expected
+signature. (The held-out procedure picks clip 8 in 131 of 200 splits and clip 10
+in 52, so the *choice* is stable; it is the *score* that was optimistic.)
+
+**Why it fails is legible, and it is a dose-response curve rather than an
+assertion.** On the graded `dam` ladder, where shift strength is a dial:
+
+| shard | rel-L2 | weighted (clip 8) | `group` | in band /8 |
+|---|---|---|---|---|
+| `poisson_dam0p1` | 0.0031 | 0.916 | 0.820 | 3 |
+| `poisson_dam0p2` | 0.0034 | 0.851 | 0.603 | 1 |
+| `poisson_dam0p3` | 0.0037 | 0.666 | 0.320 | 0 |
+| `poisson_dam0p5` | 0.0050 | 0.042 | 0.005 | 0 |
+| `darcy_dam0p1` | 0.0534 | 0.902 | 0.852 | **7** |
+| `darcy_dam0p2` | 0.0574 | 0.924 | 0.833 | 3 |
+| `darcy_dam0p3` | 0.0638 | 0.906 | 0.741 | **7** |
+| `darcy_dam0p5` | 0.0736 | 0.841 | 0.589 | 1 |
+| `darcy_dam0p7` | 0.0966 | 0.538 | 0.200 | 0 |
+| `darcy_dam1` | 0.1628 | 0.043 | 0.001 | 0 |
+
+Coverage decays monotonically with shift strength on **both** calibrators, the
+weighted one sits above the unweighted one on every rung, and both reach zero at
+the same place — the weighted one just later. That is the signature of the shift
+moving p(y|x), not only p(x): past some strength the input shift takes the
+surrogate outside its competence, the conditional error distribution changes,
+and reweighting the inputs cannot reach it by construction. The five `smooth`
+shards fail from the other side (coverage 0.999 — the shift makes the problem
+*easier*, so the interval is too wide), which is the same statement with the
+sign flipped.
+
+**What I got wrong in the H13 write-up.** I framed the outcome as a dichotomy —
+either the abstention was mine and the clause is met, or the clip's bias pushes
+coverage out of band. The truth is a third thing I did not list: **the
+abstention was mine and the residual failure is not.** And the residual failure
+is not "the bias the clip introduces" either — a *smaller* clip is worse
+(0.12/32 at clip 2, approaching unweighted split conformal), so there is a real
+bias-variance optimum just under the bound and the under-coverage on either side
+of it is the shift, not the estimator's bias. Writing a two-outcome prediction
+made me stop enumerating one outcome too early.
+
+**Net effect on the clause.** Clause 1 under covariate shift: **still ❌**, at
+~2/32 shards in band on an honest reading. What changed is that the reason is
+now correct. The previous entry in this repo said "0/32 in band, 2/32 weighted,
+and 30 of those return an infinite quantile so their 100% is abstention" and
+attributed it to a distribution-free impossibility. Half of that was our clip.
+The remaining half is real and is now measured as a dose-response curve with a
+named mechanism, which is a better negative result than the one it replaces —
+and it does not move the verdict.
+
+**Next.** The dose-response curve says the recoverable regime is bounded by the
+surrogate's own competence, which is exactly what the OOD detector already
+measures (`33/33` AUROC ≥0.9 conditional on the shift degrading the model).
+That suggests the honest deliverable for clause 1 under shift is *conditional*
+coverage — certify where the detector says the model is still in competence,
+abstain deliberately (not accidentally) elsewhere — and the abstention rate
+becomes a reported quantity rather than an artefact. That is a specification
+change and needs the human decision in `WEEKEND.md`, not a unilateral one.

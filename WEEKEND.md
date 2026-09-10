@@ -42,7 +42,7 @@ reasons it is too low.
 |---|---|---|---|
 | coverage, in distribution (ensemble) | — | **88.6%** [87.7, 89.5] | ✅ |
 | **coverage, in distribution, ONE forward pass** | not possible | **0.9026** mean, 8/8 seeds in band | ✅ |
-| coverage, under covariate shift | 0/32 shards in band (split), 2/32 (weighted) | unchanged — and provably unattainable without labels | ❌ |
+| coverage, under covariate shift | 0/32 shards in band (split), 2/32 (weighted) | **1.94/32** once the abstention is removed — and the reason is corrected, not the verdict | ❌ |
 | speedup, GPU, trained families (ensemble) | **0/10 rows ≥100×**, range 0.004×–27× | unchanged | ❌ |
 | speedup, batch 1, CUDA graph, **one favourable field (sample 0)** | not possible | **267.5×** — *not* the clause verdict | ✅ |
 | **— over 24 distinct fields — THE batch-1 verdict** | — | **24/24** clear 100×, worst field **117.0×**, median **187.4×** | ✅ |
@@ -162,12 +162,23 @@ where all three old detectors sat at chance.
 - **CUDA graphs as a general speedup.** At batch 64 the graph arm is *slower*
   than eager (4.981 vs 4.902 ms). It is a batch-1 latency technique, nothing
   more, and the table shows it losing where it loses.
-- **Coverage under covariate shift, without labels.** Not a tuning failure. Two-
-  sided 90±2% under arbitrary shift is distribution-free unattainable; weighted
-  conformal gives one-sided validity only, and under non-overlapping support it
-  needs infinite intervals — which is exactly what we measure (30/32 shards
-  return an infinite quantile, so their "100% coverage" is abstention). The
-  constructive complement: **k = 1** label to notice the shift, nine to
+- **Coverage under covariate shift, without labels.** Still fails, but **half
+  of the stated reason was ours and is now withdrawn.** We reported "30/32
+  shards return an infinite quantile, so their 100% coverage is abstention" and
+  attributed it to a distribution-free impossibility. An infinite weighted
+  quantile is in fact impossible whenever `clip² ≤ n_cal·α/(1−α)` — **10.67**
+  at our calibration size — and we shipped `clip = 20.0`. Below the bound,
+  abstention goes **89.9% → 0.0%** on all 8 seeds and does not depend on shift
+  strength at all. What the infinities were hiding is **under**-coverage:
+  median coverage **1.000 → 0.116**, cells under 0.88 **0 → 184/256**. The
+  honest score is **1.94/32** shards in band (clip selected on held-out shards;
+  the tuned 2.75 is selected on the shards it is scored on). It beats the
+  `group` calibrator at exact sign-flip **p = 0.0078** and is still nowhere
+  near the clause. What survives of the original claim is the *second* half,
+  now with a mechanism: on the graded `dam` ladder coverage decays monotonically
+  with shift strength on both calibrators and both reach zero at the same
+  shift, which is p(y|x) changing rather than only p(x). The constructive
+  complement is unchanged: **k = 1** label to notice the shift, nine to
   re-certify the interval at α=0.1.
 - **The `navier_stokes` 366× row.** Withdrawn on sight: `trained: False`. An
   untrained network timed against a real 1000-step RK4 solver, accuracy

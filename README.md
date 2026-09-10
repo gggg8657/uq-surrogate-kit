@@ -33,7 +33,8 @@ reasoning and every correction in **[`critique_log.md`](critique_log.md)**.
 |---|---|---|
 | coverage, in distribution, ensemble | **88.6%** [87.7, 89.5] | ✅ |
 | coverage, in distribution, **one forward pass** | **0.9026** mean, 8/8 seeds in band — but a constant-σ control also lands 8/8, so the head's real effect is a 13.1% sharper interval, not the coverage | ✅ |
-| coverage, under covariate shift | 0/32 shards in band; 2/32 weighted — distribution-free unattainable without labels | ❌ |
+| coverage, under covariate shift | 0/32 shards in band; 2/32 weighted — and **30 of those 32 were abstaining, because of a constant we chose** (below) | ❌ |
+| — the same clause with the abstention removed (H13) | An infinite weighted quantile is impossible when `clip² ≤ n_cal·α/(1−α)` — **10.67** here, against a shipped `clip` of **20.0**. Dropping below the bound takes abstention **89.9% → 0.0%** on all 8 seeds, and reveals **under**-coverage where the infinities had shown 100%: median coverage **1.000 → 0.116**, cells under 0.88 **0 → 184/256**. Honest reading **1.94/32** in band (held-out clip selection; the tuned 2.75 is scored on the shards it was picked on). Better than `group` at exact p=0.0078, and still nowhere near the clause | ❌ |
 | speedup ≥100×, batch 1, one forward pass, CUDA graph, over 24 distinct coefficient fields | **24/24** clear 100× at rel-L2 0.0506; worst field **117.0×**, median 187.4×, best 315.4×. The three fields that decided it (17, 18, 2) moved on the numerator alone — their solver times changed by under 1% between runs while their ratios rose 23–25% | ✅ |
 | — the same 24 fields **without CUDA-graph capture** | **2/24**; worst 23.7×, median 58.3×. The row above is conditional on graph replay and this is what it is conditional on | ❌ |
 | speedup ≥100×, batch 1, **one field (sample 0)** — kept for continuity, *not* the verdict | **267.5×** | — |
