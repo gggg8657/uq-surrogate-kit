@@ -72,6 +72,12 @@ def main():
                     default=[1, 10, 50, 100])
     ap.add_argument("--trials", type=int, default=5)
     ap.add_argument("--iters", type=int, default=10)
+    ap.add_argument("--fast-apply", action="store_true",
+                    help="also time the solver with the face coefficients "
+                         "hoisted out of the PCG iteration. Verified "
+                         "bit-identical to the default path, so it is the same "
+                         "solver and an admissible denominator -- and it can "
+                         "only make our own speedup clause harder.")
     ap.add_argument("--sample-sweep", type=int, default=24,
                     help="also time batch 1 on this many DISTINCT samples. "
                          "The per-batch cells above repeat one coefficient "
@@ -148,16 +154,27 @@ def main():
         entry = {"batch": B, "solver": {}, "surrogate": {}}
 
         a_coef, f_rhs = torch.exp(a_raw[:, 0]), a_raw[:, 1]
-        for ce in args.check_every:
-            _, resid = P.solve_darcy(a_coef, f_rhs, tol=TOL, check_every=ce)
+        # (check_every, fast_apply). `fast_apply` hoists the face coefficients
+        # out of the PCG iteration -- the redundant work an adversarial review
+        # named. It is verified bit-identical to the default path, so it is the
+        # SAME solver and therefore an admissible denominator. Including it can
+        # only make our own clause harder, which is the point.
+        combos = [(ce, fa) for fa in ([False, True] if args.fast_apply
+                                      else [False])
+                  for ce in args.check_every]
+        for ce, fap in combos:
+            _, resid = P.solve_darcy(a_coef, f_rhs, tol=TOL, check_every=ce,
+                                     fast_apply=fap)
             t = trials(lambda: P.solve_darcy(a_coef, f_rhs, tol=TOL,
-                                             check_every=ce),
+                                             check_every=ce, fast_apply=fap),
                        args.trials, args.iters)
             t["achieved_residual"] = float(resid)
             t["admissible"] = bool(resid <= TOL)
             t["check_every"] = ce
-            entry["solver"][f"check_every={ce}"] = t
-            print(f"  B={B:<3d} solver check_every={ce:<4d} "
+            t["fast_apply"] = fap
+            key = f"check_every={ce}" + ("+fast_apply" if fap else "")
+            entry["solver"][key] = t
+            print(f"  B={B:<3d} solver {key:<26s} "
                   f"{t['median_s']*1e3:8.2f} ms (min {t['min_s']*1e3:.2f}) "
                   f"resid={resid:.2e} "
                   f"{'OK' if t['admissible'] else 'INADMISSIBLE'}", flush=True)
@@ -239,6 +256,7 @@ def main():
             fastest = min(adm, key=lambda v: v["min_s"])
             entry["fair_denominator"] = {
                 "check_every": fastest["check_every"],
+                "fast_apply": fastest.get("fast_apply", False),
                 "min_s": fastest["min_s"], "median_s": fastest["median_s"],
                 "achieved_residual": fastest["achieved_residual"],
                 "why": ("fastest solver setting that still meets tol; using a "
@@ -298,9 +316,11 @@ def main():
     # ratio, including how many individual samples clear the KPI.
     # ---------------------------------------------------------------- #
     if args.sample_sweep > 0:
-        ce = res["batches"]["1"]["fair_denominator"]["check_every"]
+        fd = res["batches"]["1"]["fair_denominator"]
+        ce, fap = fd["check_every"], fd.get("fast_apply", False)
         print(f"\nper-sample sweep at batch 1, check_every={ce}, "
-              f"{args.sample_sweep} distinct samples", flush=True)
+              f"fast_apply={fap}, {args.sample_sweep} distinct samples",
+              flush=True)
         st = stats[PARENT.get(args.task, args.task)]
         tid = torch.full((1,), TASK_ID[PARENT.get(args.task, args.task)],
                          device="cuda", dtype=torch.long)
@@ -308,9 +328,10 @@ def main():
         for idx in range(min(args.sample_sweep, len(blob["a"]))):
             a_one = blob["a"][idx:idx + 1].to("cuda")
             a_c, f_r = torch.exp(a_one[:, 0]), a_one[:, 1]
-            _, resid = P.solve_darcy(a_c, f_r, tol=TOL, check_every=ce)
+            _, resid = P.solve_darcy(a_c, f_r, tol=TOL, check_every=ce,
+                                     fast_apply=fap)
             ts = trials(lambda: P.solve_darcy(a_c, f_r, tol=TOL,
-                                              check_every=ce),
+                                              check_every=ce, fast_apply=fap),
                         args.sweep_trials, args.iters)
             fn1 = make_uq_fn(model, a_one, st, tid, args.uq_source,
                              autocast=True)
@@ -342,7 +363,7 @@ def main():
         rn = sorted(c["ratio_nograd_conservative"] for c in adm)
         sv = sorted(c["solver_median_s"] for c in adm)
         res["sample_sweep"] = {
-            "check_every": ce, "n_samples": len(cells),
+            "check_every": ce, "fast_apply": fap, "n_samples": len(cells),
             "n_admissible": len(adm), "trials_per_cell": args.sweep_trials,
             "cells": cells,
             "solver_median_s": {"min": sv[0], "max": sv[-1],

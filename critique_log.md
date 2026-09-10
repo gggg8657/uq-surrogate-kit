@@ -1276,3 +1276,65 @@ eager — 4.981 ms vs 4.902 ms, and 50.5× vs 51.6×. Graph capture is not free 
 at compute-bound sizes it is neutral-to-negative. So "CUDA-graph the surrogate"
 is a batch-1 latency technique specifically, not a general speedup, and the
 table shows it losing where it loses.
+
+## H10 — I attacked my own denominator, and it cost me one of the two passing arms
+
+**Written before running.** `codex` named a specific inefficiency in the
+reference solver: `_darcy_apply` (`uqkit/sims/pde2d.py:190`) rebuilds four
+face-coefficient arrays on every PCG iteration although `a` is fixed for the
+whole solve — four `roll`s and four fused multiply-adds per iteration, for up to
+2000 iterations, all producing the same numbers. Rung 3 says a broken baseline
+is not evidence, and it cuts against me here: fixing it can only make my own
+clause harder.
+
+**Hypothesis.** Hoisting the face coefficients out of the iteration
+(`fast_apply=True`, default left `False` so the corpus-generating path and every
+previously published timing are byte-for-byte the code they were measured on)
+cuts the batch-1 solver by 20–35%, and the 328.5× falls proportionally.
+
+**Prediction registered.** The `graph` arm survives 100× and the `nograd` arm
+does not — nograd was at 113.6×, a 13.6% margin, and a 20%+ solver gain eats it.
+
+**Equivalence check first, because a faster reference is only admissible if it
+is the same solver.** Solution deviation **0.000e+00** — bit-identical, not
+merely close — and the same achieved residual 7.1458e-11. So it is the same
+solver and an admissible denominator.
+
+**Result.** Batch-1 solver min 186.54 → **145.85 ms**, a 1.28× gain:
+
+| arm at batch 1 | before the fix | after the fix | ≥100×? |
+|---|---|---|---|
+| `graph` | 328.5× | **228.2×** | ✅ |
+| `nograd` | 113.6× | **90.5×** | ❌ *(was ✅)* |
+| `eager`, autograd on | 90.0× | 72.3× | ❌ |
+| batch 64, best arm | 51.8× | **44.0×** | ❌ |
+
+The prediction held exactly. **Fixing my own baseline withdrew a passing
+reading**, and the honest table now shows one surviving arm rather than two.
+
+**And the per-sample sweep is where this gets uncomfortable.** Over 24 distinct
+coefficient fields against the optimized reference: **24/24 still clear 100×**,
+but the minimum falls from 150.2× to **107.9×**, median 230.2× → 154.3×, and
+solve difficulty spans 3.74× (68.8–257.5 ms).
+
+A 107.9× worst case is a **7.9% margin**. Concretely: the hardest field solves
+in 68.75 ms, the graph surrogate answers in 0.6373 ms, and a reference solver
+reaching **63.73 ms** on that field — a further **7.3%** — takes the clause
+under 100× on it. The solver still has the named-and-unmeasured optimizations
+(fused stencil kernels, a discrete-Laplacian rather than continuous-spectral
+preconditioner, mixed-precision inner iterations, graph-capturing fixed-length
+PCG chunks), and 7.3% is well inside what any one of those would plausibly buy.
+
+**So the verdict changes character even though the tick does not.** Clause 2 is
+met on the batch-1 reading — 24/24 fields, worst 107.9×, at rel-L2 0.0506,
+against a reference verified bit-identical and admissible on residual. But it is
+**marginal, not secure**, and it should be reported that way: two rounds of
+honest baseline improvement took it from 602× to 228× on the median field and
+from 150× to 108× on the worst, and the next round of solver work could end it.
+Anyone quoting the 228× without the 107.9× worst case and the 63.73 ms
+break-even is quoting the flattering half of a measurement I have now watched
+degrade twice under exactly the kind of scrutiny it should get.
+
+**What I will not do.** Stop optimizing the reference here because the number is
+still above the line. The remaining routes are written down above so the next
+turn attacks them rather than protecting the tick.

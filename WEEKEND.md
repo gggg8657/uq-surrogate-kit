@@ -20,10 +20,10 @@ that is met and a reading that is not. None is a clean `PASS`.
 | **coverage, in distribution, ONE forward pass** | not possible | **0.9026** mean, 8/8 seeds in band | ✅ |
 | coverage, under covariate shift | 0/32 shards in band (split), 2/32 (weighted) | unchanged — and provably unattainable without labels | ❌ |
 | speedup, GPU, trained families (ensemble) | **0/10 rows ≥100×**, range 0.004×–27× | unchanged | ❌ |
-| **speedup, batch 1, one forward pass, CUDA graph, fair denominator** | not possible | **328.5×** | ✅ |
-| **— over 24 distinct coefficient fields** | — | **24/24** clear 100×, worst field **150.2×** | ✅ |
-| speedup, batch 64 (batched reading) | — | **51.8×** | ❌ |
-| speedup, batch 1, eager (the old protocol) | — | **90.0×** fair / 106.0× subsidized | ❌ |
+| **speedup, batch 1, one forward pass, CUDA graph, fair denominator** | not possible | **228.2×** — met, but **marginal** | ✅ |
+| **— over 24 distinct coefficient fields** | — | **24/24** clear 100×, worst field **107.9×** (a 7.9% margin) | ✅ |
+| speedup, batch 64 (batched reading) | — | **44.0×** | ❌ |
+| speedup, batch 1, eager (the old protocol) | — | **72.3×** fair / 107.6× subsidized | ❌ |
 | speedup, repeated 8× (Darcy, ensemble) | **23.5×** [23.0, 23.7] | unchanged | ❌ |
 | speedup, iso-accuracy (Darcy) | **2.2×** | unchanged | ❌ |
 | OOD shift AUROC, all 49 shards, strict | 43/49 (`mahalanobis`) | **47/49** (`combo`) | ❌ |
@@ -52,17 +52,34 @@ defaulted to `check_every=1` — a device-to-host sync on every one of up to 200
 PCG iterations — and `bench_speedup.py` timed the reference solver that way while
 timing the surrogate with autograd left on. Removing both:
 
-- **328.5×** at batch 1 under CUDA-graph replay (gated bit-exact against eager,
+- **228.2×** at batch 1 under CUDA-graph replay (gated bit-exact against eager,
   then re-gated against a *mutated* input so a stale buffer cannot pass);
-- **90.0×** for the eager arm against the fair denominator, versus 106.0× against
+- **72.3×** for the eager arm against the fair denominator, versus 107.6× against
   the subsidized one. **The subsidy alone was the difference between passing and
   failing this clause**, on the protocol every earlier number here used.
 
+**Then we attacked our own denominator again, and it cost us a passing arm.**
+The reference solver rebuilt four face-coefficient arrays on every PCG iteration
+although the coefficient field is fixed for the whole solve. Hoisting them out
+(verified **bit-identical** — solution deviation 0.000e+00, same residual) cut
+the batch-1 solver by 1.28×, and took the no-grad eager arm from 113.6× to
+**90.5×**, i.e. from met to not met. Only the CUDA-graph arm survives.
+
 **And the batch-1 denominator was one repeated sample.** Sweeping 24 distinct
-coefficient fields: **24/24** clear 100×, worst field **150.2×**, median 230.2×,
-while solve difficulty itself spans 3.91×. The historical single sample sat
-*above* the median, so the accident was mildly in our favour — but the clause
-survives the worst field by 1.5×.
+coefficient fields against the optimized reference: **24/24** clear 100×, but
+the worst field reads **107.9×** and the median 154.3×, while solve difficulty
+spans 3.74× (68.8–257.5 ms).
+
+**Clause 2 is met and it is marginal — read this before quoting the 228×.** A
+107.9× worst case is a 7.9% margin. The hardest field solves in 68.75 ms, the
+surrogate answers in 0.6373 ms, and a reference reaching **63.73 ms** on that
+field — a further **7.3%** — takes the clause under 100×. Two rounds of honest
+baseline improvement took this reading from 602× to 228× on the median field and
+from 150× to 108× on the worst. The named, unmeasured solver routes (fused
+stencil kernels, a discrete-Laplacian instead of continuous-spectral
+preconditioner, mixed-precision inner iterations, graph-capturing fixed-length
+PCG chunks) would each plausibly buy more than 7.3%. Anyone quoting 228× without
+the 107.9× and the 63.73 ms break-even is quoting the flattering half.
 
 **OOD is not a detector-family limit after all.** The old 0.486–0.503 on
 operator shift (`0.486`/`0.497`/`0.495` on `biharmonic`, `0.499`/`0.492`/`0.502`
@@ -101,11 +118,13 @@ This decides whether clause 2 is met. Both readings are in the table.
 - *Option B — hold the batched reading.* 51.8× at batch 64, clause not met.
   Defensible: at batch 64 both sides are dispatch-efficient, so it is the only
   reading where the comparison is like-for-like on hardware utilisation.
-- *Recommendation:* report A as the headline with B beside it, because the
-  remaining asymmetry is real — the reference solver is dispatch-starved at
-  batch 1 and only the surrogate was graph-captured. A reference solver reaching
-  **63.9 ms** would take the batch-1 clause back under 100×, and 17 of the 24
-  fields already solve in under 200 ms, so that is not an outlandish target.
+- *Recommendation:* report A as the headline with B beside it **and label it
+  marginal**. The remaining asymmetry is real — the reference is still an eager
+  Python PCG loop and only the surrogate was graph-captured — and the margin on
+  the worst field is 7.9%. A reference reaching 63.73 ms on that field ends the
+  clause. Our own two rounds of baseline fixing each cost us a reading, and we
+  expect a third to cost the last one; that expectation is the reason to state
+  the clause as marginal now rather than defend it later.
 
 **2. Does clause 3 mean "detect every shift" or "detect every shift that
 matters"?** Strict, all 49 shards: **47/49**. Conditional on the shift actually

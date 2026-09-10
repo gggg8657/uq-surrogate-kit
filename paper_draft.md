@@ -106,11 +106,22 @@ Amortizing the solver's test over 50 iterations (which returns an iterate whose
 *measured* final residual is 6.8e-11 against a 1e-10 tolerance, so it is the
 same solver) and removing the surrogate's autograd and per-kernel dispatch:
 
-| arm at batch 1 | fair denominator | subsidized denominator |
-|---|---|---|
-| eager, autograd on (the protocol above) | **90.0×** | 106.0× |
-| eager, no autograd | 113.6× | 131.3× |
-| CUDA-graph replay | **328.5×** | 378.9× |
+| arm at batch 1 | vs the repo's PCG | vs the *optimized* PCG | subsidized |
+|---|---|---|---|
+| eager, autograd on (the protocol above) | 90.0× | **72.3×** | 107.6× |
+| eager, no autograd | 113.6× ✅ | **90.5×** ❌ | 133.8× |
+| CUDA-graph replay | 328.5× | **228.2×** ✅ | 337.5× |
+
+The middle column is the one to read, and it exists because we went looking for
+work our own reference was doing redundantly. `_darcy_apply` rebuilt four
+face-coefficient arrays on every PCG iteration although the coefficient field is
+fixed for the whole solve. Hoisting them out is **bit-identical** — solution
+deviation 0.000e+00 against the original path, same achieved residual — so it is
+the same solver and an admissible denominator, and it cut the batch-1 solve by
+1.28×. It also **withdrew a passing arm**: no-grad eager went from 113.6× to
+90.5×, from met to not met. We regard this as the correct direction for a
+speedup claim to move under scrutiny, and we report it rather than stopping at
+the first configuration that cleared the line.
 
 The eager row crosses the 100× threshold *in the subsidy alone*. We report this
 as the paper's most uncomfortable measurement: for the protocol under which
@@ -125,10 +136,19 @@ arrays on every iteration although the coefficient field is fixed for the whole
 solve; that optimization is named and unmeasured. A reference reaching 63.9 ms
 would take the clause back under 100×. Second, every batch-1 row in the
 literature-style table above times *one* coefficient field. Solve difficulty
-varies 3.91× across fields, so we sweep 24 distinct ones: 24 of 24 clear 100×,
-worst field 150.2×, median 230.2×. The clause holds per problem, not on an
-average — and the single field used historically sat above the median, i.e. the
-accident was in our favour.
+varies 3.74× across fields (68.8–257.5 ms), so we sweep 24 distinct ones against
+the optimized reference: 24 of 24 clear 100×, worst field 107.9×, median 154.3×.
+The clause holds per problem rather than on an average — but a 107.9× worst case
+is a **7.9% margin**, and the hardest field would fall below 100× against a
+reference reaching 63.73 ms on it, a further 7.3%. Two rounds of baseline
+improvement took this reading from 602× to 228× on the median field and 150× to
+108× on the worst; the remaining routes (fused stencil kernels, a
+discrete-Laplacian rather than continuous-spectral preconditioner,
+mixed-precision inner iterations with FP64 refinement, graph-capturing
+fixed-length PCG chunks) would each plausibly buy more than 7.3%. **We therefore
+report clause 2 as met and marginal, and we expect it to fail against a
+sufficiently well-engineered reference.** That is a more useful statement than a
+speedup figure, and it is the one our own measurements support.
 
 The third is the honest one and it is an *upper bound*: the sweep never made the
 PCG as inaccurate as the surrogate. At a 10⁻¹ residual tolerance the solver still

@@ -22,9 +22,9 @@ reasoning and every correction in **[`critique_log.md`](critique_log.md)**.
 | coverage, in distribution, ensemble | **88.6%** [87.7, 89.5] | ✅ |
 | coverage, in distribution, **one forward pass** | **0.9026** mean, 8/8 seeds in band — but a constant-σ control also lands 8/8, so the head's real effect is a 13.1% sharper interval, not the coverage | ✅ |
 | coverage, under covariate shift | 0/32 shards in band; 2/32 weighted — distribution-free unattainable without labels | ❌ |
-| speedup ≥100×, batch 1, one forward pass, CUDA graph, fair denominator | **328.5×** at rel-L2 0.0506; **24/24** distinct coefficient fields clear 100×, worst field 150.2× | ✅ |
-| speedup ≥100×, batch 64 (batched reading) | 51.8× | ❌ |
-| speedup ≥100×, batch 1, eager (the protocol every earlier row used) | **90.0×** against a fair solver denominator, 106.0× against the subsidized one — the subsidy alone decided this clause | ❌ |
+| speedup ≥100×, batch 1, one forward pass, CUDA graph, fair denominator | **228.2×** at rel-L2 0.0506; **24/24** distinct coefficient fields clear 100×, but worst field **107.9×** — a 7.9% margin, and a reference solver reaching 63.73 ms on that field ends the clause. Met, and **marginal** | ✅ |
+| speedup ≥100×, batch 64 (batched reading) | 44.0× | ❌ |
+| speedup ≥100×, batch 1, eager (the protocol every earlier row used) | **72.3×** against a fair solver denominator, 107.6× against the subsidized one — the subsidy alone decided this clause | ❌ |
 | speedup ≥100×, ensemble / iso-accuracy | **23.5×** best row; **2.2×** iso-accuracy; 0/10 rows ≥100× | ❌ |
 | OOD AUROC ≥0.9, all 49 shards, strict | 47/49 (`combo`); the old **0.486–0.503** on operator shift was an identity, not a limit | ❌ |
 | OOD AUROC ≥0.9, conditional on the shift degrading the surrogate | **33/33**, min 0.9964; both misses sit at 1.06× degradation, where firing is a false alarm | ✅ |

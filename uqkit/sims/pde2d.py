@@ -208,11 +208,45 @@ def _darcy_apply(a, u):
     return out / h2
 
 
+def _darcy_faces(a):
+    """The four face-coefficient arrays, which depend only on `a`.
+
+    `_darcy_apply` recomputes these on every PCG iteration although `a` is
+    fixed for the whole solve -- four `roll`s and four fused multiply-adds per
+    iteration, for up to 2000 iterations, all producing the same numbers. An
+    adversarial review of our speedup benchmark pointed this out
+    (`logs/critic_codex_graph.log`): a reference solver doing avoidable work
+    subsidizes any surrogate timed against it, and the subsidy is ours to
+    remove, not the reader's to discount.
+
+    Hoisted out so `solve_darcy(..., fast_apply=True)` can compute them once.
+    Algebraically identical -- the same arithmetic in the same fp64, just not
+    repeated.
+    """
+    return (0.5 * (a + torch.roll(a, -1, dims=-2)),
+            0.5 * (a + torch.roll(a, 1, dims=-2)),
+            0.5 * (a + torch.roll(a, -1, dims=-1)),
+            0.5 * (a + torch.roll(a, 1, dims=-1)))
+
+
+def _darcy_apply_pre(faces, u, h2):
+    """`_darcy_apply` with the face coefficients supplied instead of rebuilt."""
+    a_xp, a_xm, a_yp, a_ym = faces
+    out = (
+        a_xp * (u - torch.roll(u, -1, dims=-2))
+        + a_xm * (u - torch.roll(u, 1, dims=-2))
+        + a_yp * (u - torch.roll(u, -1, dims=-1))
+        + a_ym * (u - torch.roll(u, 1, dims=-1))
+    )
+    return out / h2
+
+
 def _zero_mean(x):
     return x - x.mean(dim=(-2, -1), keepdim=True)
 
 
-def solve_darcy(a, f, tol=1e-10, max_iter=2000, check_every=1):
+def solve_darcy(a, f, tol=1e-10, max_iter=2000, check_every=1,
+                fast_apply=False):
     """Solve -div(a grad u) = f (periodic, zero-mean) with batched PCG.
 
     Preconditioner: the constant-coefficient spectral inverse scaled by the
@@ -221,6 +255,10 @@ def solve_darcy(a, f, tol=1e-10, max_iter=2000, check_every=1):
     float32 it stagnates near 1e-3 relative residual, which would put the
     "ground truth" at the same order as the model error it is meant to measure.
     Returns (u, residual_ratio) with u cast back to the input dtype.
+
+    `fast_apply` hoists the face coefficients out of the iteration (see
+    `_darcy_faces`); it is algebraically identical and off by default so
+    that the corpus-generating path is unchanged.
 
     `check_every` amortizes the convergence test. The test calls `.max()` and
     compares it in Python, which forces a device-to-host synchronization on
@@ -238,6 +276,16 @@ def solve_darcy(a, f, tol=1e-10, max_iter=2000, check_every=1):
     k2 = laplacian_symbol(N, a.device, a.dtype)
     inv_k2 = torch.where(k2 > 0, 1.0 / k2.clamp_min(1e-12), torch.zeros_like(k2))
     a_bar = a.mean(dim=(-2, -1), keepdim=True)
+    h2 = 1.0 / (N * N)
+    # `fast_apply` hoists the face coefficients out of the iteration. Default
+    # stays False so the corpus-generating path and every previously published
+    # timing are byte-for-byte the code they were measured on; the optimized
+    # path is opt-in and is timed as its own arm.
+    faces = _darcy_faces(a) if fast_apply else None
+
+    def apply_A(v):
+        return (_darcy_apply_pre(faces, v, h2) if fast_apply
+                else _darcy_apply(a, v))
 
     def precond(r):
         rhat = torch.fft.fft2(_zero_mean(r))
@@ -255,7 +303,7 @@ def solve_darcy(a, f, tol=1e-10, max_iter=2000, check_every=1):
     rz = dot(r, z)
 
     for it in range(max_iter):
-        Ap = _zero_mean(_darcy_apply(a, p))
+        Ap = _zero_mean(apply_A(p))
         pAp = dot(p, Ap).clamp_min(1e-30)
         alpha = rz / pAp
         u = u + alpha * p
@@ -270,7 +318,7 @@ def solve_darcy(a, f, tol=1e-10, max_iter=2000, check_every=1):
 
     u = _zero_mean(u)
     resid = (
-        (_zero_mean(_darcy_apply(a, u)) - b).flatten(1).norm(dim=1) / b_norm
+        (_zero_mean(apply_A(u)) - b).flatten(1).norm(dim=1) / b_norm
     ).max().item()
     return u.to(out_dtype), resid
 
