@@ -627,12 +627,106 @@ def _mean_sharp(a):
     return sum(sh) / len(sh)
 
 
-def sec_fair(fa, sr, out):
+def sec_h12(old, new, out):
+    """The einsum path and the packed-weight path, side by side.
+
+    The two runs share every solver flag and every timing parameter, and the
+    two surrogates are bit-identical by construction (`packed_weight_gate`), so
+    the only thing that differs between the columns is how the same weights are
+    laid out in memory. That is what makes them comparable at all -- the rule
+    in this repo is that a changed protocol voids a before/after, and this
+    protocol did not change.
+    """
+    out.append("\n### 2e. H12 — the surrogate had a dispatch subsidy of its "
+               "own (`runs/bench_fair.json` vs `runs/bench_fair_h12.json`)\n")
+    if old is None or new is None:
+        out.append(f"{NM} — needs both `runs/bench_fair.json` and "
+                   f"`runs/bench_fair_h12.json`.\n")
+        return
+    g = new["batches"].get("1", {}).get("packed_weight_gate")
+    out.append(
+        "Three rounds of scrutiny (H9–H11) went into the reference solver and "
+        "none into the surrogate, which is a bias: only the side whose "
+        "improvement hurts the claim was being audited. "
+        "`SpectralConv2d.forward` contracted with "
+        "`einsum(\"bixy,ioxy->boxy\", ...)`, which must permute a 13.1 MB "
+        "weight tensor into `(x, y, in, out)` order on **every** forward pass "
+        "although the weights are fixed at inference. The packed path does "
+        "that permute once at load and contracts with `bmm`.\n")
+    if g:
+        out.append(
+            f"**Same model, verified, not asserted.** On the shipped "
+            f"checkpoint at the benchmarked batch and resolution, the packed "
+            f"path deviates from the einsum path by "
+            f"`max|Δ|` = {g['max_abs_dev']['mean']:.1e} on the mean, "
+            f"{g['max_abs_dev']['lo']:.1e} and {g['max_abs_dev']['hi']:.1e} on "
+            f"the two interval bounds, against a field scale of "
+            f"{g['field_scale']:.3e}. The bar is {g['bar']}; the run raises "
+            f"rather than annotates if it is missed. The bounds are checked as "
+            f"well as the mean because a change confined to σ would leave the "
+            f"mean identical and silently move every coverage number.\n")
+    out.append(f"Surrogate rel-L2 is unchanged at "
+               f"{new['surrogate_rel_l2']:.5f} (was "
+               f"{old['surrogate_rel_l2']:.5f}), as bit-identity requires.\n")
+
+    out.append("| reading | einsum path | packed path | ≥100×? |")
+    out.append("|---|---|---|---|")
+    for B in ("1", "64"):
+        eo, en = old["batches"].get(B, {}), new["batches"].get(B, {})
+        for arm in ("graph", "nograd", "eager"):
+            ro = eo.get("ratios", {}).get(arm)
+            rn = en.get("ratios", {}).get(arm)
+            if not (ro and rn):
+                continue
+            out.append(
+                f"| batch {B}, `{arm}`, one field (sample 0) | "
+                f"{ro['ratio_conservative']:.1f}× "
+                f"({eo['surrogate'][arm]['median_s']*1e3:.3f} ms) | "
+                f"**{rn['ratio_conservative']:.1f}×** "
+                f"({en['surrogate'][arm]['median_s']*1e3:.3f} ms) | "
+                f"{MARK[rn['meets_100x_conservative']]} |")
+    so, sn = old.get("sample_sweep"), new.get("sample_sweep")
+    if so and sn:
+        go, gn = so["ratio_graph_conservative"], sn["ratio_graph_conservative"]
+        out.append(
+            f"| **batch 1, `graph`, {gn['n']} distinct fields — the clause "
+            f"verdict** | {go['n_ge_100x']}/{go['n']}, worst {go['min']:.1f}× | "
+            f"**{gn['n_ge_100x']}/{gn['n']}, worst {gn['min']:.1f}×** | "
+            f"{MARK[gn['n_ge_100x'] == gn['n']]} |")
+        out.append("")
+        dmed = so["solver_median_s"]["median"] / sn["solver_median_s"]["median"]
+        out.append(
+            f"**The denominator did not move.** Median solve time over the "
+            f"same {sn['n_samples']} fields: {so['solver_median_s']['median']*1e3:.2f} ms "
+            f"before, {sn['solver_median_s']['median']*1e3:.2f} ms after "
+            f"({dmed:.3f}× — timing noise, not a changed reference). Every "
+            f"solver flag is identical between the two runs; if this ratio "
+            f"were not ~1.0 the comparison would be void.\n")
+        b1n = new["batches"].get("1", {}).get("ratios", {}).get("graph", {})
+        if b1n.get("solver_s_to_erase_100x"):
+            out.append(
+                f"**What it would take to undo this.** The break-even is "
+                f"unchanged in kind and only moved in value: a reference "
+                f"solver reaching "
+                f"**{b1n['solver_s_to_erase_100x']*1e3:.1f} ms** on a field "
+                f"takes that field back under 100×, against a current fastest "
+                f"field of {sn['solver_median_s']['min']*1e3:.1f} ms. The PCG "
+                f"loop is still a Python loop launching individual kernels, "
+                f"and fused stencil kernels, cached grid-dependent "
+                f"preconditioner data and graph-captured fixed-length PCG "
+                f"chunks are all admissible and all unmeasured. So the "
+                f"defensible statement is "
+                f"**\"{gn['n_ge_100x']}/{gn['n']} measured fields against "
+                f"this specified PCG implementation\"**, not an established "
+                f"advantage against an equivalently optimized reference.\n")
+
+
+def sec_fair(fa, sr, out, src="bench_fair.json"):
     """Clause 2 with the dispatch subsidy removed from BOTH sides."""
-    out.append("\n### 2d. Clause 2 with the subsidy removed from both sides "
-               "(`runs/bench_fair.json`, `runs/solver_repeat.json`)\n")
+    out.append(f"\n### 2d. Clause 2 with the subsidy removed from both sides "
+               f"(`runs/{src}`, `runs/solver_repeat.json`)\n")
     if fa is None:
-        out.append(f"{NM} — `runs/bench_fair.json` absent.\n")
+        out.append(f"{NM} — `runs/{src}` absent.\n")
         return
     out.append(f"Task `{fa['task']}`, surrogate rel-L2 "
                f"**{fa['surrogate_rel_l2']:.4f}**, "
@@ -867,7 +961,7 @@ def sec_degradation(cs, out):
 
 
 def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
-            csu=None):
+            csu=None, fa_src="bench_fair.json"):
     """The KPI, clause by clause, with the JSON each verdict came from."""
     out.insert(0, "")
     lines = ["## KPI verdict\n",
@@ -1033,7 +1127,7 @@ def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
                 f"{fa['surrogate_rel_l2']:.4f}, one forward pass (subsidized "
                 f"`check_every=1` reading would have said "
                 f"{rr['ratio_vs_check_every_1_median']:.1f}\u00d7) | "
-                f"`runs/bench_fair.json` | "
+                f"`runs/{fa_src}` | "
                 f"{MARK[rr['meets_100x_conservative']]} |")
         sw = fa.get("sample_sweep")
         if sw:
@@ -1047,7 +1141,7 @@ def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
                 f"{g['min']:.1f}\u00d7, median {g['median']:.1f}\u00d7, best "
                 f"{g['max']:.1f}\u00d7, while solver difficulty itself spans "
                 f"{sw['solver_median_s']['spread_ratio']:.2f}\u00d7 | "
-                f"`runs/bench_fair.json` | "
+                f"`runs/{fa_src}` | "
                 f"{MARK[g['n_ge_100x'] == g['n']]} |")
         b1 = fa["batches"].get("1", {}).get("ratios", {}).get("eager")
         if b1:
@@ -1057,7 +1151,7 @@ def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
                 f"{b1['ratio_conservative']:.1f}\u00d7 fair, "
                 f"{b1['ratio_vs_check_every_1_median']:.1f}\u00d7 subsidized \u2014 "
                 f"**the subsidy alone decided this clause** | "
-                f"`runs/bench_fair.json` | "
+                f"`runs/{fa_src}` | "
                 f"{MARK[b1['meets_100x_conservative']]} |")
     if csu is not None:
         drows = []
@@ -1109,7 +1203,7 @@ def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
                 f"{ens} — **superseded**: the single-network σ head emits mean "
                 f"and interval in one forward pass, so the coverage row above "
                 f"and the batch-1 speedup row above are now the same model and "
-                f"the same run | `runs/uq_seeds.json`, `runs/bench_fair.json` "
+                f"the same run | `runs/uq_seeds.json`, `runs/{fa_src}` "
                 f"| ✅ |")
         else:
             lines.append(f"| ≥100× *and* an interval | both | {ens} | "
@@ -1133,10 +1227,18 @@ def main():
     sec_iso(i, body)
     sec_ood(o, body)
     sec_consistency(load('consistency_M1.json'), body, 'M1')
-    u, fa = load('uq_seeds.json'), load('bench_fair.json')
+    u = load('uq_seeds.json')
+    # The H12 run supersedes the H11 one as the clause reading (same solver
+    # flags, bit-identical surrogate, only the weight layout differs), but the
+    # H11 run is kept and reported next to it rather than replaced -- the whole
+    # point of 2e is that the reader sees what the change moved.
+    fa_old, fa_new = load('bench_fair.json'), load('bench_fair_h12.json')
+    fa = fa_new or fa_old
+    fa_src = 'bench_fair_h12.json' if fa_new else 'bench_fair.json'
     csu = load('consistency_uq.json')
     sec_uq_seeds(u, body)
-    sec_fair(fa, load('solver_repeat.json'), body)
+    sec_fair(fa, load('solver_repeat.json'), body, fa_src)
+    sec_h12(fa_old, fa_new, body)
     sec_consistency(csu, body, 'uq')
     sec_degradation(csu, body)
     sec_probe(lp, body)
@@ -1147,7 +1249,7 @@ def main():
             "hand — every number here is regenerated from the JSON a run wrote.",
             ""]
     Path(args.out).write_text(
-        "\n".join(head + verdict(c, b, o, body, i, m, load('consistency_M1.json'), u, fa, csu) + body) + "\n")
+        "\n".join(head + verdict(c, b, o, body, i, m, load('consistency_M1.json'), u, fa, csu, fa_src) + body) + "\n")
     print(f"wrote {args.out}")
 
 

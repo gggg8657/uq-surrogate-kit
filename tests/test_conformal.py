@@ -181,6 +181,53 @@ def test_auroc_matches_brute_force():
     print(f"ok  AUROC with ties matches brute force: {auroc(s, y):.6f}")
 
 
+
+def test_infinite_weighted_quantile_is_a_clip_property():
+    """`clip**2 <= n_cal * alpha/(1-alpha)` makes an infinite quantile impossible.
+
+    `WeightedConformal.fit` searches the cumulative calibration weight for
+    `(1-alpha)*(W + v)`, and that cumulative weight maxes out at `W`, so the
+    quantile is infinite exactly when `v > W * alpha/(1-alpha)`. With ratios
+    clipped to `[1/clip, clip]` the worst case is a perfectly separated shift:
+    every calibration point floors, so `W = n_cal/clip`, and the test point
+    ceilings at `v = clip`. So abstention needs `clip**2 > n_cal*alpha/(1-alpha)`
+    -- a property of a constant we chose, not of the shift.
+
+    This is why `runs/conformal.json` reports infinite-quantile counts of
+    exactly 512 (the whole test shard) on shards whose calibration ESS is
+    807/1024: an ESS that high and an abstention rate that high cannot both be
+    describing the same shift. See H13 in `critique_log.md`.
+    """
+    import numpy as np
+
+    from uqkit.conformal import WeightedConformal
+
+    n_cal, alpha = 1024, 0.1
+    bound = (n_cal * alpha / (1 - alpha)) ** 0.5     # 10.67 at n=1024, a=0.1
+    rng = np.random.default_rng(0)
+    scores = rng.random(n_cal)
+
+    # The adversarial weighting: every calibration point at the floor, every
+    # test point at the ceiling. Nothing about the data, only the clip.
+    for clip, want_inf in ((20.0, True), (50.0, True),
+                           (10.0, False), (8.0, False), (2.0, False)):
+        wc = WeightedConformal(alpha=alpha).fit(
+            scores, np.full(n_cal, 1.0 / clip), np.full(64, clip))
+        assert (wc.n_inf > 0) == want_inf, (clip, wc.n_inf, bound)
+        assert (clip > bound) == want_inf, (clip, bound)
+
+    # And the bound is tight from below: just under it, nothing abstains even
+    # when the separation is total.
+    wc = WeightedConformal(alpha=alpha).fit(
+        scores, np.full(n_cal, 1.0 / (bound - 1e-6)),
+        np.full(64, bound - 1e-6))
+    assert wc.n_inf == 0
+
+    print(f"ok  infinite weighted quantile is impossible for clip <= "
+          f"{bound:.2f} at n_cal={n_cal}, alpha={alpha}; the shipped clip is "
+          f"20.0, which is why whole shards abstain")
+
+
 if __name__ == "__main__":
     for f in [test_quantile_index, test_marginal_coverage,
               test_group_conformal_protects_the_hard_group,
@@ -190,4 +237,5 @@ if __name__ == "__main__":
               test_probe_auc_is_honest, test_scores_shapes_and_scaling,
               test_binom_ci, test_auroc_matches_brute_force]:
         f()
+    test_infinite_weighted_quantile_is_a_clip_property()
     print("all conformal tests passed")

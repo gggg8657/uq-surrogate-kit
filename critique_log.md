@@ -1591,3 +1591,59 @@ field of 62.4 ms. The clause, if it passes, passes with a ~12% margin on the
 easiest field, against a reference with named unmeasured optimizations. Both of
 its concrete defect findings — the eager/graph regime mix and the 4× memory
 error — were real and are fixed above.
+
+## H13 (queued, not yet run) — the weighted-conformal abstention rate is a property of the clip constant, not of the shift
+
+Clause 1 has a met reading in distribution (0.9026, 8/8 seeds, one forward
+pass) and a badly unmet one under shift, and the brief is explicit that the
+shifted number is the interesting one. The `weighted` column is the arm that is
+*supposed* to repair shift, and `RESULTS.md` currently reports it as unusable
+for a reason that reads like a shrug: 30 of 32 shards return an infinite
+quantile, so their 100% coverage is abstention. I have been treating that as a
+fact about the shifts. It is not — it is arithmetic about a constant I chose.
+
+**The derivation.** `WeightedConformal.fit` (`uqkit/conformal.py:232`) sets
+`thresh = (1-α)(W + v)` where `W = Σ w_cal` and `v` is the test point's own
+weight, and searches the cumulative calibration weight for it. The cumulative
+weight maxes out at `W`, so the quantile is infinite exactly when
+
+    (1-α)(W + v) > W    ⟺    v > W · α/(1-α)    ⟺ (α=0.1)    v > W/9.
+
+`LikelihoodRatioProbe.ratio` clips to `[1/clip, clip]` with `clip = 20`
+(`uqkit/conformal.py:280`). The worst case is a perfectly separated shift: every
+calibration point floors at `1/clip`, so `W = n_cal/clip`, and the test point
+ceilings at `v = clip`. Abstention then requires
+
+    clip > n_cal / (9 · clip)    ⟺    clip² > n_cal / 9.
+
+At `n_cal = 1024` that is `clip > 10.67`. **At `clip = 20` universal abstention
+is reachable; at `clip ≤ 10` it is impossible by construction, whatever the
+shift.** That is why the ∞ counts cluster at exactly 512 — the whole test shard
+— rather than varying with shift strength, and why `darcy_dam0p5` abstains on
+499 of 512 points while its calibration ESS is a healthy 807/1024. An ESS that
+high and an abstention rate that high cannot both be describing the shift.
+
+**H13: sweeping `clip` over {2, 4, 8, 10, 20, 50} moves the shifted-coverage
+verdict, and the frontier — abstention rate vs coverage vs interval width — is
+the actual result.** Two outcomes and both are worth having: either coverage
+lands in [88, 92] on shards that currently abstain, which is clause 1 under
+shift met on a reading that was always available and that I mis-set; or the bias
+the clip introduces pushes coverage out of band, in which case the honest
+statement is that this estimator cannot both certify and stay valid on these
+shifts, with the number that shows it.
+
+**What would distinguish this from the obvious alternative.** The obvious
+alternative is "the shifts are simply too strong for covariate-shift conformal",
+which is what the ‡-marked operator shifts genuinely are. H13 is distinguishable
+from it: if the shifts were the binding constraint, abstention would track shift
+strength, and lowering `clip` would trade abstention for *out-of-band* coverage
+rather than in-band coverage. If instead `clip = 8` yields both finite
+quantiles and in-band coverage on the graded `dam` shards, the constraint was
+mine. The graded `darcy_dam0p1 … dam1` ladder is the right place to read it,
+because the shift strength there is a dial rather than a category.
+
+**Not run this turn.** H12 owns the GPU and one hypothesis at a time is the
+rule. Written down now so that it is a prediction rather than a rationalization
+of whatever the sweep returns. The structural claim `clip² ≤ n_cal/9 ⟹ no
+infinite quantile` is a property of the algorithm, not of a run, and belongs in
+`tests/test_conformal.py` where it can be checked without a GPU.
