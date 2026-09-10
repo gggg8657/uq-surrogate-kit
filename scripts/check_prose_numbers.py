@@ -28,6 +28,7 @@ def claims():
     """(file, rendered string, description) for every hand-written headline."""
     out = []
     c, b, o = load("conformal.json"), load("bench.json"), load("ood.json")
+    selj, scj = load("selective.json"), load("scale.json")
     n, i, m = load("bench_noise.json"), load("isoaccuracy.json"), load("members.json")
     lp = load("label_probe.json")
 
@@ -212,6 +213,60 @@ def claims():
                  ("unseen_operator", "param_oor")]
         if blind:
             out.append(("WEEKEND.md", "**k = 1**", "labelled probes needed"))
+    # --- H14: the gated certificate, and the oracle that also fails -------
+    if selj:
+        hs = selj["headline_score"]
+        sg = selj["by_gate"]["sigma"]["by_score"][hs]
+        out.append(("WEEKEND.md", f"0/{sg['n_covariate_shards']}",
+                    "shards in band under the gated certificate"))
+        out.append(("WEEKEND.md",
+                    f"{sg['abstention_median_over_shards']:.3f}",
+                    "median abstention of the shipped gate"))
+
+    # --- H15/H16/H17 -------------------------------------------------------
+    if scj and scj.get("h15"):
+        L = scj["h15"]["lomo"]
+        out.append(("WEEKEND.md", f"{L['in_band_median']:g}/{L['n_shards']}",
+                    "H15 leave-one-mechanism-out shards in band, median"))
+        out.append(("WEEKEND.md",
+                    f"{L['in_band_range'][0]}\u2013{L['in_band_range'][1]}",
+                    "H15 seed range, in-band shards"))
+        out.append(("WEEKEND.md",
+                    f"{L['vs_ungated']['exact_sign_flip_p']:.4f}",
+                    "H15 sign-flip p against the ungated arm"))
+        out.append(("WEEKEND.md",
+                    f"{L['vs_insample_ceiling']['exact_sign_flip_p']:.4f}",
+                    "H15 sign-flip p against its in-sample ceiling"))
+    if scj and scj.get("wtol"):
+        fm = scj["wtol"]["by_score"]["field_max"]
+        nr = scj["wtol"]["by_score"]["norm_ratio"]
+        out.append(("WEEKEND.md",
+                    f"\u00b1{fm['tol_rel_median_over_shards']*50:.1f}%",
+                    "H16 required width accuracy (half the tolerance)"))
+        out.append(("WEEKEND.md",
+                    f"{nr['tol_rel_median_over_shards']*100:.2f}%",
+                    "H16 tolerance for norm_ratio"))
+        e = fm.get("equivariant")
+        if e:
+            out.append(("WEEKEND.md", f"{e['required_range_base']:.1f}\u00d7",
+                        "H17 required range before the repair"))
+            out.append(("WEEKEND.md", f"{e['required_range_eq']:.1f}\u00d7",
+                        "H17 required range after the repair"))
+            out.append(("WEEKEND.md",
+                        f"{e['vs_base']['exact_sign_flip_p']:.4f}",
+                        "H17 sign-flip p, ungated in-band vs baseline"))
+            # The registered control is the claim most damaging if it silently
+            # flipped, so it is asserted here rather than merely rendered.
+            c_ = e.get("control_darcy_amp2")
+            if c_ and c_["change"] < 0.95:
+                raise SystemExit(
+                    f"H17 CONTROL VIOLATED: darcy_amp2's required width "
+                    f"factor changed by {c_['change']:.3f} (< 0.95). The "
+                    f"wrapper is improving a shard where no "
+                    f"scale-equivariance exists, so it is doing something "
+                    f"other than what H17 claims. Fix or withdraw the H17 "
+                    f"result before publishing it.")
+
     return [c for c in out if c]
 
 

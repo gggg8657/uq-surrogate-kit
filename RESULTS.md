@@ -770,7 +770,7 @@ Row by row across the ladder, so the shape is visible and not only the crossing:
 Two shards remain under 0.9 for every detector here, and both are the *weakest* rung of the graded ladder, where the shift is by design barely present — and one of them, `poisson_dam0p1`, sits at **0.8999**, one part in ten thousand under the threshold and well inside its own bootstrap interval, so the clause turns there on a difference this sample size cannot resolve. The crossing table above is the honest presentation of that row; a tick or a cross is not. Note also that `combo` = max(z) is **worse** than `mahalanobis` alone on exactly those two rows: taking a maximum over z-scores pays for a second, noisier component. `router` — use the consistency residual only when the requested operator is untrained, else the input detector — avoids that, but on the 6 shards where it differs it is inheriting the free `lookup`, not beating it.
 
 
-### 3d. Does the detector miss anything that matters? (`runs/consistency_uq.json`)
+### 3e. Does the detector miss anything that matters? (`runs/consistency_uq.json`)
 
 Per shift family, never as one average over easy and hard shifts:
 

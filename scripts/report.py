@@ -1349,7 +1349,7 @@ def sec_fair(fa, sr, out, src="bench_fair.json"):
 
 def sec_degradation(cs, out):
     """Clause 3 read against how much each shift actually hurts the model."""
-    out.append("\n### 3d. Does the detector miss anything that matters? "
+    out.append("\n### 3e. Does the detector miss anything that matters? "
                "(`runs/consistency_uq.json`)\n")
     if cs is None:
         out.append(f"{NM} — `runs/consistency_uq.json` absent.\n")

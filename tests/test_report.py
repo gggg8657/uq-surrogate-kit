@@ -69,26 +69,59 @@ def test_each_section_heading_emitted_once():
     print(f"  {len(heads)} headings, {len(labels)} numbered, all unique")
 
 
-def test_no_duplicated_table_rows():
-    """The KPI verdict table has no two identical rows."""
+def test_no_duplicated_table_rows_within_a_section():
+    """No table row appears twice inside the same section.
+
+    Scoped to a section on purpose. `sec_consistency` is called once per
+    deployment and emits two structurally identical tables, so identical
+    header rows -- and even identical data rows, where the two runs agree --
+    are correct across sections and only a defect within one. Column-header
+    rows are skipped even within a section, because a section may legitimately
+    carry two sub-tables with the same columns (the iso-accuracy section does,
+    one per solver setting). The bug this guards is the KPI verdict table
+    carrying the same H16 and H17 *data* rows twice, which was two blocks
+    behind the same guard appending to one table.
+    """
     doc = ROOT / "RESULTS.md"
     if not doc.exists():
         print("  RESULTS.md absent -- skipped")
         return
-    rows = [l.strip() for l in doc.read_text().split("\n")
-            if l.startswith("| ") and not set(l) <= set("|- ")]
-    dupes = {k: v for k, v in Counter(rows).items() if v > 1}
-    assert not dupes, ("identical rows in RESULTS.md:\n"
-                       + "\n".join(f"  x{v}: {k[:110]}" for k, v in dupes.items()))
-    print(f"  {len(rows)} table rows, none identical")
+    section, rows, bad = "(top)", Counter(), {}
+    lines = doc.read_text().split("\n")
+    # a column header is a row whose successor is a `|---|` separator
+    headers = {i for i, l in enumerate(lines)
+               if i + 1 < len(lines) and lines[i + 1].startswith("|")
+               and set(lines[i + 1]) <= set("|-: ")}
+    for i, line in enumerate(lines):
+        if i in headers:
+            continue
+        if line.startswith("#"):
+            for r, c in rows.items():
+                if c > 1:
+                    bad[(section, r)] = c
+            section, rows = line.strip(), Counter()
+        elif line.startswith("| ") and not set(line) <= set("|-: "):
+            rows[line.strip()] += 1
+    for r, c in rows.items():
+        if c > 1:
+            bad[(section, r)] = c
+    assert not bad, ("rows duplicated within a single section:\n"
+                     + "\n".join(f"  x{c} in {sec[:44]}: {r[:90]}"
+                                  for (sec, r), c in bad.items()))
+    print("  no row duplicated within any section")
 
 
 #: Numeric literals a report generator legitimately contains: the KPI band and
-#: target, percentage and permille conversions, quantile levels, indices,
-#: rounding, and the alpha the whole repo runs at.
+#: target, percentage conversions, quantile levels, indices, rounding, the
+#: alpha the whole repo runs at, and **protocol constants** -- batch sizes,
+#: grid resolutions, split sizes. A protocol constant describes how a run was
+#: configured; a measurement is what the run returned. Only the second kind is
+#: forbidden here, and the distinction is the reason this list exists rather
+#: than a blanket ban.
 _ALLOWED = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 16, 20, 24, 32, 40, 42,
-            49, 50, 100, 110, 128, 256, 512, 1000, 1024,
-            0.1, 0.5, 0.88, 0.9, 0.92, 0.05, 0.95, 1.0, 1.5, 2.0, 100.0, 90.0}
+            49, 50, 64, 100, 110, 128, 256, 512, 1000, 1024,
+            0.1, 0.5, 0.88, 0.9, 0.92, 0.05, 0.95, 1.0, 1.5, 2.0, 100.0, 90.0,
+            64.0}
 
 
 def test_no_suspicious_measured_looking_literals():
