@@ -1,0 +1,1042 @@
+{
+  "score": "field_max",
+  "band": [
+    0.88,
+    0.92
+  ],
+  "arms": {
+    "const": {
+      "n_seeds": 8,
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "coverage_in_dist": {
+        "mean": 0.8977294921875,
+        "min": 0.89375,
+        "max": 0.9013671875,
+        "median": 0.89814453125,
+        "n": 8,
+        "sd": 0.002468184615059217,
+        "range": 0.007617187499999956,
+        "values": [
+          0.89375,
+          0.8951171875,
+          0.896875,
+          0.898046875,
+          0.8982421875,
+          0.8984375,
+          0.9,
+          0.9013671875
+        ]
+      },
+      "n_seeds_in_band": 8,
+      "forward_passes_per_interval": [
+        1
+      ],
+      "per_seed": [
+        {
+          "seed": 0,
+          "file": "conf_u0_const.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "const",
+          "coverage_in_dist": 0.8982421875,
+          "coverage_ci95": [
+            0.8896601302312896,
+            0.9062271025749258
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.08587389811873436,
+          "sharpness_per_family": {
+            "poisson": 0.05751487612724304,
+            "helmholtz": 0.09178636223077774,
+            "diffusion": 0.039599932730197906,
+            "advdiff": 0.039909478276968,
+            "darcy": 0.2005588412284851
+          },
+          "ood_split_in_band": 0,
+          "ood_split_over": 11,
+          "ood_weighted_in_band": 2,
+          "ood_weighted_over": 30,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 1,
+          "file": "conf_u1_const.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "const",
+          "coverage_in_dist": 0.9013671875,
+          "coverage_ci95": [
+            0.8928965638061009,
+            0.9092359832349842
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.09290722236037255,
+          "sharpness_per_family": {
+            "poisson": 0.06755932420492172,
+            "helmholtz": 0.10105209052562714,
+            "diffusion": 0.046270500868558884,
+            "advdiff": 0.047051168978214264,
+            "darcy": 0.2026030272245407
+          },
+          "ood_split_in_band": 0,
+          "ood_split_over": 13,
+          "ood_weighted_in_band": 0,
+          "ood_weighted_over": 31,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 2,
+          "file": "conf_u2_const.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "const",
+          "coverage_in_dist": 0.898046875,
+          "coverage_ci95": [
+            0.8894579342772195,
+            0.9060389663893167
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.08706776201725006,
+          "sharpness_per_family": {
+            "poisson": 0.06188075616955757,
+            "helmholtz": 0.09136784076690674,
+            "diffusion": 0.042007461190223694,
+            "advdiff": 0.04246744140982628,
+            "darcy": 0.19761531054973602
+          },
+          "ood_split_in_band": 1,
+          "ood_split_over": 10,
+          "ood_weighted_in_band": 2,
+          "ood_weighted_over": 30,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 3,
+          "file": "conf_u3_const.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "const",
+          "coverage_in_dist": 0.9,
+          "coverage_ci95": [
+            0.8914803208111833,
+            0.9079199012521465
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.09149300009012222,
+          "sharpness_per_family": {
+            "poisson": 0.06505512446165085,
+            "helmholtz": 0.09710688889026642,
+            "diffusion": 0.04666784778237343,
+            "advdiff": 0.04753422364592552,
+            "darcy": 0.2011009156703949
+          },
+          "ood_split_in_band": 2,
+          "ood_split_over": 11,
+          "ood_weighted_in_band": 0,
+          "ood_weighted_over": 32,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 4,
+          "file": "conf_u4_const.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "const",
+          "coverage_in_dist": 0.8984375,
+          "coverage_ci95": [
+            0.889862335609383,
+            0.9064152293365119
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.08986766338348388,
+          "sharpness_per_family": {
+            "poisson": 0.062149204313755035,
+            "helmholtz": 0.09642587602138519,
+            "diffusion": 0.042221758514642715,
+            "advdiff": 0.04292002692818642,
+            "darcy": 0.20562145113945007
+          },
+          "ood_split_in_band": 1,
+          "ood_split_over": 11,
+          "ood_weighted_in_band": 2,
+          "ood_weighted_over": 30,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 5,
+          "file": "conf_u5_const.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "const",
+          "coverage_in_dist": 0.89375,
+          "coverage_ci95": [
+            0.8850119602545719,
+            0.9018976333390185
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.09048924148082733,
+          "sharpness_per_family": {
+            "poisson": 0.061547111719846725,
+            "helmholtz": 0.09723076224327087,
+            "diffusion": 0.04202759265899658,
+            "advdiff": 0.0411519892513752,
+            "darcy": 0.21048875153064728
+          },
+          "ood_split_in_band": 1,
+          "ood_split_over": 11,
+          "ood_weighted_in_band": 0,
+          "ood_weighted_over": 32,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 6,
+          "file": "conf_u6_const.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "const",
+          "coverage_in_dist": 0.8951171875,
+          "coverage_ci95": [
+            0.8864261098253593,
+            0.9032158087459864
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.08931470513343812,
+          "sharpness_per_family": {
+            "poisson": 0.06259339302778244,
+            "helmholtz": 0.09450031071901321,
+            "diffusion": 0.043441928923130035,
+            "advdiff": 0.044123850762844086,
+            "darcy": 0.20191404223442078
+          },
+          "ood_split_in_band": 0,
+          "ood_split_over": 11,
+          "ood_weighted_in_band": 1,
+          "ood_weighted_over": 31,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 7,
+          "file": "conf_u7_const.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "const",
+          "coverage_in_dist": 0.896875,
+          "coverage_ci95": [
+            0.8882449551237932,
+            0.9049099527046667
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.09466097876429558,
+          "sharpness_per_family": {
+            "poisson": 0.06574150919914246,
+            "helmholtz": 0.10134654492139816,
+            "diffusion": 0.04643917828798294,
+            "advdiff": 0.04735917970538139,
+            "darcy": 0.21241848170757294
+          },
+          "ood_split_in_band": 1,
+          "ood_split_over": 11,
+          "ood_weighted_in_band": 2,
+          "ood_weighted_over": 30,
+          "ood_n_shards": 32
+        }
+      ],
+      "sharpness_rel": {
+        "mean": 0.09020930891856552,
+        "min": 0.08587389811873436,
+        "max": 0.09466097876429558,
+        "median": 0.09017845243215561,
+        "n": 8,
+        "sd": 0.0028885109351823317,
+        "range": 0.008787080645561218,
+        "values": [
+          0.08587389811873436,
+          0.08706776201725006,
+          0.08931470513343812,
+          0.08986766338348388,
+          0.09048924148082733,
+          0.09149300009012222,
+          0.09290722236037255,
+          0.09466097876429558
+        ]
+      },
+      "ood_split_in_band": {
+        "mean": 0.75,
+        "min": 0,
+        "max": 2,
+        "median": 1.0,
+        "n": 8,
+        "sd": 0.7071067811865476,
+        "range": 2,
+        "values": [
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          2
+        ]
+      },
+      "ood_split_over": {
+        "mean": 11.125,
+        "min": 10,
+        "max": 13,
+        "median": 11.0,
+        "n": 8,
+        "sd": 0.8345229603962802,
+        "range": 3,
+        "values": [
+          10,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          13
+        ]
+      },
+      "ood_weighted_in_band": {
+        "mean": 1.125,
+        "min": 0,
+        "max": 2,
+        "median": 1.5,
+        "n": 8,
+        "sd": 0.9910312089651149,
+        "range": 2,
+        "values": [
+          0,
+          0,
+          0,
+          1,
+          2,
+          2,
+          2,
+          2
+        ]
+      },
+      "ood_weighted_over": {
+        "mean": 30.75,
+        "min": 30,
+        "max": 32,
+        "median": 30.5,
+        "n": 8,
+        "sd": 0.8864052604279183,
+        "range": 2,
+        "values": [
+          30,
+          30,
+          30,
+          30,
+          31,
+          31,
+          32,
+          32
+        ]
+      },
+      "ood_n_shards": [
+        32
+      ]
+    },
+    "cqr": {
+      "n_seeds": 8,
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "coverage_in_dist": {
+        "mean": 0.901220703125,
+        "min": 0.894140625,
+        "max": 0.9048828125,
+        "median": 0.901953125,
+        "n": 8,
+        "sd": 0.0035167873822436954,
+        "range": 0.0107421875,
+        "values": [
+          0.894140625,
+          0.898046875,
+          0.9015625,
+          0.9015625,
+          0.90234375,
+          0.903515625,
+          0.9037109375,
+          0.9048828125
+        ]
+      },
+      "n_seeds_in_band": 8,
+      "forward_passes_per_interval": [
+        1
+      ],
+      "per_seed": [
+        {
+          "seed": 0,
+          "file": "conf_u0_cqr.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "cqr",
+          "coverage_in_dist": 0.9015625,
+          "coverage_ci95": [
+            0.8930989233213277,
+            0.9094239558594371
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.07602738663554191,
+          "sharpness_per_family": {
+            "poisson": 0.05050307512283325,
+            "helmholtz": 0.07955627143383026,
+            "diffusion": 0.037237498909235,
+            "advdiff": 0.038398049771785736,
+            "darcy": 0.17444203794002533
+          },
+          "ood_split_in_band": 1,
+          "ood_split_over": 12,
+          "ood_weighted_in_band": 0,
+          "ood_weighted_over": 32,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 1,
+          "file": "conf_u1_cqr.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "cqr",
+          "coverage_in_dist": 0.9048828125,
+          "coverage_ci95": [
+            0.8965405637331907,
+            0.9126179618221231
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.07923624739050865,
+          "sharpness_per_family": {
+            "poisson": 0.05707646161317825,
+            "helmholtz": 0.08404368162155151,
+            "diffusion": 0.04132143035531044,
+            "advdiff": 0.04253266751766205,
+            "darcy": 0.171206995844841
+          },
+          "ood_split_in_band": 1,
+          "ood_split_over": 13,
+          "ood_weighted_in_band": 1,
+          "ood_weighted_over": 31,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 2,
+          "file": "conf_u2_cqr.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "cqr",
+          "coverage_in_dist": 0.903515625,
+          "coverage_ci95": [
+            0.8951230645358232,
+            0.9113031360417352
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.07796406671404839,
+          "sharpness_per_family": {
+            "poisson": 0.05539679154753685,
+            "helmholtz": 0.0801783874630928,
+            "diffusion": 0.040638286620378494,
+            "advdiff": 0.040805716067552567,
+            "darcy": 0.1728011518716812
+          },
+          "ood_split_in_band": 0,
+          "ood_split_over": 13,
+          "ood_weighted_in_band": 0,
+          "ood_weighted_over": 32,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 3,
+          "file": "conf_u3_cqr.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "cqr",
+          "coverage_in_dist": 0.9015625,
+          "coverage_ci95": [
+            0.8930989233213277,
+            0.9094239558594371
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.07951104417443275,
+          "sharpness_per_family": {
+            "poisson": 0.05690121650695801,
+            "helmholtz": 0.08270155638456345,
+            "diffusion": 0.04308629408478737,
+            "advdiff": 0.0438036248087883,
+            "darcy": 0.17106252908706665
+          },
+          "ood_split_in_band": 0,
+          "ood_split_over": 14,
+          "ood_weighted_in_band": 0,
+          "ood_weighted_over": 32,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 4,
+          "file": "conf_u4_cqr.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "cqr",
+          "coverage_in_dist": 0.9037109375,
+          "coverage_ci95": [
+            0.8953255338511019,
+            0.9114909988661357
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.07975183948874473,
+          "sharpness_per_family": {
+            "poisson": 0.055198583751916885,
+            "helmholtz": 0.08388184756040573,
+            "diffusion": 0.039080046117305756,
+            "advdiff": 0.0402810201048851,
+            "darcy": 0.1803176999092102
+          },
+          "ood_split_in_band": 0,
+          "ood_split_over": 13,
+          "ood_weighted_in_band": 0,
+          "ood_weighted_over": 32,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 5,
+          "file": "conf_u5_cqr.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "cqr",
+          "coverage_in_dist": 0.894140625,
+          "coverage_ci95": [
+            0.8854159581605314,
+            0.9022742997124176
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.07915989011526108,
+          "sharpness_per_family": {
+            "poisson": 0.05350886285305023,
+            "helmholtz": 0.08254629373550415,
+            "diffusion": 0.039662014693021774,
+            "advdiff": 0.03827228769659996,
+            "darcy": 0.18180999159812927
+          },
+          "ood_split_in_band": 1,
+          "ood_split_over": 12,
+          "ood_weighted_in_band": 0,
+          "ood_weighted_over": 32,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 6,
+          "file": "conf_u6_cqr.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "cqr",
+          "coverage_in_dist": 0.898046875,
+          "coverage_ci95": [
+            0.8894579342772195,
+            0.9060389663893167
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.08178820833563805,
+          "sharpness_per_family": {
+            "poisson": 0.05746394768357277,
+            "helmholtz": 0.08424028009176254,
+            "diffusion": 0.042254433035850525,
+            "advdiff": 0.042987123131752014,
+            "darcy": 0.18199525773525238
+          },
+          "ood_split_in_band": 2,
+          "ood_split_over": 12,
+          "ood_weighted_in_band": 0,
+          "ood_weighted_over": 32,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 7,
+          "file": "conf_u7_cqr.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "cqr",
+          "coverage_in_dist": 0.90234375,
+          "coverage_ci95": [
+            0.8939084601367044,
+            0.9101757476027776
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.08232041969895362,
+          "sharpness_per_family": {
+            "poisson": 0.05743544548749924,
+            "helmholtz": 0.08638330549001694,
+            "diffusion": 0.0429454930126667,
+            "advdiff": 0.043448224663734436,
+            "darcy": 0.18138962984085083
+          },
+          "ood_split_in_band": 1,
+          "ood_split_over": 12,
+          "ood_weighted_in_band": 1,
+          "ood_weighted_over": 31,
+          "ood_n_shards": 32
+        }
+      ],
+      "sharpness_rel": {
+        "mean": 0.07946988781914115,
+        "min": 0.07602738663554191,
+        "max": 0.08232041969895362,
+        "median": 0.07937364578247069,
+        "n": 8,
+        "sd": 0.0019946475030705206,
+        "range": 0.00629303306341171,
+        "values": [
+          0.07602738663554191,
+          0.07796406671404839,
+          0.07915989011526108,
+          0.07923624739050865,
+          0.07951104417443275,
+          0.07975183948874473,
+          0.08178820833563805,
+          0.08232041969895362
+        ]
+      },
+      "ood_split_in_band": {
+        "mean": 0.75,
+        "min": 0,
+        "max": 2,
+        "median": 1.0,
+        "n": 8,
+        "sd": 0.7071067811865476,
+        "range": 2,
+        "values": [
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          2
+        ]
+      },
+      "ood_split_over": {
+        "mean": 12.625,
+        "min": 12,
+        "max": 14,
+        "median": 12.5,
+        "n": 8,
+        "sd": 0.7440238091428449,
+        "range": 2,
+        "values": [
+          12,
+          12,
+          12,
+          12,
+          13,
+          13,
+          13,
+          14
+        ]
+      },
+      "ood_weighted_in_band": {
+        "mean": 0.25,
+        "min": 0,
+        "max": 1,
+        "median": 0.0,
+        "n": 8,
+        "sd": 0.4629100498862757,
+        "range": 1,
+        "values": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1
+        ]
+      },
+      "ood_weighted_over": {
+        "mean": 31.75,
+        "min": 31,
+        "max": 32,
+        "median": 32.0,
+        "n": 8,
+        "sd": 0.4629100498862757,
+        "range": 1,
+        "values": [
+          31,
+          31,
+          32,
+          32,
+          32,
+          32,
+          32,
+          32
+        ]
+      },
+      "ood_n_shards": [
+        32
+      ]
+    },
+    "het": {
+      "n_seeds": 8,
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "coverage_in_dist": {
+        "mean": 0.9026123046875,
+        "min": 0.8953125,
+        "max": 0.908984375,
+        "median": 0.90283203125,
+        "n": 8,
+        "sd": 0.003960198749217112,
+        "range": 0.013671875,
+        "values": [
+          0.8953125,
+          0.900390625,
+          0.901171875,
+          0.9025390625,
+          0.903125,
+          0.9046875,
+          0.9046875,
+          0.908984375
+        ]
+      },
+      "n_seeds_in_band": 8,
+      "forward_passes_per_interval": [
+        1
+      ],
+      "per_seed": [
+        {
+          "seed": 0,
+          "file": "conf_u0_het.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "het",
+          "coverage_in_dist": 0.9046875,
+          "coverage_ci95": [
+            0.8963380331384732,
+            0.9124301602771612
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.07337189465761185,
+          "sharpness_per_family": {
+            "poisson": 0.04835625737905502,
+            "helmholtz": 0.07524465024471283,
+            "diffusion": 0.03535628691315651,
+            "advdiff": 0.03538167104125023,
+            "darcy": 0.17252060770988464
+          },
+          "ood_split_in_band": 0,
+          "ood_split_over": 13,
+          "ood_weighted_in_band": 0,
+          "ood_weighted_over": 32,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 1,
+          "file": "conf_u1_het.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "het",
+          "coverage_in_dist": 0.903125,
+          "coverage_ci95": [
+            0.8947181562270529,
+            0.9109273800711465
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.07894727662205696,
+          "sharpness_per_family": {
+            "poisson": 0.05669058486819267,
+            "helmholtz": 0.08227361738681793,
+            "diffusion": 0.04111076146364212,
+            "advdiff": 0.04187369346618652,
+            "darcy": 0.17278772592544556
+          },
+          "ood_split_in_band": 1,
+          "ood_split_over": 13,
+          "ood_weighted_in_band": 1,
+          "ood_weighted_over": 31,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 2,
+          "file": "conf_u2_het.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "het",
+          "coverage_in_dist": 0.908984375,
+          "coverage_ci95": [
+            0.9007961330322743,
+            0.9165593674563058
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.07531502172350883,
+          "sharpness_per_family": {
+            "poisson": 0.05279695242643356,
+            "helmholtz": 0.07595314830541611,
+            "diffusion": 0.03794602304697037,
+            "advdiff": 0.038199324160814285,
+            "darcy": 0.17167966067790985
+          },
+          "ood_split_in_band": 0,
+          "ood_split_over": 13,
+          "ood_weighted_in_band": 0,
+          "ood_weighted_over": 32,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 3,
+          "file": "conf_u3_het.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "het",
+          "coverage_in_dist": 0.901171875,
+          "coverage_ci95": [
+            0.8926942141141413,
+            0.9090480007872644
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.07963834106922149,
+          "sharpness_per_family": {
+            "poisson": 0.05586911365389824,
+            "helmholtz": 0.08072087913751602,
+            "diffusion": 0.04228353127837181,
+            "advdiff": 0.04289974272251129,
+            "darcy": 0.17641843855381012
+          },
+          "ood_split_in_band": 0,
+          "ood_split_over": 14,
+          "ood_weighted_in_band": 0,
+          "ood_weighted_over": 32,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 4,
+          "file": "conf_u4_het.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "het",
+          "coverage_in_dist": 0.9046875,
+          "coverage_ci95": [
+            0.8963380331384732,
+            0.9124301602771612
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.07910501062870026,
+          "sharpness_per_family": {
+            "poisson": 0.05396277830004692,
+            "helmholtz": 0.08138439804315567,
+            "diffusion": 0.038713861256837845,
+            "advdiff": 0.03928446024656296,
+            "darcy": 0.1821795552968979
+          },
+          "ood_split_in_band": 0,
+          "ood_split_over": 13,
+          "ood_weighted_in_band": 0,
+          "ood_weighted_over": 32,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 5,
+          "file": "conf_u5_het.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "het",
+          "coverage_in_dist": 0.9025390625,
+          "coverage_ci95": [
+            0.8941108691607417,
+            0.9103636707184198
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.07883568555116653,
+          "sharpness_per_family": {
+            "poisson": 0.05272873863577843,
+            "helmholtz": 0.08120141923427582,
+            "diffusion": 0.03793906420469284,
+            "advdiff": 0.03720635548233986,
+            "darcy": 0.18510285019874573
+          },
+          "ood_split_in_band": 0,
+          "ood_split_over": 13,
+          "ood_weighted_in_band": 1,
+          "ood_weighted_over": 31,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 6,
+          "file": "conf_u6_het.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "het",
+          "coverage_in_dist": 0.900390625,
+          "coverage_ci95": [
+            0.8918849130635099,
+            0.9082959732791785
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.0801164224743843,
+          "sharpness_per_family": {
+            "poisson": 0.055316973477602005,
+            "helmholtz": 0.08104972541332245,
+            "diffusion": 0.04056656360626221,
+            "advdiff": 0.0412023700773716,
+            "darcy": 0.18244647979736328
+          },
+          "ood_split_in_band": 1,
+          "ood_split_over": 12,
+          "ood_weighted_in_band": 0,
+          "ood_weighted_over": 32,
+          "ood_n_shards": 32
+        },
+        {
+          "seed": 7,
+          "file": "conf_u7_het.json",
+          "n_members": 1,
+          "forward_passes_per_interval": 1,
+          "sigma_source": "het",
+          "coverage_in_dist": 0.8953125,
+          "coverage_ci95": [
+            0.8866281672314876,
+            0.9034040834795375
+          ],
+          "n": 5120,
+          "sharpness_rel": 0.08195521533489228,
+          "sharpness_per_family": {
+            "poisson": 0.05600767582654953,
+            "helmholtz": 0.0840856209397316,
+            "diffusion": 0.04165370389819145,
+            "advdiff": 0.042270246893167496,
+            "darcy": 0.1857588291168213
+          },
+          "ood_split_in_band": 1,
+          "ood_split_over": 12,
+          "ood_weighted_in_band": 2,
+          "ood_weighted_over": 30,
+          "ood_n_shards": 32
+        }
+      ],
+      "sharpness_rel": {
+        "mean": 0.07841060850769281,
+        "min": 0.07337189465761185,
+        "max": 0.08195521533489228,
+        "median": 0.0790261436253786,
+        "n": 8,
+        "sd": 0.002749118257498004,
+        "range": 0.008583320677280432,
+        "values": [
+          0.07337189465761185,
+          0.07531502172350883,
+          0.07883568555116653,
+          0.07894727662205696,
+          0.07910501062870026,
+          0.07963834106922149,
+          0.0801164224743843,
+          0.08195521533489228
+        ]
+      },
+      "ood_split_in_band": {
+        "mean": 0.375,
+        "min": 0,
+        "max": 1,
+        "median": 0.0,
+        "n": 8,
+        "sd": 0.5175491695067657,
+        "range": 1,
+        "values": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1
+        ]
+      },
+      "ood_split_over": {
+        "mean": 12.875,
+        "min": 12,
+        "max": 14,
+        "median": 13.0,
+        "n": 8,
+        "sd": 0.6408699444616558,
+        "range": 2,
+        "values": [
+          12,
+          12,
+          13,
+          13,
+          13,
+          13,
+          13,
+          14
+        ]
+      },
+      "ood_weighted_in_band": {
+        "mean": 0.5,
+        "min": 0,
+        "max": 2,
+        "median": 0.0,
+        "n": 8,
+        "sd": 0.7559289460184545,
+        "range": 2,
+        "values": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          2
+        ]
+      },
+      "ood_weighted_over": {
+        "mean": 31.5,
+        "min": 30,
+        "max": 32,
+        "median": 32.0,
+        "n": 8,
+        "sd": 0.7559289460184545,
+        "range": 2,
+        "values": [
+          30,
+          31,
+          31,
+          32,
+          32,
+          32,
+          32,
+          32
+        ]
+      },
+      "ood_n_shards": [
+        32
+      ]
+    }
+  },
+  "note": "`const` is a control, not a candidate: split conformal rescales any sigma to ~90% marginal coverage, so `const` landing in the band is the null result that says how much of a coverage number is the head and how much is the rescaling. Compare `sharpness_rel` between arms, not coverage."
+}

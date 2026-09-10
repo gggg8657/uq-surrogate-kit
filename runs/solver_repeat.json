@@ -1,0 +1,77 @@
+{
+  "env": {
+    "torch": "2.8.0+cu128",
+    "python": "3.11.16",
+    "platform": "Linux-6.8.0-58-generic-x86_64-with-glibc2.39",
+    "torch_num_threads": 96,
+    "torch_interop_threads": 96,
+    "OMP_NUM_THREADS": "<unset>",
+    "MKL_NUM_THREADS": "<unset>",
+    "cpu_count": 192,
+    "cuda": "12.8",
+    "gpu": "NVIDIA H100 NVL",
+    "visible_devices": "3",
+    "tf32_matmul": false
+  },
+  "task": "darcy",
+  "clock_ramp": {
+    "ramped": true,
+    "seconds": 6.0,
+    "matmuls": 1800
+  },
+  "trials": 12,
+  "iters_per_trial": 20,
+  "batches": {
+    "1": {
+      "batch": 1,
+      "trial_median_s": [
+        0.37986295856535435,
+        0.3758858647197485,
+        0.3106228280812502,
+        0.22347220219671726,
+        0.22309171594679356,
+        0.2226689402014017,
+        0.2227519191801548,
+        0.22187933139503002,
+        0.22520794533193111,
+        0.22248343378305435,
+        0.22181487828493118,
+        0.2228063941001892
+      ],
+      "min_s": 0.22181487828493118,
+      "max_s": 0.37986295856535435,
+      "median_of_medians_s": 0.22294905502349138,
+      "mean_s": 0.256045700982213,
+      "sd_s": 0.062203374251191657,
+      "spread_ratio_max_over_min": 1.7125224489107682,
+      "rel_range_pct": 61.726511975845455,
+      "pcg_iters_per_trial": null
+    },
+    "64": {
+      "batch": 64,
+      "trial_median_s": [
+        0.28540567122399807,
+        0.28748318552970886,
+        0.2882119845598936,
+        0.31735507398843765,
+        0.28394624777138233,
+        0.28353712521493435,
+        0.2843401487916708,
+        0.28384608030319214,
+        0.28333877585828304,
+        0.28455950506031513,
+        0.28354834020137787,
+        0.28362356312572956
+      ],
+      "min_s": 0.28333877585828304,
+      "max_s": 0.31735507398843765,
+      "median_of_medians_s": 0.28414319828152657,
+      "mean_s": 0.2874329751357436,
+      "sd_s": 0.009555764313439562,
+      "spread_ratio_max_over_min": 1.1200552166822675,
+      "rel_range_pct": 11.834514851363178,
+      "pcg_iters_per_trial": null
+    }
+  },
+  "note": "Each trial is a full `timeit` (3 warmup + --iters timed calls) on the same tensor, so one trial is exactly what a bench run measures once. The spread ACROSS trials is the run-to-run uncertainty a single bench row does not show. Nothing here involves the surrogate."
+}

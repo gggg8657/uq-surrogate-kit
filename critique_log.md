@@ -799,3 +799,436 @@ shards (it is split conformal on exchangeable data, so it should be nearly
 free), and the k = 9 curve reaches the band by k = 9 with the finite-sample
 guarantee, not before. If oracle target-split fails, that is the more
 interesting result and it kills the score, not the calibrator.
+
+---
+
+## Turn 7 (2026-09-10, ~12:30) — the M=1 UQ network is measured, and the 100× clause is now a launch-overhead problem
+
+### What the numbers are
+
+The addendum's rung-2 route was run last turn and never aggregated or
+committed. It is aggregated now. Eight seeds, three σ heads, one forward pass
+per interval (`runs/uq_seeds.json`, `runs/conf_u*_{het,cqr,const}.json`):
+
+| arm | fwd/interval | cov mean | sd | range | seeds in [88,92] | `sharpness_rel` |
+|---|---|---|---|---|---|---|
+| `het` | **1** | 0.9026 | 0.00396 | 0.01367 | **8/8** | **0.0784** |
+| `cqr` | **1** | 0.9012 | 0.00352 | 0.01074 | **8/8** | 0.0795 |
+| `const` (control) | 1 | 0.8977 | 0.00247 | 0.00762 | 8/8 | 0.0902 |
+
+So the addendum's structural claim is confirmed: the coverage row and the
+one-forward-pass row are now **the same row**. M>1 is no longer forced.
+
+The control matters more than the two candidates. Split conformal rescales
+*any* σ to ~90% marginal coverage, so `const` — a σ that is literally a
+constant — also lands 8/8 in band. **Coverage in band at M=1 is therefore not
+evidence that the head learned anything.** The only thing that separates the
+heads is width: `het` is 13.1% sharper than `const` (0.0784 vs 0.0902). That is
+the real effect of the σ head and it is a much smaller claim than "the
+single-network interval works". Reported as such.
+
+### The speedup, and the row that must not be quoted
+
+`runs/bench_uq.json` (GPU 3, `torch_num_threads=96`, tf32 off, bf16 autocast,
+20 iters, clock-ramp warmup):
+
+| family | b | solver | solver accuracy | `uq_single` | `+residual` | surrogate rel-L2 |
+|---|---|---|---|---|---|---|
+| darcy | 1 | 265.1 ms | PCG fp64, tol 1e-10 | **71.7×** | 63.7× | 0.0506 |
+| darcy | 64 | 316.4 ms | PCG fp64, tol 1e-10 | 64.8× | 63.0× | 0.0506 |
+| poisson/helmholtz/diffusion/advdiff | 1, 64 | 0.10–0.15 ms | exact spectral, ~1e-7 | **0.02–0.07×** | — | 0.0025–0.0034 |
+| navier_stokes | 1 | 796.8 ms | RK4 1000 steps | ~366× | — | **`[not measured]`** |
+
+**The navier_stokes row is not a result and I am not counting it.** `trained:
+False` — no surrogate was ever trained on that family, so its 366× is an
+untrained network timed against a real solver. The repo already labels these
+`*(untrained)*` with `[not measured]` accuracy in `RESULTS.md:143`, which is
+why it did not become a headline. It is the single most seductive number in the
+file and it is worth nothing. Best row *with* an accuracy is **71.7× at 5.06%
+rel-L2**, and the honest strict reading against a solver tuned to the
+surrogate's own accuracy is still the 2.2× in `runs/isoaccuracy.json`.
+
+So the addendum's premise was half right. Putting the interval in one network
+did remove the structural blocker, but the 108.5× it cited came from a
+1-channel ensemble *member*; the actual UQ network with its extra heads reads
+**71.7×**, not 108.5×. Clause 2 is short by 1.4×, not met by construction.
+
+### Which part is the binding constraint — from numbers already on disk
+
+Darcy, batch 1: surrogate 3.699 ms. Darcy, batch 64: surrogate 4.885 ms.
+**64× the arithmetic for 1.32× the wall clock.** The four spectral families sit
+at 2.22–2.30 ms at b=1 regardless of what they compute. A network whose time is
+almost independent of its own workload is not compute-bound; at b=1 it is
+paying per-kernel launch latency, and an FNO with this many layers launches
+enough kernels to account for ~2 ms of it.
+
+That reframes clause 2. The gap to 100× is not "the network is too big" and not
+"the solver is too fast" — on darcy the solver takes 265 ms, three orders of
+magnitude more. It is that **at deployment batch 1 we are timing the CPU-side
+launch of the surrogate, not the surrogate.** This is a design decision in how
+the model is executed, which puts it squarely at rung 2.
+
+What distinguishes this explanation from the obvious alternative ("the model is
+just slow"): if the model were compute-bound, b=64 would cost ~64× b=1. It
+costs 1.32×. And if it were dominated by the normalization/de-normalization
+inside the timed region, the cost would scale with tensor size, which across
+darcy-vs-poisson at fixed b=1 it does not (3.70 vs 2.30 ms is a 1.6× spread
+over families whose fields differ far more than that).
+
+Second, smaller asymmetry found while reading the harness: the timed surrogate
+closures in `scripts/bench_speedup.py` run **with autograd tracking on** —
+neither `make_uq_fn` nor `make_surrogate_fn` is wrapped in `no_grad` — while
+`PDE2DSimulator.solve` carries `@torch.no_grad()` (`uqkit/sims/pde2d_sim.py:42`).
+Every speedup number this repo has ever published charges the surrogate for
+building an autograd graph nobody uses and does not charge the solver for it.
+That biases *against* our own claim, so it is not a cheat, but it is an unfair
+comparison in the direction that happens to be safe, and it should be measured
+rather than left as a silent margin.
+
+### H8, written before it runs
+
+**Hypothesis.** The batch-1 surrogate time is dominated by kernel-launch and
+autograd-bookkeeping overhead, not arithmetic. Removing both — `no_grad` plus
+CUDA-graph capture and replay of the identical weights — takes the darcy b=1
+row from 71.7× past 100× **with the rel-L2 unchanged**, because a graph replay
+executes the same kernels on the same tensors.
+
+**Registered predictions.**
+1. `uq_single+graph` at darcy b=1 drops to **≤ 1.5 ms** (from 3.699 ms), giving
+   **≥ 170×**.
+2. The b=64 row moves by **< 1.3×**, because it is compute-bound. If b=64
+   improves as much as b=1 in relative terms, my launch-bound diagnosis is
+   wrong and the gain is something else (kernel fusion, allocator) — I would
+   have to say so.
+3. `uq_single+nograd` (eager, no graph) captures only part of it: I predict it
+   lands between 2.6 and 3.4 ms at darcy b=1, i.e. it explains less than half
+   the gap. If `nograd` alone reaches ≤1.5 ms then the overhead was autograd,
+   not launch, and prediction 1's mechanism is misattributed even if the number
+   passes.
+4. The four spectral families stay **below 1×** no matter what. Launch overhead
+   is not why a network loses to an exact propagator that costs 0.1 ms, and no
+   amount of graph capture will change that. Clause 2 will remain a
+   family-by-family statement, never an average.
+
+**Falsified if** the graph replay changes rel-L2 at all beyond bf16
+non-determinism, in which case it is a different model and the row is void.
+That check is a hard assert in the runner, not an eyeball.
+
+**What this does not claim.** CUDA-graph capture is a real deployment
+technique, same weights, same hardware, same accuracy, same solver
+denominator — so it is rung 2, not a loosened protocol. But it is also not a
+free lunch to be quoted alone: the eager row stays in the table as the strict
+reading, exactly as the 1.47× row stayed in E4. If the graph row passes 100×
+and the eager row does not, **both go in the table and the clause is reported
+as "met under graph capture, 71.7× eager"**, with the two protocols named. A
+clause met only under a stated execution mode is met under that mode and
+nowhere else.
+
+### H8 result — all four predictions held, and the clause moved. Then I found what makes the number unfair.
+
+`runs/bench_uq_exec.json`, GPU 3, same shard, same solver, same weights; only
+kernel dispatch differs. Darcy, the only trained family where any surrogate
+beats its solver:
+
+| arm | b=1 surrogate | b=1 ratio | b=64 surrogate | b=64 ratio | rel-L2 | graph vs eager |
+|---|---|---|---|---|---|---|
+| `uq_single` (eager, grad on — the published protocol) | 3.652 ms | 105.8× | 4.878 ms | 63.9× | 0.0506 | — |
+| `uq_single+nograd` | 2.955 ms | 130.8× | 4.828 ms | 64.6× | 0.0506 | — |
+| `uq_single+graph` | **0.642 ms** | **602.2×** | 4.495 ms | 69.4× | 0.0506 | **0.0 (bit-exact)** |
+| `uq_single+residual+graph` | 0.727 ms | 531.7× | 4.588 ms | 68.0× | 0.0506 | **0.0** |
+
+Predictions, scored against what I wrote before the run:
+
+1. graph ≤ 1.5 ms → **0.642 ms**. Held.
+2. b=64 moves < 1.3× → **1.085×** (4.878 → 4.495 ms). Held, and it is the
+   prediction that matters, because it is what makes the diagnosis *launch
+   overhead* rather than "the code got faster somehow".
+3. `nograd` alone lands 2.6–3.4 ms → **2.955 ms**. Held. So autograd
+   bookkeeping was 19% of the batch-1 cost and dispatch was the remaining 82%.
+   The mechanism is attributed correctly and not just the number.
+4. Spectral families stay below 1× → best is **0.3×**. Held. Graph capture
+   makes a network that loses to an exact 0.1 ms propagator lose by less. It
+   does not make it win, and no averaging over families will be done.
+
+The bit-exact `graph_vs_eager_rel_dev = 0.0` is the part I care about most: the
+replay is not an approximation of the model, it is the same kernels on the same
+tensors, so no accuracy was traded for the time.
+
+**But the denominator is not stable, and I nearly published on it.** The same
+darcy b=1 solver row read **265.1 ms** last run and **386.5 ms** this run — same
+GPU, same shard, same code, one hour apart. That 46% swing alone moved the
+*eager* arm from 71.7× to 105.8×, i.e. across the KPI threshold, with the
+surrogate untouched. Had I run only the second bench I would have reported
+"eager M=1 passes 100×" and it would have been the clock-ramp artefact all over
+again. `scripts/probe_solver_repeat.py` is now running 12 repeated trials to put
+an interval on that denominator, and no darcy b=1 number goes in a document
+without it.
+
+**And here is the thing that actually decides this clause.** The darcy solver
+costs 386 ms at b=1 and 312 ms at b=64 — 64× the systems for *less* wall clock.
+The reference solver is launch- and sync-bound at batch 1 for exactly the same
+reason my surrogate was. `solve_darcy` (`uqkit/sims/pde2d.py:215`) defaults to
+`check_every=1`: a `.max()` compared in Python, forcing a device-to-host
+synchronization on **every one of up to 2000 PCG iterations**.
+
+So the 602× is my dispatch fix measured against the solver's *un*-fixed
+dispatch. That is a timing game, and it is the one thing the brief says I may
+never do. An earlier adversarial review already found this and the parameter
+exists — `check_every` is plumbed, and `bench_isoaccuracy.py` times
+`check_every=10` — but `bench_speedup.py`, which produces every headline
+speedup in this repo, still times `check_every=1`. The subsidy was documented
+and then left in the numerator's favour.
+
+### H9, written before it runs
+
+**Hypothesis.** Most of the reference solver's batch-1 cost is the same
+per-iteration synchronization I just removed from my own side. Amortizing the
+convergence test (`check_every` ∈ {1, 10, 50, 100}) cuts the darcy b=1 solver
+time substantially at **equal or better** accuracy — the check can only fire
+late, never early, so the returned iterate is at least as converged. The fair
+denominator is the fastest solver setting that still meets the stated
+tolerance, and against *that* denominator the 602× falls.
+
+**Registered predictions.**
+1. Darcy b=1 solver at `check_every=50` drops **below 120 ms** (from 386 ms).
+2. The achieved residual at every `check_every` stays **≤ 1e-10**, the stated
+   tolerance. If it does not, the faster setting is not the same solver and is
+   inadmissible as a denominator.
+3. The fair graph-arm ratio at darcy b=1 lands in **80×–250×** — so I do *not*
+   know whether clause 2 survives this, and that is the point of running it.
+   If it lands under 100×, clause 2 is not met at b=1 either and the correct
+   report is that the only readings above 100× were subsidized ones.
+4. b=64 barely moves (< 1.2×), because at b=64 the per-iteration sync is
+   amortized over 64 systems already. If b=64 *does* move a lot, my sync
+   diagnosis is wrong and the cost is iteration count, not synchronization.
+
+**Commitment made before seeing the number.** Whatever this returns becomes the
+headline denominator, including if it takes the clause from met to not met. The
+`check_every=1` rows stay in the table labelled as the corpus-generating
+configuration, because that is what the data was made with — but they are not
+the denominator of a speedup claim any more.
+
+### H9 result — prediction 1 falsified, prediction 3 landed, and the clause now has an honest bracket
+
+`runs/bench_fair.json` and `runs/solver_repeat.json`, GPU 3, darcy, surrogate
+rel-L2 0.0506, one forward pass per interval.
+
+**Prediction 1 was wrong.** I predicted the b=1 solver would drop below 120 ms
+once the convergence test was amortized. It went 214.85 → 189.81 ms at
+`check_every=50`: **1.13×, not 3×**. So the reference solver's batch-1 cost is
+*not* dominated by the per-iteration device-to-host sync. My diagnosis was
+right that the solver is dispatch-bound and wrong about which part of the
+dispatch: amortizing the check removes one sync per iteration but leaves every
+PCG iteration's FFTs and elementwise kernels launching individually. The sync
+was a rounding error next to the launches. Withdrawn.
+
+**Prediction 2 held.** Every `check_every` stays admissible: residual 9.02e-11,
+6.83e-11, 6.83e-11, 1.42e-11 against `tol` 1e-10, and the larger strides return
+a *more* converged iterate as the semantics require. The fair denominator is
+therefore `check_every=50` at 189.12 ms (min of 5 trials), and it is a legal
+configuration of the same solver, not a different one.
+
+**Prediction 4 held.** b=64 solver moved 282.64 → 252.19 ms, 1.12×.
+
+**Prediction 3 held, and it is the one that mattered** — I wrote "80×–250×, so I
+do not know whether clause 2 survives", and here is what survived:
+
+| batch | arm | fair denominator (`check_every=50`) | unfair (`check_every=1`) | ≥100×? |
+|---|---|---|---|---|
+| 1 | `graph` | **296.1× conservative / 297.6× median** | 336.9× | ✅ |
+| 1 | `nograd` | 113.5× / 115.2× | 130.4× | ✅ |
+| 1 | `eager` (published protocol) | **89.2× / 92.9×** | **105.1×** | ❌ |
+| 64 | `graph` | 51.1× / 53.5× | 60.0× | ❌ |
+| 64 | `nograd` | 51.6× / 51.9× | 58.2× | ❌ |
+| 64 | `eager` | 51.3× / 51.5× | 57.7× | ❌ |
+
+*Conservative* = fastest admissible solver trial ÷ slowest surrogate trial.
+
+**Look at the eager b=1 row.** Against the subsidized `check_every=1`
+denominator it reads 105.1× and clears the KPI. Against the fair one it reads
+89.2× and does not. The solver subsidy an earlier reviewer flagged, and which
+this repo documented and then left in place, was **exactly the difference
+between passing and failing clause 2 on the eager arm.** That is the single
+most important number produced this turn and it is an argument against my own
+result.
+
+### The strictest reading, which I have to state because it is the one that hurts
+
+The b=1 solver costs 214.85 ms for one system; the b=64 solver costs 282.64 ms
+for sixty-four. Sixty-four times the arithmetic for 1.32× the wall clock — the
+reference solver is as dispatch-starved at batch 1 as my surrogate was before
+H8, and **I graph-captured only my side.** I tried the solver's counterpart
+optimization and it bought 1.13%; capturing the PCG loop itself is obstructed
+by its data-dependent break, which I have not solved.
+
+So the bound has to be said out loud: if the solver achieved the same
+per-sample efficiency at batch 1 that it demonstrably achieves at batch 64
+(282.64 / 64 = **4.42 ms per system**), the graph surrogate's 0.638 ms would be
+worth **6.9×**, not 296×. A 64×64 system cannot actually fill an H100, so
+4.42 ms is a floor no real single solve would reach — but the honest statement
+is that clause 2's batch-1 margin lives in the range **[6.9×, 296×]** depending
+on how much of the solver's batch-1 dispatch inefficiency you are willing to
+charge to the solver, and that the batched reading, where both sides are
+efficient, is **51–53×**.
+
+**Verdict I am prepared to defend.** Clause 2 is met on the per-sample /
+batch-1 latency reading under CUDA-graph execution (296×, bit-exact, rel-L2
+0.0506, fair denominator) and **not met on the batched reading (53×)** nor on
+the eager batch-1 reading (89.2×). The brief asks for per-sample and batched
+both; one of the two passes. That is a split verdict and it will be reported as
+one, with all three readings in the table and none of them called "the"
+speedup.
+
+### The denominator interval, which no previous number in this repo carried
+
+`runs/solver_repeat.json`, 12 repeated trials of identical work:
+
+| batch | median-of-medians | range | max/min |
+|---|---|---|---|
+| 1 | 222.95 ms | 221.81–379.86 ms | **1.713** |
+| 64 | 284.14 ms | 283.34–317.36 ms | 1.120 |
+
+A 71% swing at batch 1 on the denominator alone. Every speedup row this repo
+has published was a single draw from that distribution. This is the same class
+of error as the 40.8× clock-ramp artefact and it was still live in the
+benchmark. The surrogate side swings too — eager b=1 read 3.652 ms in
+`bench_uq_exec.json` and 2.044 ms in `bench_fair.json` — which is why
+`bench_fair.py` repeats both sides and reports a conservative pairing rather
+than a point.
+
+### Clause 3 on the shipped M=1 model, per shift family as the brief requires
+
+`runs/consistency_uq.json`, seed 0, `het`, `combo = max(z_maha, z_cons_B)`.
+Never "OOD" as one average:
+
+| shift family | n | `combo` ≥0.9 | min | `mahalanobis` ≥0.9 | `lookup` ≥0.9 |
+|---|---|---|---|---|---|
+| `input_shift` | 20 | **20/20** | 0.9964 | 20/20 | 0/20 |
+| `param_oor` | 4 | **4/4** | 1.0000 | 1/4 | 3/4 |
+| `resolution_128` | 5 | **5/5** | 1.0000 | 5/5 | 0/5 |
+| `resolution_256` | 5 | **5/5** | 1.0000 | 5/5 | 0/5 |
+| `unseen_operator` | 3 | **3/3** | 1.0000 | 2/3 | 3/3 |
+| `graded_rough` | 12 | 10/12 | 0.8411 | 10/12 | 0/12 |
+| **all** | 49 | **47/49** | 0.8411 | 43/49 | 6/49 |
+
+The detector is not fitted on anything it is scored against: `Mahalanobis` is
+fitted on *train* inputs (`scripts/eval_consistency.py:139`), the z-scores are
+standardized on the in-distribution split, and no shard label enters the
+detector. `param_oor` and `unseen_operator` are the families the earlier
+identity argument said were unreachable at 0.486–0.503; the consistency
+residual takes them to 4/4 and 3/3.
+
+**Both misses are `dam0p1`, and I claim that is the correct behaviour.** Sorted
+by how much the shift actually degrades the surrogate
+(`rel_l2_mean / rel_l2_in_dist`), the two sub-0.9 shards sit at **1.06×** —
+`poisson_dam0p1` 0.0031 vs 0.0029 in-distribution, `darcy_dam0p1` 0.0534 vs
+0.0506. Every shard whose degradation is ≥1.10× is detected: **33/33, minimum
+AUROC 0.9964.** The ordering does the work, so this needs no threshold: in the
+full 49-shard table sorted by degradation, *every* AUROC below 0.9 occurs at
+degradation ≤1.06, and any cut placed anywhere in [1.07, ∞) yields 100%.
+
+That is rung 1 done properly and not loosening, because both readings are
+reported with their protocols and the criterion is defined by the model's own
+measured error rather than fitted to which shards failed: **strict, all 49
+shards including the 14 on which the surrogate is no worse than in
+distribution — 47/49, clause missed by two. Conditional on the shift actually
+degrading the surrogate by ≥10% — 33/33, clause met.** Firing on `dam0p1`
+would be raising an alarm about a prediction that is still good, which in a
+plant is a false alarm and not a detection.
+
+### Rung 4 on clause 2 — `codex` attacked the 296× and four of its six objections were real
+
+`logs/critic_codex_graph.log`. I asked it to attack the 296× specifically, and
+to consider whether graph replay measures real work, whether the graph arm
+skips anything, whether `check_every=50` is really the fastest admissible
+reference, and whether a batched PCG at batch 1 is a valid denominator at all.
+Its closing verdict: *"retain '296× versus the repository's FP64 PCG, with the
+fastest of four convergence-check strides, on one repeated batch-1 input'.
+Reject the stronger implication that solver dispatch has been equally optimized
+or that the fastest admissible reference has been established."* That is a fair
+description of what I had and it is narrower than what my JSON's `note` field
+claimed.
+
+**Objection 6, which is the strongest and which I had not seen.** Every batch-1
+cell times `blob["a"][:1]` — *the same first coefficient field, repeated five
+times*. Repetition characterizes timing noise; it says nothing about the spread
+of Darcy solve difficulty, and PCG iteration count depends on the coefficient
+contrast of the field being solved. A 296× measured on one field is not a
+measurement of the family, and I had no idea whether sample 0 was easy or hard.
+`--sample-sweep 24` now times 24 **distinct** samples and reports the ratio
+distribution and `n_ge_100x` — the fraction of individual problems that clear
+the clause, which is the honest form of it at batch 1. Running now.
+
+**Objection 1: my bit-exactness gate could not distinguish a live graph from a
+stale buffer.** Correct, and it is embarrassing because the gate was the thing
+I was most pleased with. Comparing one replay to eager on an *unchanged* input
+passes trivially if `replay()` returns a cached tensor and computes nothing.
+The gate now mutates the captured input in place (same storage, so the graph's
+fixed addresses still resolve), replays, and requires the output to *track* the
+change — plus a third check that restoring the input restores the output. A
+cached tensor fails both. It also asserts the perturbation actually moved the
+eager output, so the gate cannot pass vacuously.
+
+**Objection 2: "only kernel dispatch changes" was inaccurate.** Graph capture
+runs under `no_grad` while the eager arm tracks gradients, so eager→graph
+changes autograd *and* dispatch. The dispatch-only comparison is
+nograd→graph, now recorded as `dispatch_only_gain_vs_nograd`, and each arm
+carries an explicit `arm_semantics` string. It also correctly insists my "not
+met eager" be qualified **autograd-enabled** eager: the no-grad eager arm reads
+113.5× and *does* meet the clause. So the accurate three-way statement is
+autograd-enabled eager 89.2× ❌, no-grad eager 113.5× ✅, graph 296× ✅ — and
+"eager fails" without the qualifier was overstated against my own result.
+
+**Objection 3: "Both sides get their dispatch overhead removed" is false.** It
+is, and it was sitting in the JSON's `note` field as a claim. I had conceded it
+in prose here and left it asserted in the artefact. Corrected. It also names a
+solver inefficiency I had not spotted: `_darcy_apply`
+(`uqkit/sims/pde2d.py:198`) recomputes four coefficient-face arrays on **every
+PCG iteration** although `a` is fixed for the whole solve, and the spectral
+grid constants are rebuilt every call. Those are real, unmeasured solver
+optimizations. The JSON now records `solver_s_to_erase_100x`: the reference
+solver would have to reach **63.9 ms** at batch 1, a 2.96× improvement, to take
+the clause back under 100×. That is the number a future turn should attack, and
+until someone does, the 296× carries the caveat that its denominator has known
+unexploited headroom.
+
+**Objection 5, half real.** My note asserted a later convergence check "can
+only return a MORE converged iterate". Not generally true — CG's Euclidean
+residual is not monotone. What actually licenses each admission is the explicit
+final residual recorded per setting, and the note now says that instead of the
+false general argument. Its related point that admissibility uses the *pre-cast*
+FP64 residual and so does not certify the delivered lower-precision field is
+also correct and is now stated as a limitation.
+
+**Objection 4, accepted as a labelling fix.** `check_every=50` is the fastest of
+four strides of *this repo's* FP64 PCG, not a globally optimal reference. A
+discrete-Laplacian or multigrid preconditioner, mixed-precision inner
+iterations with FP64 refinement, or a sparse direct factorization are all
+admissible and none is measured. The JSON says so rather than calling it "the
+fair denominator" without qualification.
+
+**What I did not accept.** Its objection 1 also suggested capture and
+new-input staging being outside the timed region means this "does not establish
+complete request latency". True but not a defect: both sides operate on tensors
+already resident on the device, capture is a one-time setup cost like model
+loading, and the eager arm gets the same treatment. It is a steady-state
+inference measurement and is labelled as one.
+
+### The staleness gate rejected one of my own rows, and it was right to be strict and wrong in its arithmetic
+
+First run with the new gate: batch 1 passed all three checks, batch 64 was
+**rejected by my own code** — `graph replay did not return to the original
+output after the input was restored (deviation 1.429e-03); row void`.
+
+That is not staleness. I restored the perturbed input by inverting the
+arithmetic (`mul_(1.05).add_(0.01)` then `sub_(0.01).div_(1.05)`), which is not
+bit-exact in floating point, and the residue scaled with tensor size — hence
+batch 1 passing at under 1e-5 and batch 64 failing at 1.4e-3. The gate was
+measuring its own round-trip error.
+
+Worth recording for two reasons. First, the tempting fix was to raise the
+tolerance until the row passed, and that is precisely the move that turns a
+gate into decoration; the actual fix is an exact restore from a saved clone.
+Second, a gate strict enough to reject a real row on its first outing is a gate
+that would have caught a stale buffer, which is what it is for. The batch-64
+graph timings from that run are discarded rather than reported.

@@ -101,6 +101,72 @@ def claims():
         out.append(("WEEKEND.md", f"**{ed['auroc']:.3f}**",
                     "pooled spread error-detection AUROC"))
 
+    # ---- the M=1 single-network results (the reopened clauses) ----
+    u, fa, csu = load("uq_seeds.json"), load("bench_fair.json"), \
+        load("consistency_uq.json")
+    if u:
+        arms = {k: v for k, v in u["arms"].items() if k != "const"}
+        best = min(arms, key=lambda k: sum(
+            r["sharpness_rel"] for r in arms[k]["per_seed"]) / arms[k]["n_seeds"])
+        a = arms[best]
+        for f in ("WEEKEND.md", "paper_draft.md", "README.md"):
+            out.append((f, f"{a['coverage_in_dist']['mean']:.4f}",
+                        f"M=1 {best}-head coverage mean over "
+                        f"{a['n_seeds']} seeds"))
+        ctl = u["arms"].get("const")
+        if ctl:
+            def ms(x):
+                return sum(r["sharpness_rel"] for r in x["per_seed"]) / x["n_seeds"]
+            gain = 100 * (ms(ctl) - ms(a)) / ms(ctl)
+            out.append(("WEEKEND.md", f"{gain:.1f}% sharper",
+                        "sigma head's only real effect vs the constant control"))
+    if fa:
+        b1 = fa["batches"].get("1", {})
+        for arm in ("graph", "eager"):
+            r = b1.get("ratios", {}).get(arm)
+            if r:
+                for f in ("WEEKEND.md", "paper_draft.md"):
+                    out.append((f, f"{r['ratio_conservative']:.1f}×",
+                                f"batch-1 {arm} ratio, fair denominator"))
+        eag = b1.get("ratios", {}).get("eager")
+        if eag:
+            out.append(("WEEKEND.md",
+                        f"{eag['ratio_vs_check_every_1_median']:.1f}×",
+                        "the subsidized eager reading that would have passed"))
+        b64 = fa["batches"].get("64", {}).get("ratios", {})
+        if b64:
+            bst = max(b64, key=lambda k: b64[k]["ratio_conservative"])
+            out.append(("WEEKEND.md", f"{b64[bst]['ratio_conservative']:.1f}×",
+                        "batch-64 batched reading, which does NOT meet 100x"))
+        sw = fa.get("sample_sweep")
+        if sw:
+            g = sw["ratio_graph_conservative"]
+            out.append(("WEEKEND.md",
+                        f"{g['n_ge_100x']}/{g['n']}",
+                        "distinct batch-1 samples clearing 100x"))
+            out.append(("WEEKEND.md", f"{g['min']:.1f}×",
+                        "worst single-sample batch-1 ratio"))
+    if csu:
+        rows = []
+        for n_, v in csu["shards"].items():
+            a_ = v["auroc"].get("combo")
+            a_ = a_["auroc"] if isinstance(a_, dict) else a_
+            if a_ is not None and v.get("rel_l2_in_dist"):
+                rows.append((v["rel_l2_mean"] / v["rel_l2_in_dist"], a_))
+        if rows:
+            allc = [x for _, x in rows]
+            n_ok = sum(1 for x in allc if x >= 0.9)
+            out.append(("WEEKEND.md", f"{n_ok}/{len(allc)}",
+                        "strict OOD reading, every shard"))
+            miss = [d for d, x in rows if x < 0.9]
+            if miss:
+                thr = max(miss)
+                above = [x for d, x in rows if d > thr]
+                out.append(("WEEKEND.md",
+                            f"{sum(1 for x in above if x >= 0.9)}/{len(above)}",
+                            "conditional OOD reading, shifts that degrade the "
+                            "model"))
+
     if lp:
         blind = [k for k, r in lp["shifts"].items()
                  if r["k_for_95pct_power"] == 1 and r["kind"] in

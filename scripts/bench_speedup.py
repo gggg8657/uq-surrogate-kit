@@ -108,6 +108,58 @@ def make_uq_fn(model, a_raw, st, tid, source, q_hat=1.0, residual=None,
     return fn
 
 
+def no_grad_wrap(fn):
+    """Same closure, autograd tracking off.
+
+    Every speedup this repo has published timed the surrogate with autograd
+    tracking ON while `PDE2DSimulator.solve` carries `@torch.no_grad()`
+    (`uqkit/sims/pde2d_sim.py:42`). That charges the surrogate for building a
+    graph nobody uses and does not charge the solver for it -- a bias against
+    our own claim, but an unfair comparison all the same. This arm measures how
+    much of the batch-1 cost that asymmetry was, instead of leaving it as a
+    silent margin. The eager arm is left exactly as it was so no published
+    number changes underneath.
+    """
+    def wrapped():
+        with torch.no_grad():
+            return fn()
+    return wrapped
+
+
+def graph_wrap(fn, n_warmup=3):
+    """Capture `fn` into a CUDA graph and return a replay closure.
+
+    `fn` closes over an input tensor that is already resident on the device and
+    never mutated, and every shape is static, which is exactly the case CUDA
+    graphs are for. Replay issues the whole kernel sequence with one launch, so
+    it isolates per-kernel launch latency -- the thing the batch-1 rows appear
+    to be spending their time on (64x the arithmetic for 1.32x the wall clock
+    between b=1 and b=64).
+
+    This is an execution mode, not a different model: same weights, same
+    kernels, same tensors. The caller asserts the output is unchanged; if it is
+    not, the row is void and the runner refuses to emit it.
+    """
+    torch.cuda.synchronize()
+    side = torch.cuda.Stream()
+    side.wait_stream(torch.cuda.current_stream())
+    with torch.cuda.stream(side):
+        with torch.no_grad():
+            for _ in range(n_warmup):
+                fn()
+    torch.cuda.current_stream().wait_stream(side)
+    torch.cuda.synchronize()
+    g = torch.cuda.CUDAGraph()
+    with torch.no_grad():
+        with torch.cuda.graph(g):
+            static_out = fn()
+
+    def replay():
+        g.replay()
+        return static_out
+    return replay, static_out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ckpts", nargs="+", required=True)
@@ -128,6 +180,13 @@ def main():
                          "The solver denominator, batches, iteration counts "
                          "and clock ramp are unchanged, so the rows are "
                          "directly comparable to an ensemble run.")
+    ap.add_argument("--exec-modes", action="store_true",
+                    help="additionally time each CUDA variant with autograd "
+                         "off and under CUDA-graph replay. Same weights and "
+                         "same solver denominator; only kernel dispatch "
+                         "changes. The eager row is still emitted unchanged, "
+                         "and a graph row whose output deviates from eager is "
+                         "rejected rather than reported.")
     ap.add_argument("--cpu-acc-n", type=int, default=128,
                     help="samples used for the CPU accuracy check")
     args = ap.parse_args()
@@ -254,7 +313,58 @@ def main():
                     row["surrogate"][name] = {
                         "s": tm["median_s"], "s_per_sample": tm["median_s"] / B,
                         "speedup": sol["median_s"] / max(tm["median_s"], 1e-12),
-                        "rel_l2": variant_acc, "timing": tm}
+                        "rel_l2": variant_acc, "timing": tm,
+                        "exec_mode": "eager", "grad": True}
+
+                    # Execution-mode arms (H8). Same weights, same kernels, same
+                    # solver denominator -- what changes is only how the kernels
+                    # are dispatched. Both are reported next to the eager row,
+                    # never instead of it.
+                    if not args.exec_modes or device != "cuda":
+                        continue
+                    with torch.no_grad():
+                        ref = fn().clone()
+                    ng = no_grad_wrap(fn)
+                    tm_ng = timeit(ng, 3, n_iter, device)
+                    row["surrogate"][name + "+nograd"] = {
+                        "s": tm_ng["median_s"],
+                        "s_per_sample": tm_ng["median_s"] / B,
+                        "speedup": sol["median_s"] / max(tm_ng["median_s"], 1e-12),
+                        "rel_l2": variant_acc, "timing": tm_ng,
+                        "exec_mode": "eager", "grad": False}
+                    try:
+                        gfn, _ = graph_wrap(fn)
+                        out = gfn()
+                        # Hard gate: a graph replay that does not reproduce the
+                        # eager output is a different model and the row is void.
+                        dev_max = float((out - ref).abs().max())
+                        scale = float(ref.abs().max()) + 1e-12
+                        rel_dev = dev_max / scale
+                        if rel_dev > 1e-5:
+                            raise RuntimeError(
+                                f"graph replay deviates from eager by "
+                                f"{rel_dev:.3e} relative -- row rejected")
+                        tm_g = timeit(gfn, 3, n_iter, device)
+                        row["surrogate"][name + "+graph"] = {
+                            "s": tm_g["median_s"],
+                            "s_per_sample": tm_g["median_s"] / B,
+                            "speedup": sol["median_s"] / max(tm_g["median_s"], 1e-12),
+                            "rel_l2": variant_acc, "timing": tm_g,
+                            "exec_mode": "cuda_graph", "grad": False,
+                            "graph_vs_eager_rel_dev": rel_dev}
+                        del gfn
+                    except Exception as e:                       # noqa: BLE001
+                        # Capture can legitimately fail (a solver residual that
+                        # allocates, a non-capturable op). Record why; do not
+                        # emit a number.
+                        row["surrogate"][name + "+graph"] = {
+                            "s": None, "speedup": None, "rel_l2": variant_acc,
+                            "exec_mode": "cuda_graph",
+                            "capture_failed": f"{type(e).__name__}: {e}"[:300]}
+                        print(f"  graph capture failed for {name}: "
+                              f"{type(e).__name__}: {e}"[:200], flush=True)
+                    del ref
+                    torch.cuda.empty_cache()
                 res["rows"].append(row)
                 sp = {k: round(v["speedup"], 1) for k, v in row["surrogate"].items()}
                 print(f"{t:14s} {device:4s} B={B:<3d} solver "

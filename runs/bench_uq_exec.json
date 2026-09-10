@@ -1,0 +1,1093 @@
+{
+  "env": {
+    "torch": "2.8.0+cu128",
+    "python": "3.11.16",
+    "platform": "Linux-6.8.0-58-generic-x86_64-with-glibc2.39",
+    "torch_num_threads": 96,
+    "torch_interop_threads": 96,
+    "OMP_NUM_THREADS": "<unset>",
+    "MKL_NUM_THREADS": "<unset>",
+    "cpu_count": 192,
+    "cuda": "12.8",
+    "gpu": "NVIDIA H100 NVL",
+    "visible_devices": "3",
+    "tf32_matmul": false
+  },
+  "n_members": 1,
+  "rows": [
+    {
+      "task": "poisson",
+      "device": "cuda",
+      "batch": 1,
+      "trained": true,
+      "solver_s": 0.00020596757531166077,
+      "solver_s_per_sample": 0.00020596757531166077,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.00020596757531166077,
+        "min_s": 0.0001984238624572754,
+        "p25_s": 0.00020039454102516174,
+        "p75_s": 0.00021716579794883728,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.0036083683371543884,
+          "s_per_sample": 0.0036083683371543884,
+          "speedup": 0.05708052949885094,
+          "rel_l2": 0.0029284083284437656,
+          "timing": {
+            "median_s": 0.0036083683371543884,
+            "min_s": 0.0035444535315036774,
+            "p25_s": 0.0035941042006015778,
+            "p75_s": 0.0036351457238197327,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+nograd": {
+          "s": 0.002933623269200325,
+          "s_per_sample": 0.002933623269200325,
+          "speedup": 0.07020927924661757,
+          "rel_l2": 0.0029284083284437656,
+          "timing": {
+            "median_s": 0.002933623269200325,
+            "min_s": 0.002866629511117935,
+            "p25_s": 0.002874724566936493,
+            "p75_s": 0.0029703304171562195,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+graph": {
+          "s": 0.0006429627537727356,
+          "s_per_sample": 0.0006429627537727356,
+          "speedup": 0.3203413791904701,
+          "rel_l2": 0.0029284083284437656,
+          "timing": {
+            "median_s": 0.0006429627537727356,
+            "min_s": 0.0006414912641048431,
+            "p25_s": 0.0006425529718399048,
+            "p75_s": 0.0006438381969928741,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        },
+        "uq_single+residual": {
+          "s": 0.003970274701714516,
+          "s_per_sample": 0.003970274701714516,
+          "speedup": 0.05187741171227173,
+          "rel_l2": 0.0029284083284437656,
+          "timing": {
+            "median_s": 0.003970274701714516,
+            "min_s": 0.003913793712854385,
+            "p25_s": 0.0039412714540958405,
+            "p75_s": 0.003993131220340729,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+residual+nograd": {
+          "s": 0.0032499004155397415,
+          "s_per_sample": 0.0032499004155397415,
+          "speedup": 0.0633765805028379,
+          "rel_l2": 0.0029284083284437656,
+          "timing": {
+            "median_s": 0.0032499004155397415,
+            "min_s": 0.003185886889696121,
+            "p25_s": 0.003226224333047867,
+            "p75_s": 0.003268525004386902,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+residual+graph": {
+          "s": 0.0006933603435754776,
+          "s_per_sample": 0.0006933603435754776,
+          "speedup": 0.29705704576287123,
+          "rel_l2": 0.0029284083284437656,
+          "timing": {
+            "median_s": 0.0006933603435754776,
+            "min_s": 0.0006906315684318542,
+            "p25_s": 0.0006923973560333252,
+            "p75_s": 0.00069451704621315,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        }
+      }
+    },
+    {
+      "task": "poisson",
+      "device": "cuda",
+      "batch": 64,
+      "trained": true,
+      "solver_s": 0.00021447055041790009,
+      "solver_s_per_sample": 3.351102350279689e-06,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.00021447055041790009,
+        "min_s": 0.0002048090100288391,
+        "p25_s": 0.00020956993103027344,
+        "p75_s": 0.00022193044424057007,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.005021004006266594,
+          "s_per_sample": 7.845318759791553e-05,
+          "speedup": 0.042714674226554006,
+          "rel_l2": 0.0029284083284437656,
+          "timing": {
+            "median_s": 0.005021004006266594,
+            "min_s": 0.005008477717638016,
+            "p25_s": 0.0050171613693237305,
+            "p75_s": 0.005027826875448227,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+nograd": {
+          "s": 0.00496530719101429,
+          "s_per_sample": 7.758292485959828e-05,
+          "speedup": 0.04319381302450474,
+          "rel_l2": 0.0029284083284437656,
+          "timing": {
+            "median_s": 0.00496530719101429,
+            "min_s": 0.004946444183588028,
+            "p25_s": 0.0049561262130737305,
+            "p75_s": 0.004980403929948807,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+graph": {
+          "s": 0.004490852355957031,
+          "s_per_sample": 7.016956806182861e-05,
+          "speedup": 0.04775720362603525,
+          "rel_l2": 0.0029284083284437656,
+          "timing": {
+            "median_s": 0.004490852355957031,
+            "min_s": 0.004471641033887863,
+            "p25_s": 0.004481188952922821,
+            "p75_s": 0.0045071132481098175,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        },
+        "uq_single+residual": {
+          "s": 0.005121128633618355,
+          "s_per_sample": 8.00176349002868e-05,
+          "speedup": 0.04187954760791959,
+          "rel_l2": 0.0029284083284437656,
+          "timing": {
+            "median_s": 0.005121128633618355,
+            "min_s": 0.005109596997499466,
+            "p25_s": 0.005114071071147919,
+            "p75_s": 0.005131278187036514,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+residual+nograd": {
+          "s": 0.005056554451584816,
+          "s_per_sample": 7.900866330601275e-05,
+          "speedup": 0.04241436584365884,
+          "rel_l2": 0.0029284083284437656,
+          "timing": {
+            "median_s": 0.005056554451584816,
+            "min_s": 0.005045369267463684,
+            "p25_s": 0.005050528794527054,
+            "p75_s": 0.005062248557806015,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+residual+graph": {
+          "s": 0.004478853195905685,
+          "s_per_sample": 6.998208118602633e-05,
+          "speedup": 0.0478851485049693,
+          "rel_l2": 0.0029284083284437656,
+          "timing": {
+            "median_s": 0.004478853195905685,
+            "min_s": 0.004461832344532013,
+            "p25_s": 0.004468925297260284,
+            "p75_s": 0.004491537809371948,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        }
+      }
+    },
+    {
+      "task": "helmholtz",
+      "device": "cuda",
+      "batch": 1,
+      "trained": true,
+      "solver_s": 0.00017153285443782806,
+      "solver_s_per_sample": 0.00017153285443782806,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.00017153285443782806,
+        "min_s": 0.0001618005335330963,
+        "p25_s": 0.00016425549983978271,
+        "p75_s": 0.0001871734857559204,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.003652464598417282,
+          "s_per_sample": 0.003652464598417282,
+          "speedup": 0.04696359124525346,
+          "rel_l2": 0.00343532906845212,
+          "timing": {
+            "median_s": 0.003652464598417282,
+            "min_s": 0.00356900691986084,
+            "p25_s": 0.003595516085624695,
+            "p75_s": 0.0036850348114967346,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+nograd": {
+          "s": 0.0029644817113876343,
+          "s_per_sample": 0.0029644817113876343,
+          "speedup": 0.057862679259888514,
+          "rel_l2": 0.00343532906845212,
+          "timing": {
+            "median_s": 0.0029644817113876343,
+            "min_s": 0.0029180459678173065,
+            "p25_s": 0.002929374575614929,
+            "p75_s": 0.0030071809887886047,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+graph": {
+          "s": 0.0006445795297622681,
+          "s_per_sample": 0.0006445795297622681,
+          "speedup": 0.2661158887578889,
+          "rel_l2": 0.00343532906845212,
+          "timing": {
+            "median_s": 0.0006445795297622681,
+            "min_s": 0.0006422325968742371,
+            "p25_s": 0.0006438083946704865,
+            "p75_s": 0.0006449781358242035,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        },
+        "uq_single+residual": {
+          "s": 0.003992469981312752,
+          "s_per_sample": 0.003992469981312752,
+          "speedup": 0.042964093716598685,
+          "rel_l2": 0.00343532906845212,
+          "timing": {
+            "median_s": 0.003992469981312752,
+            "min_s": 0.003918830305337906,
+            "p25_s": 0.003973919898271561,
+            "p75_s": 0.004011068493127823,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+residual+nograd": {
+          "s": 0.0032917875796556473,
+          "s_per_sample": 0.0032917875796556473,
+          "speedup": 0.05210933278257647,
+          "rel_l2": 0.00343532906845212,
+          "timing": {
+            "median_s": 0.0032917875796556473,
+            "min_s": 0.003214951604604721,
+            "p25_s": 0.0032438188791275024,
+            "p75_s": 0.0033117681741714478,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+residual+graph": {
+          "s": 0.000695541501045227,
+          "s_per_sample": 0.000695541501045227,
+          "speedup": 0.246617713220644,
+          "rel_l2": 0.00343532906845212,
+          "timing": {
+            "median_s": 0.000695541501045227,
+            "min_s": 0.0006928257644176483,
+            "p25_s": 0.0006947256624698639,
+            "p75_s": 0.0006964690983295441,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        }
+      }
+    },
+    {
+      "task": "helmholtz",
+      "device": "cuda",
+      "batch": 64,
+      "trained": true,
+      "solver_s": 0.00016825832426548004,
+      "solver_s_per_sample": 2.6290363166481256e-06,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.00016825832426548004,
+        "min_s": 0.00016247853636741638,
+        "p25_s": 0.0001646764576435089,
+        "p75_s": 0.00017195194959640503,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.005023965612053871,
+          "s_per_sample": 7.849946268834174e-05,
+          "speedup": 0.03349113773027868,
+          "rel_l2": 0.00343532906845212,
+          "timing": {
+            "median_s": 0.005023965612053871,
+            "min_s": 0.005002550780773163,
+            "p25_s": 0.0050199031829833984,
+            "p75_s": 0.005032233893871307,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+nograd": {
+          "s": 0.004969412460923195,
+          "s_per_sample": 7.764706970192492e-05,
+          "speedup": 0.033858796304105085,
+          "rel_l2": 0.00343532906845212,
+          "timing": {
+            "median_s": 0.004969412460923195,
+            "min_s": 0.004951208829879761,
+            "p25_s": 0.004960276186466217,
+            "p75_s": 0.0049755387008190155,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+graph": {
+          "s": 0.004494702443480492,
+          "s_per_sample": 7.022972567938268e-05,
+          "speedup": 0.03743480828403593,
+          "rel_l2": 0.00343532906845212,
+          "timing": {
+            "median_s": 0.004494702443480492,
+            "min_s": 0.0044850073754787445,
+            "p25_s": 0.004489026963710785,
+            "p75_s": 0.004520878195762634,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        },
+        "uq_single+residual": {
+          "s": 0.005130823701620102,
+          "s_per_sample": 8.016912033781409e-05,
+          "speedup": 0.03279362808984277,
+          "rel_l2": 0.00343532906845212,
+          "timing": {
+            "median_s": 0.005130823701620102,
+            "min_s": 0.005088403820991516,
+            "p25_s": 0.005116857588291168,
+            "p75_s": 0.005139615386724472,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+residual+nograd": {
+          "s": 0.005063917487859726,
+          "s_per_sample": 7.912371074780822e-05,
+          "speedup": 0.033226908745820564,
+          "rel_l2": 0.00343532906845212,
+          "timing": {
+            "median_s": 0.005063917487859726,
+            "min_s": 0.005046777427196503,
+            "p25_s": 0.00505499541759491,
+            "p75_s": 0.0050687603652477264,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+residual+graph": {
+          "s": 0.004549689590930939,
+          "s_per_sample": 7.108889985829592e-05,
+          "speedup": 0.03698237449009169,
+          "rel_l2": 0.00343532906845212,
+          "timing": {
+            "median_s": 0.004549689590930939,
+            "min_s": 0.00454036146402359,
+            "p25_s": 0.004545640200376511,
+            "p75_s": 0.004575911909341812,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        }
+      }
+    },
+    {
+      "task": "diffusion",
+      "device": "cuda",
+      "batch": 1,
+      "trained": true,
+      "solver_s": 0.00017972104251384735,
+      "solver_s_per_sample": 0.00017972104251384735,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.00017972104251384735,
+        "min_s": 0.00017473101615905762,
+        "p25_s": 0.00017635151743888855,
+        "p75_s": 0.00018595904111862183,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.003643542528152466,
+          "s_per_sample": 0.003643542528152466,
+          "speedup": 0.049325907718985415,
+          "rel_l2": 0.0025534555315971375,
+          "timing": {
+            "median_s": 0.003643542528152466,
+            "min_s": 0.0035727806389331818,
+            "p25_s": 0.0036160126328468323,
+            "p75_s": 0.003680739551782608,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+nograd": {
+          "s": 0.0029585007578134537,
+          "s_per_sample": 0.0029585007578134537,
+          "speedup": 0.06074733698789863,
+          "rel_l2": 0.0025534555315971375,
+          "timing": {
+            "median_s": 0.0029585007578134537,
+            "min_s": 0.0028805844485759735,
+            "p25_s": 0.0029388293623924255,
+            "p75_s": 0.002973552793264389,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+graph": {
+          "s": 0.0006426610052585602,
+          "s_per_sample": 0.0006426610052585602,
+          "speedup": 0.27965138859100475,
+          "rel_l2": 0.0025534555315971375,
+          "timing": {
+            "median_s": 0.0006426610052585602,
+            "min_s": 0.0006405860185623169,
+            "p25_s": 0.000641796737909317,
+            "p75_s": 0.0006432905793190002,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        }
+      }
+    },
+    {
+      "task": "diffusion",
+      "device": "cuda",
+      "batch": 64,
+      "trained": true,
+      "solver_s": 0.00018539465963840485,
+      "solver_s_per_sample": 2.8967915568500757e-06,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.00018539465963840485,
+        "min_s": 0.0001765228807926178,
+        "p25_s": 0.00017828494310379028,
+        "p75_s": 0.00019349530339241028,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.005020994693040848,
+          "s_per_sample": 7.845304207876325e-05,
+          "speedup": 0.03692389077713303,
+          "rel_l2": 0.0025534555315971375,
+          "timing": {
+            "median_s": 0.005020994693040848,
+            "min_s": 0.005007632076740265,
+            "p25_s": 0.005010150372982025,
+            "p75_s": 0.0050309523940086365,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+nograd": {
+          "s": 0.004965560510754585,
+          "s_per_sample": 7.75868829805404e-05,
+          "speedup": 0.03733609916481142,
+          "rel_l2": 0.0025534555315971375,
+          "timing": {
+            "median_s": 0.004965560510754585,
+            "min_s": 0.004950080066919327,
+            "p25_s": 0.004958752542734146,
+            "p75_s": 0.004982080310583115,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+graph": {
+          "s": 0.00451001338660717,
+          "s_per_sample": 7.046895916573703e-05,
+          "speedup": 0.041107341319417914,
+          "rel_l2": 0.0025534555315971375,
+          "timing": {
+            "median_s": 0.00451001338660717,
+            "min_s": 0.004483114928007126,
+            "p25_s": 0.004490621387958527,
+            "p75_s": 0.004521641880273819,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        }
+      }
+    },
+    {
+      "task": "advdiff",
+      "device": "cuda",
+      "batch": 1,
+      "trained": true,
+      "solver_s": 0.00024475157260894775,
+      "solver_s_per_sample": 0.00024475157260894775,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.00024475157260894775,
+        "min_s": 0.00023656710982322693,
+        "p25_s": 0.0002387315034866333,
+        "p75_s": 0.0002542659640312195,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.003651624545454979,
+          "s_per_sample": 0.003651624545454979,
+          "speedup": 0.067025393646666,
+          "rel_l2": 0.0025716321542859077,
+          "timing": {
+            "median_s": 0.003651624545454979,
+            "min_s": 0.0035860612988471985,
+            "p25_s": 0.0036115944385528564,
+            "p75_s": 0.0036996789276599884,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+nograd": {
+          "s": 0.0029543042182922363,
+          "s_per_sample": 0.0029543042182922363,
+          "speedup": 0.08284575809543024,
+          "rel_l2": 0.0025716321542859077,
+          "timing": {
+            "median_s": 0.0029543042182922363,
+            "min_s": 0.0028843358159065247,
+            "p25_s": 0.002903886139392853,
+            "p75_s": 0.002994190901517868,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+graph": {
+          "s": 0.0006441064178943634,
+          "s_per_sample": 0.0006441064178943634,
+          "speedup": 0.37998623489742683,
+          "rel_l2": 0.0025716321542859077,
+          "timing": {
+            "median_s": 0.0006441064178943634,
+            "min_s": 0.0006423294544219971,
+            "p25_s": 0.0006431974470615387,
+            "p75_s": 0.0006450451910495758,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        }
+      }
+    },
+    {
+      "task": "advdiff",
+      "device": "cuda",
+      "batch": 64,
+      "trained": true,
+      "solver_s": 0.000246463343501091,
+      "solver_s_per_sample": 3.850989742204547e-06,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.000246463343501091,
+        "min_s": 0.00024005025625228882,
+        "p25_s": 0.0002418234944343567,
+        "p75_s": 0.00025474652647972107,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.005023470148444176,
+          "s_per_sample": 7.849172106944025e-05,
+          "speedup": 0.04906236848594062,
+          "rel_l2": 0.0025716321542859077,
+          "timing": {
+            "median_s": 0.005023470148444176,
+            "min_s": 0.005004473030567169,
+            "p25_s": 0.0050126053392887115,
+            "p75_s": 0.005041975528001785,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+nograd": {
+          "s": 0.004961639642715454,
+          "s_per_sample": 7.752561941742897e-05,
+          "speedup": 0.049673769408655435,
+          "rel_l2": 0.0025716321542859077,
+          "timing": {
+            "median_s": 0.004961639642715454,
+            "min_s": 0.0049474164843559265,
+            "p25_s": 0.004952769726514816,
+            "p75_s": 0.004995308816432953,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+graph": {
+          "s": 0.004490170627832413,
+          "s_per_sample": 7.015891605988145e-05,
+          "speedup": 0.054889527354123925,
+          "rel_l2": 0.0025716321542859077,
+          "timing": {
+            "median_s": 0.004490170627832413,
+            "min_s": 0.0044814422726631165,
+            "p25_s": 0.00448603555560112,
+            "p75_s": 0.004506681114435196,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        }
+      }
+    },
+    {
+      "task": "darcy",
+      "device": "cuda",
+      "batch": 1,
+      "trained": true,
+      "solver_s": 0.38650135323405266,
+      "solver_s_per_sample": 0.38650135323405266,
+      "solver_accuracy": "batched PCG, fp64, tol 1e-10 on the relative residual",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.38650135323405266,
+        "min_s": 0.38356027007102966,
+        "p25_s": 0.3846256360411644,
+        "p75_s": 0.38886043056845665,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.003651551902294159,
+          "s_per_sample": 0.003651551902294159,
+          "speedup": 105.84577833639051,
+          "rel_l2": 0.05062808841466904,
+          "timing": {
+            "median_s": 0.003651551902294159,
+            "min_s": 0.0035520941019058228,
+            "p25_s": 0.003590051084756851,
+            "p75_s": 0.003713112324476242,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+nograd": {
+          "s": 0.0029545165598392487,
+          "s_per_sample": 0.0029545165598392487,
+          "speedup": 130.81712199138315,
+          "rel_l2": 0.05062808841466904,
+          "timing": {
+            "median_s": 0.0029545165598392487,
+            "min_s": 0.002861257642507553,
+            "p25_s": 0.002916783094406128,
+            "p75_s": 0.0030089840292930603,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+graph": {
+          "s": 0.0006418228149414062,
+          "s_per_sample": 0.0006418228149414062,
+          "speedup": 602.1932287797176,
+          "rel_l2": 0.05062808841466904,
+          "timing": {
+            "median_s": 0.0006418228149414062,
+            "min_s": 0.0006396621465682983,
+            "p25_s": 0.0006411336362361908,
+            "p75_s": 0.0006425194442272186,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        },
+        "uq_single+residual": {
+          "s": 0.004121856763958931,
+          "s_per_sample": 0.004121856763958931,
+          "speedup": 93.76874922330602,
+          "rel_l2": 0.05062808841466904,
+          "timing": {
+            "median_s": 0.004121856763958931,
+            "min_s": 0.004018627107143402,
+            "p25_s": 0.004095699638128281,
+            "p75_s": 0.004182077944278717,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+residual+nograd": {
+          "s": 0.0034239087253808975,
+          "s_per_sample": 0.0034239087253808975,
+          "speedup": 112.88307727626582,
+          "rel_l2": 0.05062808841466904,
+          "timing": {
+            "median_s": 0.0034239087253808975,
+            "min_s": 0.0033688247203826904,
+            "p25_s": 0.0034123510122299194,
+            "p75_s": 0.003449689596891403,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+residual+graph": {
+          "s": 0.0007269140332937241,
+          "s_per_sample": 0.0007269140332937241,
+          "speedup": 531.7015981694208,
+          "rel_l2": 0.05062808841466904,
+          "timing": {
+            "median_s": 0.0007269140332937241,
+            "min_s": 0.0007250607013702393,
+            "p25_s": 0.0007259286940097809,
+            "p75_s": 0.0007278881967067719,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        }
+      }
+    },
+    {
+      "task": "darcy",
+      "device": "cuda",
+      "batch": 64,
+      "trained": true,
+      "solver_s": 0.3118457105010748,
+      "solver_s_per_sample": 0.004872589226579294,
+      "solver_accuracy": "batched PCG, fp64, tol 1e-10 on the relative residual",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.3118457105010748,
+        "min_s": 0.3022039160132408,
+        "p25_s": 0.3063548915088177,
+        "p75_s": 0.5005437135696411,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.004878496751189232,
+          "s_per_sample": 7.622651173733175e-05,
+          "speedup": 63.92250039421592,
+          "rel_l2": 0.05062808841466904,
+          "timing": {
+            "median_s": 0.004878496751189232,
+            "min_s": 0.004859350621700287,
+            "p25_s": 0.0048703402280807495,
+            "p75_s": 0.0048861317336559296,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+nograd": {
+          "s": 0.0048282090574502945,
+          "s_per_sample": 7.544076652266085e-05,
+          "speedup": 64.5882783430583,
+          "rel_l2": 0.05062808841466904,
+          "timing": {
+            "median_s": 0.0048282090574502945,
+            "min_s": 0.004806336015462875,
+            "p25_s": 0.004814431071281433,
+            "p75_s": 0.004845559597015381,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+graph": {
+          "s": 0.004495462402701378,
+          "s_per_sample": 7.024160004220903e-05,
+          "speedup": 69.36899534821667,
+          "rel_l2": 0.05062808841466904,
+          "timing": {
+            "median_s": 0.004495462402701378,
+            "min_s": 0.004464879631996155,
+            "p25_s": 0.004472799599170685,
+            "p75_s": 0.004507396370172501,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        },
+        "uq_single+residual": {
+          "s": 0.005088513717055321,
+          "s_per_sample": 7.950802682898939e-05,
+          "speedup": 61.28424287348433,
+          "rel_l2": 0.05062808841466904,
+          "timing": {
+            "median_s": 0.005088513717055321,
+            "min_s": 0.005065109580755234,
+            "p25_s": 0.005079150199890137,
+            "p75_s": 0.005095887929201126,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+residual+nograd": {
+          "s": 0.0050429366528987885,
+          "s_per_sample": 7.879588520154357e-05,
+          "speedup": 61.8381177407452,
+          "rel_l2": 0.05062808841466904,
+          "timing": {
+            "median_s": 0.0050429366528987885,
+            "min_s": 0.005019154399633408,
+            "p25_s": 0.005033321678638458,
+            "p75_s": 0.005052525550127029,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+residual+graph": {
+          "s": 0.004587680101394653,
+          "s_per_sample": 7.168250158429146e-05,
+          "speedup": 67.97459796864952,
+          "rel_l2": 0.05062808841466904,
+          "timing": {
+            "median_s": 0.004587680101394653,
+            "min_s": 0.004574287682771683,
+            "p25_s": 0.004582878202199936,
+            "p75_s": 0.004593737423419952,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        }
+      }
+    },
+    {
+      "task": "navier_stokes",
+      "device": "cuda",
+      "batch": 1,
+      "trained": false,
+      "solver_s": 0.7596553172916174,
+      "solver_s_per_sample": 0.7596553172916174,
+      "solver_accuracy": "pseudo-spectral RK4, dt=0.001, 2/3 dealiasing (T=1.0, 1000 steps)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.7596553172916174,
+        "min_s": 0.7264289110898972,
+        "p25_s": 0.7295932397246361,
+        "p75_s": 1.2260905280709267,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.0036233030259609222,
+          "s_per_sample": 0.0036233030259609222,
+          "speedup": 209.6582349995836,
+          "rel_l2": null,
+          "timing": {
+            "median_s": 0.0036233030259609222,
+            "min_s": 0.003482472151517868,
+            "p25_s": 0.0035812705755233765,
+            "p75_s": 0.0036733485758304596,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+nograd": {
+          "s": 0.002917082980275154,
+          "s_per_sample": 0.002917082980275154,
+          "speedup": 260.4160808685541,
+          "rel_l2": null,
+          "timing": {
+            "median_s": 0.002917082980275154,
+            "min_s": 0.0028375908732414246,
+            "p25_s": 0.002888701856136322,
+            "p75_s": 0.002933841198682785,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+graph": {
+          "s": 0.0006411857903003693,
+          "s_per_sample": 0.0006411857903003693,
+          "speedup": 1184.7663014112493,
+          "rel_l2": null,
+          "timing": {
+            "median_s": 0.0006411857903003693,
+            "min_s": 0.0006393231451511383,
+            "p25_s": 0.0006409548223018646,
+            "p75_s": 0.0006421953439712524,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        }
+      }
+    },
+    {
+      "task": "navier_stokes",
+      "device": "cuda",
+      "batch": 64,
+      "trained": false,
+      "solver_s": 0.7529190760105848,
+      "solver_s_per_sample": 0.011764360562665388,
+      "solver_accuracy": "pseudo-spectral RK4, dt=0.001, 2/3 dealiasing (T=1.0, 1000 steps)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.7529190760105848,
+        "min_s": 0.7350671254098415,
+        "p25_s": 0.745207455009222,
+        "p75_s": 0.7693555429577827,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.00488189235329628,
+          "s_per_sample": 7.627956802025437e-05,
+          "speedup": 154.2268902144493,
+          "rel_l2": null,
+          "timing": {
+            "median_s": 0.00488189235329628,
+            "min_s": 0.0048515088856220245,
+            "p25_s": 0.0048736631870269775,
+            "p75_s": 0.004893485456705093,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": true
+        },
+        "uq_single+nograd": {
+          "s": 0.004831405356526375,
+          "s_per_sample": 7.54907086957246e-05,
+          "speedup": 155.83852325566602,
+          "rel_l2": null,
+          "timing": {
+            "median_s": 0.004831405356526375,
+            "min_s": 0.004812728613615036,
+            "p25_s": 0.004828400909900665,
+            "p75_s": 0.004843913018703461,
+            "n_iter": 20
+          },
+          "exec_mode": "eager",
+          "grad": false
+        },
+        "uq_single+graph": {
+          "s": 0.00447893887758255,
+          "s_per_sample": 6.998341996222734e-05,
+          "speedup": 168.10211002856178,
+          "rel_l2": null,
+          "timing": {
+            "median_s": 0.00447893887758255,
+            "min_s": 0.004471644759178162,
+            "p25_s": 0.0044750310480594635,
+            "p75_s": 0.0045161060988903046,
+            "n_iter": 20
+          },
+          "exec_mode": "cuda_graph",
+          "grad": false,
+          "graph_vs_eager_rel_dev": 0.0
+        }
+      }
+    }
+  ],
+  "clock_ramp": {
+    "ramped": true,
+    "seconds": 6.0,
+    "matmuls": 1800
+  },
+  "note": "rel_l2 is the ensemble mean's error on that family's test split, measured in the same bf16-autocast configuration the GPU rows are timed in. Normalization and de-normalization are inside the timed surrogate region; host-device transfer is outside it on both sides, since both operate on tensors already resident on the device. The solver here is the one the corpus was generated with; `bench_isoaccuracy.py` reports the ratio against the cheapest solver setting that matches the surrogate's own accuracy, which is the smaller and more honest number.",
+  "accuracy": {
+    "poisson|cuda|uq_single": 0.0029284083284437656,
+    "helmholtz|cuda|uq_single": 0.00343532906845212,
+    "diffusion|cuda|uq_single": 0.0025534555315971375,
+    "advdiff|cuda|uq_single": 0.0025716321542859077,
+    "darcy|cuda|uq_single": 0.05062808841466904
+  },
+  "uq_source": "het",
+  "forward_passes_per_interval": 1,
+  "uq_note": "Timed model is FNO2dUQ, ONE forward pass emitting mean, log-sigma and two residual quantiles. The 108.5x M=1 row in runs/members.json was measured on a 1-channel ensemble MEMBER and does NOT transfer to this model -- the extra 1x1 projection is a cost to be measured, not assumed. That is what this run measures.",
+  "seed": 0,
+  "accuracy_key": "task|device|variant; cuda = bf16 autocast, cpu = fp32"
+}

@@ -1,0 +1,735 @@
+{
+  "env": {
+    "torch": "2.8.0+cu128",
+    "python": "3.11.16",
+    "platform": "Linux-6.8.0-58-generic-x86_64-with-glibc2.39",
+    "torch_num_threads": 96,
+    "torch_interop_threads": 96,
+    "OMP_NUM_THREADS": "<unset>",
+    "MKL_NUM_THREADS": "<unset>",
+    "cpu_count": 192,
+    "cuda": "12.8",
+    "gpu": "NVIDIA H100 NVL",
+    "visible_devices": "3",
+    "tf32_matmul": false
+  },
+  "n_members": 1,
+  "rows": [
+    {
+      "task": "poisson",
+      "device": "cuda",
+      "batch": 1,
+      "trained": true,
+      "solver_s": 0.00013209879398345947,
+      "solver_s_per_sample": 0.00013209879398345947,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.00013209879398345947,
+        "min_s": 0.00012523680925369263,
+        "p25_s": 0.00012945383787155151,
+        "p75_s": 0.00013819336891174316,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.002304481342434883,
+          "s_per_sample": 0.002304481342434883,
+          "speedup": 0.05732257039837246,
+          "rel_l2": 0.0029284083284437656,
+          "timing": {
+            "median_s": 0.002304481342434883,
+            "min_s": 0.0022553689777851105,
+            "p25_s": 0.0022829361259937286,
+            "p75_s": 0.0023228488862514496,
+            "n_iter": 20
+          }
+        },
+        "uq_single+residual": {
+          "s": 0.002517692744731903,
+          "s_per_sample": 0.002517692744731903,
+          "speedup": 0.052468195040823395,
+          "rel_l2": 0.0029284083284437656,
+          "timing": {
+            "median_s": 0.002517692744731903,
+            "min_s": 0.002442397177219391,
+            "p25_s": 0.002494722604751587,
+            "p75_s": 0.002540450543165207,
+            "n_iter": 20
+          }
+        }
+      }
+    },
+    {
+      "task": "poisson",
+      "device": "cuda",
+      "batch": 64,
+      "trained": true,
+      "solver_s": 0.00013031065464019775,
+      "solver_s_per_sample": 2.03610397875309e-06,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.00013031065464019775,
+        "min_s": 0.00012740865349769592,
+        "p25_s": 0.0001288987696170807,
+        "p75_s": 0.00013411790132522583,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.004881521686911583,
+          "s_per_sample": 7.627377635799348e-05,
+          "speedup": 0.026694679036167932,
+          "rel_l2": 0.0029284083284437656,
+          "timing": {
+            "median_s": 0.004881521686911583,
+            "min_s": 0.004868276417255402,
+            "p25_s": 0.00487363338470459,
+            "p75_s": 0.004890058189630508,
+            "n_iter": 20
+          }
+        },
+        "uq_single+residual": {
+          "s": 0.004971366375684738,
+          "s_per_sample": 7.767759962007403e-05,
+          "speedup": 0.026212241221559383,
+          "rel_l2": 0.0029284083284437656,
+          "timing": {
+            "median_s": 0.004971366375684738,
+            "min_s": 0.004933081567287445,
+            "p25_s": 0.004959557205438614,
+            "p75_s": 0.004981253296136856,
+            "n_iter": 20
+          }
+        }
+      }
+    },
+    {
+      "task": "helmholtz",
+      "device": "cuda",
+      "batch": 1,
+      "trained": true,
+      "solver_s": 9.880959987640381e-05,
+      "solver_s_per_sample": 9.880959987640381e-05,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 9.880959987640381e-05,
+        "min_s": 9.587407112121582e-05,
+        "p25_s": 9.676814079284668e-05,
+        "p75_s": 0.00010223314166069031,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.0022267140448093414,
+          "s_per_sample": 0.0022267140448093414,
+          "speedup": 0.04437462462085661,
+          "rel_l2": 0.00343532906845212,
+          "timing": {
+            "median_s": 0.0022267140448093414,
+            "min_s": 0.002193015068769455,
+            "p25_s": 0.00221870094537735,
+            "p75_s": 0.0022420845925807953,
+            "n_iter": 20
+          }
+        },
+        "uq_single+residual": {
+          "s": 0.0024479590356349945,
+          "s_per_sample": 0.0024479590356349945,
+          "speedup": 0.04036407408703751,
+          "rel_l2": 0.00343532906845212,
+          "timing": {
+            "median_s": 0.0024479590356349945,
+            "min_s": 0.0024095065891742706,
+            "p25_s": 0.002428825944662094,
+            "p75_s": 0.002470318228006363,
+            "n_iter": 20
+          }
+        }
+      }
+    },
+    {
+      "task": "helmholtz",
+      "device": "cuda",
+      "batch": 64,
+      "trained": true,
+      "solver_s": 9.977445006370544e-05,
+      "solver_s_per_sample": 1.5589757822453976e-06,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 9.977445006370544e-05,
+        "min_s": 9.787455201148987e-05,
+        "p25_s": 9.886547923088074e-05,
+        "p75_s": 0.00010302290320396423,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.004875808954238892,
+          "s_per_sample": 7.618451490998268e-05,
+          "speedup": 0.020463158216435927,
+          "rel_l2": 0.00343532906845212,
+          "timing": {
+            "median_s": 0.004875808954238892,
+            "min_s": 0.00485476478934288,
+            "p25_s": 0.0048698969185352325,
+            "p75_s": 0.0048845745623111725,
+            "n_iter": 20
+          }
+        },
+        "uq_single+residual": {
+          "s": 0.004971768707036972,
+          "s_per_sample": 7.768388604745269e-05,
+          "speedup": 0.02006820026090234,
+          "rel_l2": 0.00343532906845212,
+          "timing": {
+            "median_s": 0.004971768707036972,
+            "min_s": 0.0049489811062812805,
+            "p25_s": 0.004958823323249817,
+            "p75_s": 0.004986591637134552,
+            "n_iter": 20
+          }
+        }
+      }
+    },
+    {
+      "task": "diffusion",
+      "device": "cuda",
+      "batch": 1,
+      "trained": true,
+      "solver_s": 0.00010871514678001404,
+      "solver_s_per_sample": 0.00010871514678001404,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.00010871514678001404,
+        "min_s": 0.00010508671402931213,
+        "p25_s": 0.00010672211647033691,
+        "p75_s": 0.00011242181062698364,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.002239612862467766,
+          "s_per_sample": 0.002239612862467766,
+          "speedup": 0.048541937136503094,
+          "rel_l2": 0.0025534555315971375,
+          "timing": {
+            "median_s": 0.002239612862467766,
+            "min_s": 0.002200491726398468,
+            "p25_s": 0.0022279657423496246,
+            "p75_s": 0.0022556744515895844,
+            "n_iter": 20
+          }
+        }
+      }
+    },
+    {
+      "task": "diffusion",
+      "device": "cuda",
+      "batch": 64,
+      "trained": true,
+      "solver_s": 0.00010889023542404175,
+      "solver_s_per_sample": 1.7014099285006523e-06,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.00010889023542404175,
+        "min_s": 0.00010598078370094299,
+        "p25_s": 0.00010812655091285706,
+        "p75_s": 0.00011252239346504211,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.004871495068073273,
+          "s_per_sample": 7.611711043864489e-05,
+          "speedup": 0.022352529131700216,
+          "rel_l2": 0.0025534555315971375,
+          "timing": {
+            "median_s": 0.004871495068073273,
+            "min_s": 0.004852350801229477,
+            "p25_s": 0.004859507083892822,
+            "p75_s": 0.004884399473667145,
+            "n_iter": 20
+          }
+        }
+      }
+    },
+    {
+      "task": "advdiff",
+      "device": "cuda",
+      "batch": 1,
+      "trained": true,
+      "solver_s": 0.00015080906450748444,
+      "solver_s_per_sample": 0.00015080906450748444,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.00015080906450748444,
+        "min_s": 0.0001450367271900177,
+        "p25_s": 0.00014782696962356567,
+        "p75_s": 0.0001533105969429016,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.0022218264639377594,
+          "s_per_sample": 0.0022218264639377594,
+          "speedup": 0.06787616717833328,
+          "rel_l2": 0.0025716321542859077,
+          "timing": {
+            "median_s": 0.0022218264639377594,
+            "min_s": 0.00203024223446846,
+            "p25_s": 0.0021955259144306183,
+            "p75_s": 0.0022414512932300568,
+            "n_iter": 20
+          }
+        }
+      }
+    },
+    {
+      "task": "advdiff",
+      "device": "cuda",
+      "batch": 64,
+      "trained": true,
+      "solver_s": 0.00012888945639133453,
+      "solver_s_per_sample": 2.013897756114602e-06,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.00012888945639133453,
+        "min_s": 0.00012618675827980042,
+        "p25_s": 0.00012795254588127136,
+        "p75_s": 0.0001344643533229828,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.0048437658697366714,
+          "s_per_sample": 7.568384171463549e-05,
+          "speedup": 0.026609348977129965,
+          "rel_l2": 0.0025716321542859077,
+          "timing": {
+            "median_s": 0.0048437658697366714,
+            "min_s": 0.004810180515050888,
+            "p25_s": 0.004833236336708069,
+            "p75_s": 0.004857756197452545,
+            "n_iter": 20
+          }
+        }
+      }
+    },
+    {
+      "task": "darcy",
+      "device": "cuda",
+      "batch": 1,
+      "trained": true,
+      "solver_s": 0.2650941777974367,
+      "solver_s_per_sample": 0.2650941777974367,
+      "solver_accuracy": "batched PCG, fp64, tol 1e-10 on the relative residual",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.2650941777974367,
+        "min_s": 0.2518039867281914,
+        "p25_s": 0.26118673011660576,
+        "p75_s": 0.40834127366542816,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.0036985594779253006,
+          "s_per_sample": 0.0036985594779253006,
+          "speedup": 71.67498032129545,
+          "rel_l2": 0.05062808841466904,
+          "timing": {
+            "median_s": 0.0036985594779253006,
+            "min_s": 0.0035788193345069885,
+            "p25_s": 0.0036153122782707214,
+            "p75_s": 0.0037254728376865387,
+            "n_iter": 20
+          }
+        },
+        "uq_single+residual": {
+          "s": 0.004159498959779739,
+          "s_per_sample": 0.004159498959779739,
+          "speedup": 63.73223803173506,
+          "rel_l2": 0.05062808841466904,
+          "timing": {
+            "median_s": 0.004159498959779739,
+            "min_s": 0.0040769800543785095,
+            "p25_s": 0.0041368864476680756,
+            "p75_s": 0.004173014312982559,
+            "n_iter": 20
+          }
+        }
+      }
+    },
+    {
+      "task": "darcy",
+      "device": "cuda",
+      "batch": 64,
+      "trained": true,
+      "solver_s": 0.3164032455533743,
+      "solver_s_per_sample": 0.004943800711771473,
+      "solver_accuracy": "batched PCG, fp64, tol 1e-10 on the relative residual",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.3164032455533743,
+        "min_s": 0.3125047907233238,
+        "p25_s": 0.31412212178111076,
+        "p75_s": 0.4921503998339176,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.004884613677859306,
+          "s_per_sample": 7.632208871655166e-05,
+          "speedup": 64.77549022710815,
+          "rel_l2": 0.05062808841466904,
+          "timing": {
+            "median_s": 0.004884613677859306,
+            "min_s": 0.0048446692526340485,
+            "p25_s": 0.004873383790254593,
+            "p75_s": 0.004895612597465515,
+            "n_iter": 20
+          }
+        },
+        "uq_single+residual": {
+          "s": 0.005024230107665062,
+          "s_per_sample": 7.850359543226659e-05,
+          "speedup": 62.975468633624764,
+          "rel_l2": 0.05062808841466904,
+          "timing": {
+            "median_s": 0.005024230107665062,
+            "min_s": 0.005008231848478317,
+            "p25_s": 0.0050132498145103455,
+            "p75_s": 0.005034111440181732,
+            "n_iter": 20
+          }
+        }
+      }
+    },
+    {
+      "task": "navier_stokes",
+      "device": "cuda",
+      "batch": 1,
+      "trained": false,
+      "solver_s": 0.7968374863266945,
+      "solver_s_per_sample": 0.7968374863266945,
+      "solver_accuracy": "pseudo-spectral RK4, dt=0.001, 2/3 dealiasing (T=1.0, 1000 steps)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.7968374863266945,
+        "min_s": 0.7925907410681248,
+        "p25_s": 0.7950873300433159,
+        "p75_s": 0.8000672124326229,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.0021729227155447006,
+          "s_per_sample": 0.0021729227155447006,
+          "speedup": 366.71229980995713,
+          "rel_l2": null,
+          "timing": {
+            "median_s": 0.0021729227155447006,
+            "min_s": 0.0021236389875411987,
+            "p25_s": 0.002161215990781784,
+            "p75_s": 0.0021937042474746704,
+            "n_iter": 20
+          }
+        }
+      }
+    },
+    {
+      "task": "navier_stokes",
+      "device": "cuda",
+      "batch": 64,
+      "trained": false,
+      "solver_s": 0.8088158722966909,
+      "solver_s_per_sample": 0.012637748004635796,
+      "solver_accuracy": "pseudo-spectral RK4, dt=0.001, 2/3 dealiasing (T=1.0, 1000 steps)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.8088158722966909,
+        "min_s": 0.8072113282978535,
+        "p25_s": 0.8078821636736393,
+        "p75_s": 0.8102833703160286,
+        "n_iter": 20
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.004876244813203812,
+          "s_per_sample": 7.619132520630956e-05,
+          "speedup": 165.86859423189608,
+          "rel_l2": null,
+          "timing": {
+            "median_s": 0.004876244813203812,
+            "min_s": 0.0048475563526153564,
+            "p25_s": 0.004862494766712189,
+            "p75_s": 0.004889409989118576,
+            "n_iter": 20
+          }
+        }
+      }
+    },
+    {
+      "task": "poisson",
+      "device": "cpu",
+      "batch": 1,
+      "trained": true,
+      "solver_s": 0.00017049908638000488,
+      "solver_s_per_sample": 0.00017049908638000488,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.00017049908638000488,
+        "min_s": 0.00015414506196975708,
+        "p25_s": 0.00015414506196975708,
+        "p75_s": 0.00017535313963890076,
+        "n_iter": 5
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.06313079968094826,
+          "s_per_sample": 0.06313079968094826,
+          "speedup": 0.0027007274934212253,
+          "rel_l2": 0.0028835651464760303,
+          "timing": {
+            "median_s": 0.06313079968094826,
+            "min_s": 0.06226832792162895,
+            "p25_s": 0.06226832792162895,
+            "p75_s": 0.06327512487769127,
+            "n_iter": 5
+          }
+        },
+        "uq_single+residual": {
+          "s": 0.06391860917210579,
+          "s_per_sample": 0.06391860917210579,
+          "speedup": 0.0026674404932829957,
+          "rel_l2": 0.0028835651464760303,
+          "timing": {
+            "median_s": 0.06391860917210579,
+            "min_s": 0.062077537178993225,
+            "p25_s": 0.062077537178993225,
+            "p75_s": 0.06454339995980263,
+            "n_iter": 5
+          }
+        }
+      }
+    },
+    {
+      "task": "helmholtz",
+      "device": "cpu",
+      "batch": 1,
+      "trained": true,
+      "solver_s": 0.00019454210996627808,
+      "solver_s_per_sample": 0.00019454210996627808,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.00019454210996627808,
+        "min_s": 0.00018833577632904053,
+        "p25_s": 0.00018833577632904053,
+        "p75_s": 0.00019638985395431519,
+        "n_iter": 5
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.06415276229381561,
+          "s_per_sample": 0.06415276229381561,
+          "speedup": 0.0030324822035766356,
+          "rel_l2": 0.0034737687092274427,
+          "timing": {
+            "median_s": 0.06415276229381561,
+            "min_s": 0.06302572414278984,
+            "p25_s": 0.06302572414278984,
+            "p75_s": 0.0646178275346756,
+            "n_iter": 5
+          }
+        },
+        "uq_single+residual": {
+          "s": 0.06401534005999565,
+          "s_per_sample": 0.06401534005999565,
+          "speedup": 0.0030389920569655923,
+          "rel_l2": 0.0034737687092274427,
+          "timing": {
+            "median_s": 0.06401534005999565,
+            "min_s": 0.06309013813734055,
+            "p25_s": 0.06309013813734055,
+            "p75_s": 0.06439877673983574,
+            "n_iter": 5
+          }
+        }
+      }
+    },
+    {
+      "task": "diffusion",
+      "device": "cpu",
+      "batch": 1,
+      "trained": true,
+      "solver_s": 0.0002333708107471466,
+      "solver_s_per_sample": 0.0002333708107471466,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.0002333708107471466,
+        "min_s": 0.0002315528690814972,
+        "p25_s": 0.0002315528690814972,
+        "p75_s": 0.00024795904755592346,
+        "n_iter": 5
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.06459809839725494,
+          "s_per_sample": 0.06459809839725494,
+          "speedup": 0.0036126575942220544,
+          "rel_l2": 0.002476005582138896,
+          "timing": {
+            "median_s": 0.06459809839725494,
+            "min_s": 0.0643254853785038,
+            "p25_s": 0.0643254853785038,
+            "p75_s": 0.06466953828930855,
+            "n_iter": 5
+          }
+        }
+      }
+    },
+    {
+      "task": "advdiff",
+      "device": "cpu",
+      "batch": 1,
+      "trained": true,
+      "solver_s": 0.0005573667585849762,
+      "solver_s_per_sample": 0.0005573667585849762,
+      "solver_accuracy": "exact spectral propagator (fp32 round-off, ~1e-7 rel)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.0005573667585849762,
+        "min_s": 0.0005102679133415222,
+        "p25_s": 0.0005102679133415222,
+        "p75_s": 0.000575043261051178,
+        "n_iter": 5
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.06470309942960739,
+          "s_per_sample": 0.06470309942960739,
+          "speedup": 0.008614220392816787,
+          "rel_l2": 0.0028823912143707275,
+          "timing": {
+            "median_s": 0.06470309942960739,
+            "min_s": 0.06444616243243217,
+            "p25_s": 0.06444616243243217,
+            "p75_s": 0.06491716578602791,
+            "n_iter": 5
+          }
+        }
+      }
+    },
+    {
+      "task": "darcy",
+      "device": "cpu",
+      "batch": 1,
+      "trained": true,
+      "solver_s": 0.23414308577775955,
+      "solver_s_per_sample": 0.23414308577775955,
+      "solver_accuracy": "batched PCG, fp64, tol 1e-10 on the relative residual",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 0.23414308577775955,
+        "min_s": 0.23362286388874054,
+        "p25_s": 0.23362286388874054,
+        "p75_s": 0.235561091452837,
+        "n_iter": 5
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.06468759849667549,
+          "s_per_sample": 0.06468759849667549,
+          "speedup": 3.619597747005447,
+          "rel_l2": 0.05092887580394745,
+          "timing": {
+            "median_s": 0.06468759849667549,
+            "min_s": 0.06381155923008919,
+            "p25_s": 0.06381155923008919,
+            "p75_s": 0.06545998901128769,
+            "n_iter": 5
+          }
+        },
+        "uq_single+residual": {
+          "s": 0.06467285752296448,
+          "s_per_sample": 0.06467285752296448,
+          "speedup": 3.620422766917612,
+          "rel_l2": 0.05092887580394745,
+          "timing": {
+            "median_s": 0.06467285752296448,
+            "min_s": 0.06390463933348656,
+            "p25_s": 0.06390463933348656,
+            "p75_s": 0.06480612233281136,
+            "n_iter": 5
+          }
+        }
+      }
+    },
+    {
+      "task": "navier_stokes",
+      "device": "cpu",
+      "batch": 1,
+      "trained": false,
+      "solver_s": 2.746481165289879,
+      "solver_s_per_sample": 2.746481165289879,
+      "solver_accuracy": "pseudo-spectral RK4, dt=0.001, 2/3 dealiasing (T=1.0, 1000 steps)",
+      "threads": 96,
+      "solver_timing": {
+        "median_s": 2.746481165289879,
+        "min_s": 1.5555952675640583,
+        "p25_s": 1.5555952675640583,
+        "p75_s": 2.750051360577345,
+        "n_iter": 5
+      },
+      "surrogate": {
+        "uq_single": {
+          "s": 0.06388010457158089,
+          "s_per_sample": 0.06388010457158089,
+          "speedup": 42.99431229346702,
+          "rel_l2": null,
+          "timing": {
+            "median_s": 0.06388010457158089,
+            "min_s": 0.06375611200928688,
+            "p25_s": 0.06375611200928688,
+            "p75_s": 0.06413068622350693,
+            "n_iter": 5
+          }
+        }
+      }
+    }
+  ],
+  "clock_ramp": {
+    "ramped": true,
+    "seconds": 6.0,
+    "matmuls": 1780
+  },
+  "note": "rel_l2 is the ensemble mean's error on that family's test split, measured in the same bf16-autocast configuration the GPU rows are timed in. Normalization and de-normalization are inside the timed surrogate region; host-device transfer is outside it on both sides, since both operate on tensors already resident on the device. The solver here is the one the corpus was generated with; `bench_isoaccuracy.py` reports the ratio against the cheapest solver setting that matches the surrogate's own accuracy, which is the smaller and more honest number.",
+  "accuracy": {
+    "poisson|cuda|uq_single": 0.0029284083284437656,
+    "poisson|cpu|uq_single": 0.0028835651464760303,
+    "helmholtz|cuda|uq_single": 0.00343532906845212,
+    "helmholtz|cpu|uq_single": 0.0034737687092274427,
+    "diffusion|cuda|uq_single": 0.0025534555315971375,
+    "diffusion|cpu|uq_single": 0.002476005582138896,
+    "advdiff|cuda|uq_single": 0.0025716321542859077,
+    "advdiff|cpu|uq_single": 0.0028823912143707275,
+    "darcy|cuda|uq_single": 0.05062808841466904,
+    "darcy|cpu|uq_single": 0.05092887580394745
+  },
+  "uq_source": "het",
+  "forward_passes_per_interval": 1,
+  "uq_note": "Timed model is FNO2dUQ, ONE forward pass emitting mean, log-sigma and two residual quantiles. The 108.5x M=1 row in runs/members.json was measured on a 1-channel ensemble MEMBER and does NOT transfer to this model -- the extra 1x1 projection is a cost to be measured, not assumed. That is what this run measures.",
+  "seed": 0,
+  "accuracy_key": "task|device|variant; cuda = bf16 autocast, cpu = fp32"
+}
