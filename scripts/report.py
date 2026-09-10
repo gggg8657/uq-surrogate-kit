@@ -627,7 +627,7 @@ def _mean_sharp(a):
     return sum(sh) / len(sh)
 
 
-def sec_h12(old, new, out):
+def sec_h12(old, new, out, pe=None):
     """The einsum path and the packed-weight path, side by side.
 
     The two runs share every solver flag and every timing parameter, and the
@@ -665,6 +665,20 @@ def sec_h12(old, new, out):
             f"rather than annotates if it is missed. The bounds are checked as "
             f"well as the mean because a change confined to σ would leave the "
             f"mean identical and silently move every coverage number.\n")
+    if pe is not None:
+        su = pe["summary"]
+        out.append(
+            f"**And at every resolution, not just the timed one.** The cache "
+            f"key is `(m1, m2, dtype, device)` and `m1 = min(modes, H//2)` "
+            f"saturates, so a cache built at N=64 is reused verbatim at N=128 "
+            f"and N=256 — where the coverage and OOD tables are evaluated and "
+            f"where nothing had checked it. `runs/packed_equivalence.json`: "
+            f"**{su['n_identical']}/{su['n_shards']}** shards bit-identical "
+            f"(worst `max|Δ|` = {su['worst_max_abs_dev']:.1e}) across "
+            f"resolutions {su['resolutions']}, on the mean and both bounds. "
+            f"So every coverage, sharpness and OOD number already published in "
+            f"this repo stands unchanged under the packed path — they were not "
+            f"re-run, and they did not need to be.\n")
     out.append(f"Surrogate rel-L2 is unchanged at "
                f"{new['surrogate_rel_l2']:.5f} (was "
                f"{old['surrogate_rel_l2']:.5f}), as bit-identity requires.\n")
@@ -774,7 +788,8 @@ def sec_fair(fa, sr, out, src="bench_fair.json"):
 
     b1 = fa["batches"].get("1", {})
     eag = b1.get("ratios", {}).get("eager")
-    if eag:
+    if eag and not eag["meets_100x_conservative"] and \
+            eag["ratio_vs_check_every_1_median"] >= 100.0:
         out.append(
             f"**The subsidy was the difference between pass and fail.** The "
             f"eager batch-1 arm — the protocol every previously published "
@@ -784,6 +799,17 @@ def sec_fair(fa, sr, out, src="bench_fair.json"):
             f"{eag['ratio_conservative']:.1f}× against the fair one, which "
             f"does not. The subsidy was documented in "
             f"`uqkit/sims/pde2d.py` and left in the numerator's favour.\n")
+    elif eag:
+        out.append(
+            f"**The subsidy no longer decides this arm, and that is a "
+            f"downgrade, not an upgrade.** Eager batch 1 reads "
+            f"{eag['ratio_conservative']:.1f}\u00d7 fair and "
+            f"{eag['ratio_vs_check_every_1_median']:.1f}\u00d7 subsidized, and "
+            f"**both fail**. Before H12 this arm was the cleanest illustration "
+            f"in the repo of a subsidy deciding a clause (64.5\u00d7 fair vs "
+            f"106.2\u00d7 subsidized); after three rounds of fixing the "
+            f"reference the subsidized reading fails too, so the illustration "
+            f"is gone and the arm is simply short.\n")
 
     if b1 and "64" in fa["batches"]:
         s1 = b1["solver"].get("check_every=1")
@@ -1143,14 +1169,37 @@ def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
                 f"{sw['solver_median_s']['spread_ratio']:.2f}\u00d7 | "
                 f"`runs/{fa_src}` | "
                 f"{MARK[g['n_ge_100x'] == g['n']]} |")
+            ng = sw.get("ratio_nograd_conservative")
+            if ng:
+                lines.append(
+                    f"| -- the same {ng['n']} fields **without CUDA-graph "
+                    f"capture** (eager dispatch, autograd off) | "
+                    f"\u2265100\u00d7 on every problem | "
+                    f"**{ng['n_ge_100x']}/{ng['n']}**; worst "
+                    f"{ng['min']:.1f}\u00d7, median {ng['median']:.1f}\u00d7, "
+                    f"best {ng['max']:.1f}\u00d7 \u2014 the row above is "
+                    f"conditional on graph replay and this is what it is "
+                    f"conditional on | `runs/{fa_src}` | "
+                    f"{MARK[ng['n_ge_100x'] == ng['n']]} |")
         b1 = fa["batches"].get("1", {}).get("ratios", {}).get("eager")
         if b1:
+            # "the subsidy decided it" is only true when the fair reading
+            # fails and the subsidized one passes. After H12 both fail on this
+            # arm, and leaving the sentence in would be the report asserting
+            # something its own numbers contradict.
+            decided = (not b1["meets_100x_conservative"]
+                       and b1["ratio_vs_check_every_1_median"] >= 100.0)
+            gloss = ("\u2014 **the subsidy alone decided this clause**"
+                     if decided else
+                     "\u2014 both readings fail, so the subsidy no longer "
+                     "decides this arm; it did before H12, at 64.5\u00d7 fair "
+                     "against 106.2\u00d7 subsidized")
             lines.append(
                 f"| -- the same clause on the *eager* protocol every earlier "
                 f"row in this repo used | \u2265100\u00d7 | "
                 f"{b1['ratio_conservative']:.1f}\u00d7 fair, "
-                f"{b1['ratio_vs_check_every_1_median']:.1f}\u00d7 subsidized \u2014 "
-                f"**the subsidy alone decided this clause** | "
+                f"{b1['ratio_vs_check_every_1_median']:.1f}\u00d7 subsidized "
+                f"{gloss} | "
                 f"`runs/{fa_src}` | "
                 f"{MARK[b1['meets_100x_conservative']]} |")
     if csu is not None:
@@ -1238,7 +1287,7 @@ def main():
     csu = load('consistency_uq.json')
     sec_uq_seeds(u, body)
     sec_fair(fa, load('solver_repeat.json'), body, fa_src)
-    sec_h12(fa_old, fa_new, body)
+    sec_h12(fa_old, fa_new, body, load('packed_equivalence.json'))
     sec_consistency(csu, body, 'uq')
     sec_degradation(csu, body)
     sec_probe(lp, body)

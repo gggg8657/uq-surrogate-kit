@@ -1,0 +1,738 @@
+{
+ "env": {
+  "torch": "2.8.0+cu128",
+  "python": "3.11.16",
+  "platform": "Linux-6.8.0-58-generic-x86_64-with-glibc2.39",
+  "torch_num_threads": 96,
+  "torch_interop_threads": 96,
+  "OMP_NUM_THREADS": "<unset>",
+  "MKL_NUM_THREADS": "<unset>",
+  "cpu_count": 192,
+  "cuda": "12.8",
+  "gpu": "NVIDIA H100 NVL",
+  "visible_devices": "2",
+  "tf32_matmul": false
+ },
+ "ckpt": "runs/u0/best.pt",
+ "source": "het",
+ "bar": "exact equality (max|delta| == 0) on mean, lo and hi",
+ "why": "the cache key is (m1, m2, dtype, device) and m1 = min(modes, H//2) saturates for every N >= 2*modes, so a cache built at N=64 is reused verbatim at N=128 and N=256; nothing had checked that until now",
+ "shards": {
+  "advdiff_amp2_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 3.0249319076538086,
+   "identical": true
+  },
+  "advdiff_cal_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 2.8641867637634277,
+   "identical": true
+  },
+  "advdiff_ood_N128": {
+   "N": 128,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 2.586535930633545,
+   "identical": true
+  },
+  "advdiff_ood_N256": {
+   "N": 256,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 3.1564505100250244,
+   "identical": true
+  },
+  "advdiff_rough_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 2.659601926803589,
+   "identical": true
+  },
+  "advdiff_smooth_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 2.542696237564087,
+   "identical": true
+  },
+  "advdiff_tau_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 2.8203470706939697,
+   "identical": true
+  },
+  "advdiff_test_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 2.7765073776245117,
+   "identical": true
+  },
+  "advdiff_train_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 2.659601926803589,
+   "identical": true
+  },
+  "biharmonic_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.052637144923210144,
+   "identical": true
+  },
+  "darcy_amp2_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.2989482581615448,
+   "identical": true
+  },
+  "darcy_c3_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.43913304805755615,
+   "identical": true
+  },
+  "darcy_cal_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.1790311634540558,
+   "identical": true
+  },
+  "darcy_dam0p1_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.22632241249084473,
+   "identical": true
+  },
+  "darcy_dam0p2_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.1444072127342224,
+   "identical": true
+  },
+  "darcy_dam0p3_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.2820585370063782,
+   "identical": true
+  },
+  "darcy_dam0p5_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.21027716994285583,
+   "identical": true
+  },
+  "darcy_dam0p7_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.21281063556671143,
+   "identical": true
+  },
+  "darcy_dam1_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.09500474482774734,
+   "identical": true
+  },
+  "darcy_ood_N128": {
+   "N": 128,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.39015284180641174,
+   "identical": true
+  },
+  "darcy_ood_N256": {
+   "N": 256,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.24152317643165588,
+   "identical": true
+  },
+  "darcy_rough_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.24321214854717255,
+   "identical": true
+  },
+  "darcy_smooth_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.2229444682598114,
+   "identical": true
+  },
+  "darcy_tau_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.1089387759566307,
+   "identical": true
+  },
+  "darcy_test_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.22970037162303925,
+   "identical": true
+  },
+  "darcy_train_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.29219236969947815,
+   "identical": true
+  },
+  "diffusion_amp2_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 2.796454429626465,
+   "identical": true
+  },
+  "diffusion_cal_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 2.3831851482391357,
+   "identical": true
+  },
+  "diffusion_ood_N128": {
+   "N": 128,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 2.3694095611572266,
+   "identical": true
+  },
+  "diffusion_ood_N256": {
+   "N": 256,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 2.5071659088134766,
+   "identical": true
+  },
+  "diffusion_rough_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 2.4245121479034424,
+   "identical": true
+  },
+  "diffusion_smooth_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 2.5071659088134766,
+   "identical": true
+  },
+  "diffusion_tau_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 2.7826788425445557,
+   "identical": true
+  },
+  "diffusion_test_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 2.5071659088134766,
+   "identical": true
+  },
+  "diffusion_train_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 2.465839147567749,
+   "identical": true
+  },
+  "frac_s0p25_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.050862859934568405,
+   "identical": true
+  },
+  "frac_s0p5_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.052637144923210144,
+   "identical": true
+  },
+  "frac_s3_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.04968000203371048,
+   "identical": true
+  },
+  "helmholtz_amp2_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.05190936475992203,
+   "identical": true
+  },
+  "helmholtz_cal_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.03360024839639664,
+   "identical": true
+  },
+  "helmholtz_ood_N128": {
+   "N": 128,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.025753483176231384,
+   "identical": true
+  },
+  "helmholtz_ood_N256": {
+   "N": 256,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.030179863795638084,
+   "identical": true
+  },
+  "helmholtz_rough_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.03520984202623367,
+   "identical": true
+  },
+  "helmholtz_smooth_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.014586933888494968,
+   "identical": true
+  },
+  "helmholtz_tau_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.039636220782995224,
+   "identical": true
+  },
+  "helmholtz_test_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.034606244415044785,
+   "identical": true
+  },
+  "helmholtz_train_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.028771469369530678,
+   "identical": true
+  },
+  "navier_stokes_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 3.0581915378570557,
+   "identical": true
+  },
+  "ns_T0p25_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 2.824005603790283,
+   "identical": true
+  },
+  "poisson_amp2_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.06831000000238419,
+   "identical": true
+  },
+  "poisson_cal_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.050862859934568405,
+   "identical": true
+  },
+  "poisson_dam0p1_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.05204571783542633,
+   "identical": true
+  },
+  "poisson_dam0p2_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.04879286140203476,
+   "identical": true
+  },
+  "poisson_dam0p3_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.049088574945926666,
+   "identical": true
+  },
+  "poisson_dam0p5_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.04938428848981857,
+   "identical": true
+  },
+  "poisson_dam0p7_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.04494857415556908,
+   "identical": true
+  },
+  "poisson_dam1_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.04465286061167717,
+   "identical": true
+  },
+  "poisson_ood_N128": {
+   "N": 128,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.051750004291534424,
+   "identical": true
+  },
+  "poisson_ood_N256": {
+   "N": 256,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.05027143284678459,
+   "identical": true
+  },
+  "poisson_rough_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.04317428916692734,
+   "identical": true
+  },
+  "poisson_smooth_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.05145428702235222,
+   "identical": true
+  },
+  "poisson_tau_ood_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.04051285982131958,
+   "identical": true
+  },
+  "poisson_test_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.052637144923210144,
+   "identical": true
+  },
+  "poisson_train_N64": {
+   "N": 64,
+   "n": 32,
+   "max_abs_dev": {
+    "mean": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "field_scale": 0.05027143284678459,
+   "identical": true
+  }
+ },
+ "summary": {
+  "n_shards": 64,
+  "n_identical": 64,
+  "n_differ": 0,
+  "differing": [],
+  "worst_max_abs_dev": 0.0,
+  "resolutions": [
+   64,
+   128,
+   256
+  ]
+ }
+}

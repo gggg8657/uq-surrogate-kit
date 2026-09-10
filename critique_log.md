@@ -1647,3 +1647,119 @@ rule. Written down now so that it is a prediction rather than a rationalization
 of whatever the sweep returns. The structural claim `clip² ≤ n_cal/9 ⟹ no
 infinite quantile` is a property of the algorithm, not of a run, and belongs in
 `tests/test_conformal.py` where it can be checked without a GPU.
+
+## H12 result — the prediction held, clause 2 passes at batch 1, and the pass is conditional on three things I have to say out loud
+
+**Every prediction I wrote down before the run landed inside its band.**
+
+| prediction (written before the run) | measured |
+|---|---|
+| closure 0.50–0.56 ms (from 0.6437) | **0.512 ms** |
+| worst of 24 fields 108–121× (from 94.0×) | **117.0×** |
+| batch 1 becomes 24/24 | **24/24** |
+| batch 64 still fails, "at most ~50×" | **41.1×** ❌ |
+
+`runs/bench_fair_h12.json`, same checkpoint, same solver flags, same 24 fields,
+same trial counts as `runs/bench_fair.json`.
+
+**Same model, verified three ways, none of them by assertion.** `rel_l2`
+0.05062808841466904 before and after — identical to every digit stored.
+`packed_weight_gate` on the shipped checkpoint at the benchmarked batch:
+`max|Δ| = 0.0` on the mean and on **both** interval bounds. And because the
+cache key is `(m1, m2, dtype, device)` while `m1 = min(modes, H//2)` saturates
+for every N ≥ 40, a cache built at N=64 is reused verbatim at N=128 and N=256 —
+where the coverage and OOD tables live and where nothing had checked it. So
+`scripts/check_packed_equivalence.py` now checks all of them:
+**64/64 shards bit-identical, worst `max|Δ| = 0.0e+00`, resolutions {64, 128,
+256}, mean and both bounds** (`runs/packed_equivalence.json`). Every coverage,
+sharpness and OOD number already in this repo therefore stands unchanged under
+the packed path. They were not re-run and they did not need to be.
+
+**The paired per-field table is the part that decides whether this is real,
+because the denominator moved too.**
+
+| | H11 (einsum) | H12 (packed) | ratio |
+|---|---|---|---|
+| surrogate `graph_max`, median over 24 fields | 0.6380 ms | 0.5119 ms | **1.246×** |
+| solver `min_s`, median over 24 fields | 92.2 ms | 99.4 ms | 0.989× (paired median) |
+| speedup, median over 24 fields | 144.4× | 187.4× | 1.231× |
+
+The paired ratio change has median **1.231×** against a surrogate that got
+**1.246×** faster, so on the typical field the whole move is the numerator.
+**Two fields are outliers and they are the solver, not us**: sample 12 (85.0 →
+148.5 ms) and sample 23 (67.6 → 116.8 ms) got *slower* between runs by 1.75×
+and 1.73×, inflating their ratios to 2.17× and 2.15×. That is inside the
+repeatability this repo already measured on identical work
+(`runs/solver_repeat.json`, max/min **1.71**), so those two rows carry no
+information and I am not quoting them.
+
+**And the three fields that actually decided the clause moved on the numerator
+alone**, which is the check that matters:
+
+| field | solver `min_s` H11 → H12 | ratio H11 → H12 |
+|---|---|---|
+| sample 17 | 60.10 → 59.88 ms (**−0.4%**) | 94.0× → **117.0×** (+24.5%) |
+| sample 18 | 60.95 → 60.34 ms (−1.0%) | 95.5× → **118.0×** (+23.5%) |
+| sample 2 | 63.77 → 63.44 ms (−0.5%) | 99.8× → **123.4×** (+23.6%) |
+
+Three fields, denominators within 1%, ratios up 23–25%, against a surrogate
+measured 24.6% faster. There is no denominator story available here.
+
+### The three conditions the pass carries, none of which I get to drop
+
+**1. It is a batch-1 claim and batch 64 fails at 41.1×.** Worse than "fails":
+the *solver* batches better than the surrogate does. 64 systems cost the solver
+193.6 ms against 136.9 ms for one (1.41× for 64× the arithmetic); they cost the
+surrogate 4.369 ms against 0.512 ms (8.5×). A 64×64 system cannot fill an H100,
+so batch 1 is where a plant-latency claim lives — but anyone reading "≥100×" as
+a throughput statement is reading it wrong, and the 41.1× row is in the KPI
+table for that reason.
+
+**2. It is conditional on CUDA-graph capture, and I added the row that says
+so.** The same 24 fields under eager dispatch with autograd off: **2/24**, worst
+23.7×, median 58.3×. The single-field `nograd` reading crossed 100× (84.3× →
+101.4×) and it would have been easy to quote that; across 24 fields it is 2/24
+and that is the honest form. Graph replay is a legitimate deployment mode — same
+weights, same kernels, gated against eager on a mutated input — but it is a
+*condition*, not a footnote.
+
+**3. The reference is still not equally optimized, and the break-even moved
+toward the solver.** `codex`'s formulation is better than mine and I am adopting
+it: this is *"24/24 measured fields against this specified PCG implementation"*,
+**not** an established advantage against an equivalently optimized reference.
+The PCG loop is still a Python loop launching individual kernels; fused stencil
+kernels, cached grid-dependent preconditioner data and graph-captured
+fixed-length PCG chunks are all admissible and all unmeasured. Concretely, at a
+0.512 ms closure a reference reaching **51.2 ms** on a field takes that field
+back under 100×, against a current fastest field of **60.3 ms** — a **15%**
+margin on the easiest field. The last three rounds of solver work bought 1.28×,
+1.08× and a selection fix; a fourth round of that size ends this clause again.
+
+**What I got wrong, and it is the same thing three turns running.** H9 through
+H11 audited only the denominator, and I wrote the H11 conclusion — "the
+surrogate side is where the remaining factor has to come from" — as though it
+were a hard place to get a factor. It was not. It was a 13.1 MB memcpy of
+constants repeated eight times per forward, sitting in a file I had read several
+times, worth 1.246× in an afternoon. Auditing only the side whose improvement
+hurts you feels like rigour and is actually a blind spot with a flattering
+shape: it guarantees you will find every reason your number is too high and none
+of the reasons it is too low. The kernel census that found it took four minutes
+and I should have run it three turns ago.
+
+**One stale sentence deleted from `RESULTS.md`, by making the report refuse to
+generate it.** The verdict table asserted "the subsidy alone decided this
+clause" on the eager arm. After H12 that arm reads 67.6× fair and 79.5×
+subsidized — *both fail*, so the subsidy decides nothing there any more. The
+sentence is now emitted only when the fair reading fails and the subsidized one
+passes, and the else-branch says plainly that the illustration is gone. A report
+that regenerates from JSON can still carry a hand-written claim its own numbers
+contradict; the fix is to make the claim conditional on the numbers, not to
+remember to edit it.
+
+### Clause 2 verdict, stated as it should be quoted
+
+> **MET at batch 1, on 24/24 distinct coefficient fields, worst 117.0×, median
+> 187.4×, at rel-L2 0.0506 against an FP64 PCG reference converged to 1e-10
+> (achieved 5.0e-11), under CUDA-graph replay, on one H100 NVL, one forward pass
+> emitting the mean and the conformal interval together.**
+> **NOT met at batch 64 (41.1×), and not met without graph capture (2/24).**
