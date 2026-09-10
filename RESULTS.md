@@ -656,6 +656,61 @@ In-band shards, ungated, no width model at all: 0,0,0,0,0,0,0,0 → **1,1,2,1,2,
 **This does not make the clause pass and was not expected to.** A width model would still have to span 68.4× while holding ±2.2%. What H17 establishes is that a large part of the requirement was our own broken equivariance rather than a fact about uncertainty quantification.
 
 
+### 1e. H15 — a learned interval width, and the ceiling it hits (`runs/scale.json`)
+
+H14 showed the failure is in the *scale* of the conformity score, not the composition of the test set, so H15 rescales the width instead of selecting the population: fit h(z) to the conditional 90th percentile of S on a **development** shift suite (75 shards, 256 samples each, seed block 40000+, generated in memory and never written to disk), calibrate T = S/h(z) on a held-back half of the in-distribution calibration split, and emit q·h(z)·σ. h is linear in standardized log-features and fitted by pinball loss, so its coefficients are readable and it cannot rescue the clause by being a black box.
+
+The headline is **leave-one-mechanism-out**: each evaluation shard is scored only by the fold that never saw its shift mechanism, where the roughness knob covers `rough`, `smooth` *and* the whole graded ladder.
+
+| reading | in band /32, per seed | median |
+|---|---|---|
+| ungated `group` baseline, same runs | 0,0,0,0,0,0,0,0 | 0 |
+| every mechanism seen (generous) | 5,0,5,4,4,3,6,3 | 4 |
+| `alpha` held out | 3,3,5,4,4,2,8,7 | 4 |
+| `amp` held out | 4,5,6,3,1,4,1,1 | 3.5 |
+| `tau` held out | 3,3,3,2,7,4,3,4 | 3 |
+| **LOMO headline** | **3,2,5,4,4,2,8,7** | **4** |
+| `insample_leak` — h fitted **on the evaluation shards**; an in-sample ceiling, *not a result* | 4,3,4,4,3,3,5,5 | 4 |
+
+Against the ungated baseline the gain is real: exact two-sided sign-flip **p = 0.0078**, the smallest attainable at 8 seeds. **Against its own in-sample ceiling there is no difference at all: p = 0.5156.** So H15 does not fail at generalizing to an unseen mechanism — it fails with the answer in front of it, and the binding constraint is the feature set and model class rather than the amount of development data. The seed spread is 2–8 shards, which is wider than most effects this repo has reported, so the median is quoted rather than any single run.
+
+h lands within a factor of 0.29–67.41 (median 1.52) of the quantile it is trying to predict — a *diagnostic that uses ground truth* — and the coverage that comes out of that spans essentially the whole unit interval. Those two facts together are what H16 measures.
+
+
+### 1f. H16 — “90±2% coverage” is a “predict the width to ±2%” requirement (`runs/scale.json`, 8 seeds)
+
+No uncertainty method enters this measurement. For a per-sample score S the width achieving coverage exactly *p* **is** the *p*-th quantile of S, so the widths that keep coverage inside the KPI band span exactly [Q₀.₈₈(S), Q₀.₉₂(S)] and the relative tolerance is (Q₀.₉₂ − Q₀.₈₈)/Q₀.₉₀. Three order statistics.
+
+| score | median tolerance over the 32 shards | in distribution | range over shards | in band /32, per seed | framing disagreements |
+|---|---|---|---|---|---|
+| `field_max` | **4.47%** | 5.35% | 0.40–19.75% | 0,0,0,0,0,0,0,0 | 0/256 |
+| `norm_ratio` | **4.22%** | 3.50% | 0.38–18.32% | 0,0,0,0,0,1,0,0 | 2/256 |
+| `rel_l2` | **6.34%** | 5.01% | 0.11–43.04% | 0,1,0,1,0,0,1,0 | 1/256 |
+
+`framing disagreements` counts cells where in-band membership and “the deployed width sits inside the tolerance” disagree. It is the check that could have falsified the explanation, and it is reported rather than described.
+
+**Changing the score is not an escape**, which is worth stating because it was the obvious next move: `field_max` is a maximum over 4,096 pixels and the expectation was that extreme-value concentration made it uniquely tight, but `norm_ratio` — an aggregate — is *tighter still*. The tolerance is set by the score's density near its own 0.9 quantile, and all three behave alike.
+
+
+#### H17 — the required dynamic range was partly self-inflicted
+
+The width a shifted shard actually needs, relative to the deployed one, spans up to **107.6×** and is concentrated in the four `*_amp2` shards. Poisson, Helmholtz, diffusion and advection-diffusion are **linear** in the field the amplitude shift scales, so u(c·f) = c·u(f) exactly — but `predict_shard*` standardizes inputs with frozen calibration statistics, so a 2× input extrapolates instead of scaling. `uqkit/equivar.py` restores the equivariance at test time, F(a) → s·F(a/s), with no retraining and one extra reduction per sample.
+
+| | required width factor, median over seeds |
+|---|---|
+| `advdiff_amp2` | 107.60× → **0.96×** (0.009 of baseline) |
+| `darcy_amp2` — **registered control, must not improve** | 68.44× → **68.44×** (1.000 of baseline) |
+| `diffusion_amp2` | 84.79× → **0.99×** (0.012 of baseline) |
+| `helmholtz_amp2` | 54.71× → **1.19×** (0.022 of baseline) |
+| `poisson_amp2` | 85.71× → **1.10×** (0.013 of baseline) |
+
+The four linear families collapse to about 1×; the control does not move. **`darcy_amp2` is the control because Darcy's channel 0 is log-permeability, not a source** — `PDE2DSimulator.rhs` reads the source from channel 1 — so scaling it raises permeability to a power and no equivariance exists to restore. It goes 68.44× → 68.44×, a change of 1.000, i.e. unchanged, exactly as registered. Had it improved, the wrapper would have been doing something other than what is claimed. Overall the required range falls 107.6× → **68.4×**, and it is the control shard that now sets the ceiling.
+
+In-band shards, ungated, no width model at all: 0,0,0,0,0,0,0,0 → **1,1,2,1,2,1,1,0** (sign-flip p = 0.0156), while in-distribution families in band stay 5,4,5,5,5,5,5,5 → 5,4,5,5,4,5,5,5 of 5 — the wrapper is near-identity in distribution, as it has to be.
+
+**This does not make the clause pass and was not expected to.** A width model would still have to span 68.4× while holding ±2.2%. What H17 establishes is that a large part of the requirement was our own broken equivariance rather than a fact about uncertainty quantification.
+
+
 ### 3c. Solver-consistency detection, and the two deployments (`runs/consistency_uq.json`)
 
 An operator shift is observable only if the request *names* the operator. **(A)** scores the residual under `PARENT[task]`, the operator the surrogate is configured for — the process moved and nobody reconfigured the model. Under (A) every unsupervised detector is a function of (input, configured operator), neither of which changed, so it is at chance **by construction**; that is the strict reading and it stands. **(B)** scores it under the operator the request names. Of the 49 shards, exactly **6 change the operator** (`tests/test_sims.py::test_operator_key_partitions_the_ood_suite` pins the partition); on the rest (B) is byte-identical to (A), which is the control.

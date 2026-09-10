@@ -28,6 +28,10 @@ Protocol, registered in `critique_log.md` (H15) before this ran:
   pass (helmholtz 0.588, advdiff 1.000) while flattering the graded ladder.
   That was a bug in the comparison, not a result. The pooled reading is still
   reported, labelled, because it is the strict one.
+* `--equivariant` (H18) composes this with the H17 test-time wrapper. The
+  composition is the only difference between the two arms -- same dev suite,
+  same seed block, same folds, same per-family quantile -- so they pair by
+  checkpoint and the sign-flip test against the H15 arm is exact.
 * Width travels with every coverage. h can buy coverage by inflating every
   interval, which would be H13's abstention trap in a third disguise, so
   `width_mult_median` and its ratio to the ungated interval are in every
@@ -46,6 +50,8 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from uqkit import devshift as D  # noqa: E402
 from uqkit.conformal import GroupConformal, _floor, get_score  # noqa: E402
+from uqkit.equivar import (predict_equivariant,  # noqa: E402
+                           reference_scale)
 from uqkit.features import spectral_features  # noqa: E402
 from uqkit.metrics import binom_ci, rel_l2  # noqa: E402
 from uqkit.scale import (GroupScaleConformal,  # noqa: E402
@@ -81,6 +87,14 @@ def main():
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--sigma-source", default=None,
                     choices=["het", "cqr", "const"])
+    ap.add_argument("--equivariant", action="store_true",
+                    help="H18: fit and evaluate h on top of the H17 test-time "
+                         "scale-equivariant predictor F_eq(a) = s*F(a/s). "
+                         "Composition only -- every other element of the H15 "
+                         "protocol is unchanged, so the arms are paired by "
+                         "checkpoint and the sign-flip test is exact. "
+                         "`darcy_amp2` remains the control that must not "
+                         "improve, since Darcy's channel 0 is log-permeability.")
     args = ap.parse_args()
     single = args.sigma_source is not None
     if single and len(args.ckpt) != 1:
@@ -102,11 +116,28 @@ def main():
     fn, _ = get_score(args.score)
     FAM_IDX = {t: i for i, t in enumerate(in_tasks)}
 
-    def predict(blob):
+    def predict_raw(blob):
         if single:
             return predict_shard_single(models[0], blob, stats, args.device,
                                         sigma_source=args.sigma_source)
         return predict_shard(models, blob, stats, args.device)
+
+    # REF is the median per-sample scale of the linear channels on the
+    # CALIBRATION split, so s ~ 1 in distribution and the wrapper is
+    # near-identity there. Filled below, before any evaluation shard is read.
+    REF = {}
+
+    def predict(blob):
+        """The prediction path, optionally wrapped in scale equivariance.
+
+        Only the prediction is rescaled: `truth` and the returned inputs are
+        the originals, so every score, calibrator and feature downstream sees
+        exactly the data it saw in the H15 arm.
+        """
+        if not args.equivariant:
+            return predict_raw(blob)
+        parent = PARENT.get(blob["task"], blob["task"])
+        return predict_equivariant(predict_raw, blob, parent, REF[parent])
 
     # ---- features: strictly deployment-observable ---------------------------
     FEAT_NAMES = None
@@ -148,11 +179,18 @@ def main():
     cal_rows = {}
     med_parts = []
     _tick("loading in-distribution calibration shards")
+    cal_blobs = {t: load_shard(args.root, t, "cal") for t in in_tasks}
+    if args.equivariant:
+        # computed from calibration inputs alone, before anything else is read
+        for t in in_tasks:
+            REF[t] = reference_scale(cal_blobs[t]["a"], t)
+        _tick(f"equivariant REF from cal only: "
+              + ", ".join(f"{t}={REF[t]:.4g}" for t in in_tasks))
     for t in in_tasks:
-        blob = load_shard(args.root, t, "cal")
-        m, s, tr, a = predict(blob)
+        m, s, tr, a = predict(cal_blobs[t])
         med_parts.append(s.flatten())
         cal_rows[t] = {"mean": m, "sigma": s, "truth": tr, "a": a}
+    del cal_blobs
     MED = float(torch.cat(med_parts).median())
     del med_parts
 
@@ -207,6 +245,8 @@ def main():
            "sigma_source": args.sigma_source or "ensemble_spread",
            "forward_passes_per_interval": 1 if single else len(models),
            "sigma_floor_median": MED, "sigma_floor_frac": 0.05,
+           "equivariant": bool(args.equivariant),
+           "equivariant_ref": {k: float(v) for k, v in REF.items()},
            "dev": {"n_shards": len(dev_specs), "n_per_shard": args.dev_n,
                    "seed_base": D.SEED_BASE,
                    "by_mechanism": {k: {"n_rows": int(len(v["s"])),
