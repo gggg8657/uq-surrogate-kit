@@ -772,301 +772,220 @@ def sec_h14(sv, out):
 
 
 def sec_h15(sc, out):
-    """H15 learned width, H16 the tolerance that explains it, H17 the repair."""
-    if sc is None:
+    """H15: a learned interval width, and the in-sample ceiling it hits.
+
+    Reads only keys `scripts/agg_scale.py` actually writes. An earlier version
+    of this function read `by_fold[...]["in_dist"]`, which that aggregator does
+    not emit, so `report.py` could not run at all -- committed and unnoticed
+    because the commit predated the section being exercised. Hence the shape
+    guard: a gap in the report beats a report that cannot be generated.
+    """
+    sc = (sc or {}).get("h15")
+    out.append("\n### 1e. H15 \u2014 a learned interval width, and the "
+               "ceiling it hits (`runs/scale.json`)\n")
+    if not sc or "lomo" not in sc or "by_fold" not in sc:
+        out.append(f"{NM} \u2014 `runs/scale.json` absent or unrecognised.\n")
         return
-    h = sc.get("h15")
-    if h:
-        L = h["lomo"]
-        out.append("\n### 1e. H15 — a learned interval width, and the ceiling "
-                   "it hits (`runs/scale.json`)\n")
-        out.append(
-            f"H14 showed the failure is in the *scale* of the conformity "
-            f"score, not the composition of the test set, so H15 rescales the "
-            f"width instead of selecting the population: fit h(z) to the "
-            f"conditional 90th percentile of S on a **development** shift "
-            f"suite ({h['dev']['n_shards']} shards, "
-            f"{h['dev']['n_per_shard']} samples each, seed block "
-            f"{h['dev']['seed_base']}+, generated in memory and never written "
-            f"to disk), calibrate T = S/h(z) on a held-back half of the "
-            f"in-distribution calibration split, and emit q\u00b7h(z)\u00b7\u03c3. "
-            f"h is linear in standardized log-features and fitted by pinball "
-            f"loss, so its coefficients are readable and it cannot rescue the "
-            f"clause by being a black box.\n")
-        out.append(
-            f"The headline is **leave-one-mechanism-out**: each evaluation "
-            f"shard is scored only by the fold that never saw its shift "
-            f"mechanism, where the roughness knob covers `rough`, `smooth` "
-            f"*and* the whole graded ladder.\n")
-        out.append("| reading | in band /32, per seed | median |")
-        out.append("|---|---|---|")
-        pf = lambda v: ",".join(str(x) for x in v)  # noqa: E731
-        out.append(f"| ungated `group` baseline, same runs | "
-                   f"{pf(L['ungated_baseline_per_seed'])} | 0 |")
-        for f, v in h["by_fold"].items():
-            if v["leak"]:
-                continue
-            tag = ("every mechanism seen (generous)"
-                   if v["held_out_mechanism"] is None
-                   else f"`{v['held_out_mechanism']}` held out")
-            out.append(f"| {tag} | {pf(v['in_band_per_seed'])} | "
-                       f"{v['in_band_median']:g} |")
-        out.append(f"| **LOMO headline** | **{pf(L['in_band_per_seed'])}** | "
-                   f"**{L['in_band_median']:g}** |")
-        leakf = h["by_fold"].get("insample_leak")
-        if leakf:
-            out.append(f"| `insample_leak` — h fitted **on the evaluation "
-                       f"shards**; an in-sample ceiling, *not a result* | "
-                       f"{pf(leakf['in_band_per_seed'])} | "
-                       f"{leakf['in_band_median']:g} |")
-        out.append(
-            f"\nAgainst the ungated baseline the gain is real: exact "
-            f"two-sided sign-flip **p = "
-            f"{L['vs_ungated']['exact_sign_flip_p']:.4f}**, the smallest "
-            f"attainable at 8 seeds. **Against its own in-sample ceiling there "
-            f"is no difference at all: p = "
-            f"{L['vs_insample_ceiling']['exact_sign_flip_p']:.4f}.** So H15 "
-            f"does not fail at generalizing to an unseen mechanism \u2014 it "
-            f"fails with the answer in front of it, and the binding constraint "
-            f"is the feature set and model class rather than the amount of "
-            f"development data. The seed spread is "
-            f"{L['in_band_range'][0]}\u2013{L['in_band_range'][1]} shards, "
-            f"which is wider than most effects this repo has reported, so the "
-            f"median is quoted rather than any single run.\n")
-        u = L["underprediction_factor__uses_truth"]
-        out.append(
-            f"h lands within a factor of {u['min']:.2f}\u2013{u['max']:.2f} "
-            f"(median {u['median']:.2f}) of the quantile it is trying to "
-            f"predict \u2014 a *diagnostic that uses ground truth* \u2014 and "
-            f"the coverage that comes out of that spans essentially the whole "
-            f"unit interval. Those two facts together are what H16 measures.\n")
-    w = sc.get("wtol")
-    if not w:
-        return
-    out.append(f"\n### 1f. H16 — \u201c90\u00b12% coverage\u201d is a "
-               f"\u201cpredict the width to \u00b12%\u201d requirement "
-               f"(`runs/scale.json`, {w['n_seeds']} seeds)\n")
+    L, dv = sc["lomo"], sc["dev"]
+    n = L["n_shards"]
+    pf = lambda v: ",".join(str(x) for x in v)  # noqa: E731
     out.append(
-        "No uncertainty method enters this measurement. For a per-sample score "
-        "S the width achieving coverage exactly *p* **is** the *p*-th quantile "
-        "of S, so the widths that keep coverage inside the KPI band span "
-        "exactly [Q\u2080.\u2088\u2088(S), Q\u2080.\u2089\u2082(S)] and the "
-        "relative tolerance is (Q\u2080.\u2089\u2082 \u2212 "
-        "Q\u2080.\u2088\u2088)/Q\u2080.\u2089\u2080. Three order "
-        "statistics.\n")
+        f"H14 showed the failure is in the *scale* of the conformity score "
+        f"rather than the composition of the test set, so H15 rescales the "
+        f"width instead of selecting the population: fit h(z) to the "
+        f"conditional 90th percentile of the score on a **development** shift "
+        f"suite ({dv['n_shards']} shards \u00d7 {dv['n_per_shard']} samples, "
+        f"seed block {dv['seed_base']}+, values checked disjoint from every "
+        f"evaluation shard, generated in memory and never written to disk), "
+        f"calibrate T = S/h(z) on a held-back half of the in-distribution "
+        f"calibration split, and emit q\u00b7h(z)\u00b7\u03c3. h is linear in "
+        f"standardized log-features and fitted by pinball loss, so its "
+        f"coefficients are readable and it cannot rescue the clause by being "
+        f"a black box.\n")
+    out.append(
+        f"The headline is **leave-one-mechanism-out**: each shard is scored "
+        f"only by the fold that never saw its shift mechanism, where the "
+        f"roughness knob covers `rough`, `smooth` *and* the entire graded "
+        f"ladder. {L['note']}\n")
+    out.append(f"| reading | in band /{n}, per seed | median |")
+    out.append("|---|---|---|")
+    out.append(f"| ungated `group` baseline, same runs | "
+               f"{pf(L['ungated_baseline_per_seed'])} | 0 |")
+    for f, v in sc["by_fold"].items():
+        if v["leak"]:
+            continue
+        tag = ("every mechanism seen (generous reading)"
+               if v["held_out_mechanism"] is None
+               else f"`{v['held_out_mechanism']}` held out of the fit")
+        out.append(f"| {tag} | {pf(v['in_band_per_seed'])} | "
+                   f"{v['in_band_median']:g} |")
+    out.append(f"| **LOMO headline** | **{pf(L['in_band_per_seed'])}** | "
+               f"**{L['in_band_median']:g}** |")
+    leak = sc["by_fold"].get(sc.get("leak_fold", "insample_leak"))
+    if leak:
+        out.append(f"| `insample_leak` \u2014 h fitted **on the evaluation "
+                   f"shards**; an in-sample ceiling, *not a result* | "
+                   f"{pf(leak['in_band_per_seed'])} | "
+                   f"{leak['in_band_median']:g} |")
+    out.append(
+        f"\nAgainst the ungated baseline the gain is real: exact two-sided "
+        f"sign-flip **p = {L['vs_ungated']['exact_sign_flip_p']:.4f}**, the "
+        f"smallest attainable at {sc['n_seeds']} seeds. **Against its own "
+        f"in-sample ceiling there is no difference: p = "
+        f"{L['vs_insample_ceiling']['exact_sign_flip_p']:.4f}.** So H15 does "
+        f"not fail at generalizing to an unseen mechanism \u2014 it fails with "
+        f"the answer in front of it, and what binds is the feature set and "
+        f"model class, not the amount of development data. The seed spread is "
+        f"{L['in_band_range'][0]}\u2013{L['in_band_range'][1]} shards, wider "
+        f"than most effects this repo has reported, so the median is quoted "
+        f"and no single run is.\n")
+    u = L["underprediction_factor__uses_truth"]
+    out.append(
+        f"h lands within a factor of {u['min']:.2f}\u2013{u['max']:.2f} "
+        f"(median {u['median']:.2f}) of the quantile it is trying to predict "
+        f"\u2014 a diagnostic that *uses ground truth* and is labelled so in "
+        f"the JSON \u2014 and the coverage that comes out of it spans almost "
+        f"the whole unit interval. Reconciling those two facts is what H16 "
+        f"measures.\n")
+    works = sorted((k, v) for k, v in L["shards"].items()
+                   if v["in_band_seeds"] > 0)
+    if works:
+        out.append(f"Shards the learned width brings into band on at least "
+                   f"one seed, with the interval width it costs:\n")
+        out.append(f"| shard | mechanism | ungated | LOMO scaled | width vs "
+                   f"ungated | seeds in band /{sc['n_seeds']} |")
+        out.append("|---|---|---|---|---|---|")
+        for k, v in works:
+            flag = " \u26a0" if v["width_inflated_seeds"] else ""
+            out.append(
+                f"| `{k.split('/')[1]}` | `{v['mechanism']}` | "
+                f"{v['ungated_median']:.3f} | **{v['scaled_median']:.3f}** | "
+                f"{v['width_ratio_median']:.2f}\u00d7{flag} | "
+                f"{v['in_band_seeds']} |")
+        out.append(f"\n\u26a0 marks a shard whose interval exceeded "
+                   f"{sc['width_flag']:g}\u00d7 the ungated one on at least "
+                   f"one seed. Coverage bought by inflating the interval is "
+                   f"not a deployable certificate, which is why the width "
+                   f"column is not optional.\n")
+
+
+
+def _mean_sharp(a):
+    sh = [r["sharpness_rel"] for r in a["per_seed"]]
+    return sum(sh) / len(sh)
+
+
+def sec_h16(sc, out):
+    """H16 (what the clause demands) and H17 (the equivariance repair).
+
+    Kept separate from `sec_h15` because they are different objects: H15 is a
+    method, H16 is a property of the metric that explains why no method of that
+    shape could have worked, and H17 is a fix to the *surrogate* that shrinks
+    what the metric demands.
+    """
+    w = (sc or {}).get("wtol")
+    out.append("\n### 1f. H16 \u2014 \u201c90\u00b12% coverage\u201d is a "
+               "\u201cpredict the width to \u00b12%\u201d requirement\n")
+    if not w:
+        out.append(f"{NM} \u2014 `runs/scale.json` has no `wtol` block.\n")
+        return
+    out.append(
+        f"No uncertainty method enters this measurement ({w['n_seeds']} "
+        f"seeds). For a per-sample score S the width achieving coverage "
+        f"exactly *p* **is** the *p*-th quantile of S, so the widths keeping "
+        f"coverage inside the KPI band span exactly "
+        f"[Q\u2080.\u2088\u2088(S), Q\u2080.\u2089\u2082(S)] and the "
+        f"relative tolerance is (Q\u2080.\u2089\u2082 \u2212 "
+        f"Q\u2080.\u2088\u2088)/Q\u2080.\u2089\u2080. Three order "
+        f"statistics; nothing to tune.\n")
     out.append("| score | median tolerance over the 32 shards | in "
                "distribution | range over shards | in band /32, per seed | "
                "framing disagreements |")
     out.append("|---|---|---|---|---|---|")
     for sn, r in w["by_score"].items():
+        dis = sum(r["framing_disagreements_per_seed"])
+        nc = len(r["framing_disagreements_per_seed"]) * 32
         out.append(
             f"| `{sn}` | **{r['tol_rel_median_over_shards']*100:.2f}%** | "
             f"{r['tol_rel_median_in_dist']*100:.2f}% | "
             f"{r['tol_rel_min_over_shards']*100:.2f}"
             f"\u2013{r['tol_rel_max_over_shards']*100:.2f}% | "
             f"{','.join(str(x) for x in r['in_band_per_seed'])} | "
-            f"{sum(r['framing_disagreements_per_seed'])}"
-            f"/{len(r['framing_disagreements_per_seed'])*32} |")
+            f"{dis}/{nc} |")
     out.append(
         "\n`framing disagreements` counts cells where in-band membership and "
         "\u201cthe deployed width sits inside the tolerance\u201d disagree. "
-        "It is the check that could have falsified the explanation, and it is "
+        "It is the check that could have falsified the explanation, so it is "
         "reported rather than described.\n")
     out.append(
-        "**Changing the score is not an escape**, which is worth stating "
+        "**Changing the score is not an escape**, which is worth saying "
         "because it was the obvious next move: `field_max` is a maximum over "
-        "4,096 pixels and the expectation was that extreme-value concentration "
-        "made it uniquely tight, but `norm_ratio` \u2014 an aggregate \u2014 "
-        "is *tighter still*. The tolerance is set by the score's density near "
-        "its own 0.9 quantile, and all three behave alike.\n")
+        "4,096 pixels and the expectation was that extreme-value "
+        "concentration made it uniquely tight. `norm_ratio`, an aggregate, is "
+        "*tighter still*. The tolerance is set by the score's density near "
+        "its own 0.9 quantile and all three behave alike.\n")
     fm = w["by_score"].get("field_max", {})
     e = fm.get("equivariant")
-    if e:
-        out.append(
-            f"\n#### H17 — the required dynamic range was partly "
-            f"self-inflicted\n")
-        out.append(
-            f"The width a shifted shard actually needs, relative to the "
-            f"deployed one, spans up to **{e['required_range_base']:.1f}\u00d7** "
-            f"and is concentrated in the four `*_amp2` shards. Poisson, "
-            f"Helmholtz, diffusion and advection-diffusion are **linear** in "
-            f"the field the amplitude shift scales, so u(c\u00b7f) = c\u00b7u(f) "
-            f"exactly \u2014 but `predict_shard*` standardizes inputs with "
-            f"frozen calibration statistics, so a 2\u00d7 input extrapolates "
-            f"instead of scaling. `uqkit/equivar.py` restores the equivariance "
-            f"at test time, F(a) \u2192 s\u00b7F(a/s), with no retraining and "
-            f"one extra reduction per sample.\n")
-        out.append("| | required width factor, median over seeds |")
-        out.append("|---|---|")
-        rf = fm["required_factor"]
-        for n in sorted(rf):
-            if "amp2" not in n:
-                continue
-            v = rf[n]
-            ctl = (" \u2014 **registered control, must not improve**"
-                   if "darcy_amp2" in n else "")
-            out.append(f"| `{n.split('/')[1]}`{ctl} | "
-                       f"{v['base_median']:.2f}\u00d7 \u2192 "
-                       f"**{v['eq_median']:.2f}\u00d7** "
-                       f"({v['factor_change']:.3f} of baseline) |")
-        c = e.get("control_darcy_amp2")
-        out.append(
-            f"\nThe four linear families collapse to about 1\u00d7; the "
-            f"control does not move. **`darcy_amp2` is the control because "
-            f"Darcy's channel 0 is log-permeability, not a source** \u2014 "
-            f"`PDE2DSimulator.rhs` reads the source from channel 1 \u2014 so "
-            f"scaling it raises permeability to a power and no equivariance "
-            f"exists to restore."
-            + (f" It goes {c['base']:.2f}\u00d7 \u2192 {c['eq']:.2f}\u00d7, "
-               f"a change of {c['change']:.3f}, i.e. unchanged, exactly as "
-               f"registered. Had it improved, the wrapper would have been "
-               f"doing something other than what is claimed."
-               if c else "")
-            + f" Overall the required range falls "
-            f"{e['required_range_base']:.1f}\u00d7 \u2192 "
-            f"**{e['required_range_eq']:.1f}\u00d7**, and it is the control "
-            f"shard that now sets the ceiling.\n")
-        out.append(
-            f"In-band shards, ungated, no width model at all: "
-            f"{','.join(str(x) for x in fm['in_band_per_seed'])} \u2192 "
-            f"**{','.join(str(x) for x in e['in_band_per_seed'])}** "
-            f"(sign-flip p = {e['vs_base']['exact_sign_flip_p']:.4f}), while "
-            f"in-distribution families in band stay "
-            f"{','.join(str(x) for x in fm['in_band_in_dist_per_seed'])}"
-            f" \u2192 "
-            f"{','.join(str(x) for x in e['in_band_in_dist_per_seed'])} of 5 "
-            f"\u2014 the wrapper is near-identity in distribution, as it has "
-            f"to be.\n")
-        out.append(
-            f"**This does not make the clause pass and was not expected to.** "
-            f"A width model would still have to span "
-            f"{e['required_range_eq']:.1f}\u00d7 while holding "
-            f"\u00b1{fm['tol_rel_median_over_shards']*50:.1f}%. What H17 "
-            f"establishes is that a large part of the requirement was our own "
-            f"broken equivariance rather than a fact about uncertainty "
-            f"quantification.\n")
-
-
-def sec_h15(sc, out):
-    """H15: rescale the interval instead of selecting the population."""
-    out.append("\n### 1e. H15 — a learned width model, the first thing that "
-               "has moved this clause (`runs/scale.json`)\n")
-    # `runs/scale.json` is written by `scripts/agg_scale.py`, which nests the
-    # H15 aggregate under "h15" alongside other analyses of the same runs.
-    # Degrade to [not measured] on an unrecognised shape rather than failing
-    # CI: a report that cannot be generated is worse than a gap in it.
-    sc = (sc or {}).get("h15")
-    if not sc or "lomo" not in sc or "by_fold" not in sc:
-        out.append(f"{NM} — `runs/scale.json` absent or unrecognised.\n")
+    if not e:
         return
-    lo = sc["lomo"]
-    leak = sc["by_fold"].get("insample_leak", {})
-    allf = sc["by_fold"]["all"]
-    n = lo["n_shards"]
+    out.append("\n#### H17 \u2014 part of that demand was our own bug\n")
     out.append(
-        f"H14 measured that the failure is in the *scale* of the conformity "
-        f"score rather than in the composition of the test set, so H15 makes "
-        f"the width a function of deployment-observable difficulty: fit "
-        f"h(z) to the conditional 90th percentile of "
-        f"the score, calibrate T = S/h(z) with one quantile per family, and "
-        f"emit q·h(z)·σ̃. h is a linear pinball-quantile regression — convex, "
-        f"no architecture, readable coefficients — fitted on a development "
-        f"shift suite of {sc['dev']['n_shards']} shards generated in memory "
-        f"from seed block {sc['dev']['seed_base']}, with values checked "
-        f"disjoint from every evaluation shard, plus half the in-distribution "
-        f"`cal` split. q is calibrated on the *other* half "
-        f"(n = {sc['n_cal_q']}), and the ungated baseline is recomputed on "
-        f"that same half so the comparison is like-for-like.\n")
-    out.append("| reading | in band /%d | per seed | what it is |" % n)
-    out.append("|---|---|---|---|")
+        f"The width a shifted shard needs, relative to the deployed one, "
+        f"spans up to **{e['required_range_base']:.1f}\u00d7**, concentrated "
+        f"in the four `*_amp2` shards. Poisson, Helmholtz, diffusion and "
+        f"advection-diffusion are **linear** in the field the amplitude shift "
+        f"scales, so u(c\u00b7f) = c\u00b7u(f) holds exactly \u2014 but "
+        f"`predict_shard*` standardizes inputs with frozen calibration "
+        f"statistics, so a 2\u00d7 input extrapolates instead of scaling. "
+        f"`uqkit/equivar.py` restores the equivariance at test time, "
+        f"F(a) \u2192 s\u00b7F(a/s), with no retraining and one extra "
+        f"reduction per sample.\n")
+    out.append("| shard | required width factor, median over seeds |")
+    out.append("|---|---|")
+    for n in sorted(fm["required_factor"]):
+        if "amp2" not in n:
+            continue
+        v = fm["required_factor"][n]
+        ctl = (" \u2014 **registered control, must not improve**"
+               if "darcy_amp2" in n else "")
+        out.append(f"| `{n.split('/')[1]}`{ctl} | "
+                   f"{v['base_median']:.2f}\u00d7 \u2192 "
+                   f"**{v['eq_median']:.2f}\u00d7** "
+                   f"({v['factor_change']:.3f} of baseline) |")
+    c = e.get("control_darcy_amp2")
     out.append(
-        f"| ungated `group` (baseline) | **{min(lo['ungated_baseline_per_seed'])}"
-        f"** | {','.join(str(x) for x in lo['ungated_baseline_per_seed'])} | "
-        f"one quantile per family, no width model |")
+        f"\nThe four linear families collapse to about 1\u00d7. "
+        f"**`darcy_amp2` is the control because Darcy's channel 0 is "
+        f"log-permeability, not a source** \u2014 `PDE2DSimulator.rhs` reads "
+        f"the source from channel 1 \u2014 so scaling it raises permeability "
+        f"to a power and there is no equivariance to restore."
+        + (f" It goes {c['base']:.2f}\u00d7 \u2192 {c['eq']:.2f}\u00d7, a "
+           f"change of {c['change']:.3f}: unchanged, exactly as registered. "
+           f"Had it improved, the wrapper would have been doing something "
+           f"other than what is claimed here." if c else "")
+        + f" The required range falls {e['required_range_base']:.1f}\u00d7 "
+        f"\u2192 **{e['required_range_eq']:.1f}\u00d7**, and it is now the "
+        f"control shard that sets the ceiling.\n")
     out.append(
-        f"| **leave-one-mechanism-out — THE HEADLINE** | "
-        f"**{lo['in_band_median']:g}** (median) | "
-        f"{','.join(str(x) for x in lo['in_band_per_seed'])} | each shard "
-        f"scored only by the fold that never saw its shift axis |")
+        f"In-band shards, ungated, with no width model at all: "
+        f"{','.join(str(x) for x in fm['in_band_per_seed'])} \u2192 "
+        f"**{','.join(str(x) for x in e['in_band_per_seed'])}** (exact "
+        f"sign-flip p = {e['vs_base']['exact_sign_flip_p']:.4f}), while "
+        f"in-distribution families in band stay "
+        f"{','.join(str(x) for x in fm['in_band_in_dist_per_seed'])} "
+        f"\u2192 {','.join(str(x) for x in e['in_band_in_dist_per_seed'])} "
+        f"of 5 \u2014 the wrapper is near-identity in distribution, as it has "
+        f"to be, and `tests/test_equivar.py` pins the exactness of "
+        f"s\u00b7F(a/s) independently of the network.\n")
     out.append(
-        f"| all mechanisms seen | {allf['in_band_median']:g} | "
-        f"{','.join(str(x) for x in allf['in_band_per_seed'])} | "
-        f"interpolation — h has seen every axis at bracketing strengths; the "
-        f"generous reading, not the headline |")
-    if leak:
-        out.append(
-            f"| in-sample **ceiling** | {leak['in_band_median']:g} | "
-            f"{','.join(str(x) for x in leak['in_band_per_seed'])} | "
-            f"h fitted **on the evaluation shards**. Not a result: the "
-            f"ceiling of this feature set and model class |")
-    out.append(
-        f"\nExact two-sided sign-flip against the ungated arm: "
-        f"**p = {lo['vs_ungated']['exact_sign_flip_p']:.4f}**, the smallest "
-        f"attainable at {sc['n_seeds']} seeds. The improvement from 0 is real. "
-        f"**The clause needs ~29/{n} and this is "
-        f"{lo['in_band_median']:g}/{n}, so clause 1 under covariate shift is "
-        f"still not met** — and the per-seed spread is "
-        f"{min(lo['in_band_per_seed'])} to {max(lo['in_band_per_seed'])}, so "
-        f"the effect is pinned at 8 seeds and its size is not. The count is "
-        f"not quotable without that range.\n")
-    idl = allf["in_dist"]
-    out.append(
-        f"**In distribution the rescaling is free**: all five families at "
-        + ", ".join(f"{t} {v['scaled_median']:.4f}" for t, v in idl.items())
-        + f", against the ungated arm's "
-        f"{list(idl.values())[0]['ungated_median']:.4f}, at width ratios "
-        f"{min(v['width_ratio_median'] for v in idl.values()):.3f}"
-        f"\u2013{max(v['width_ratio_median'] for v in idl.values()):.3f}. "
-        f"A recalibration that damaged the in-distribution pass would not be "
-        f"worth reading, and the first version of this run did exactly that "
-        f"(see `critique_log.md`, H15, setup bug 1).\n")
-    sh = lo["shards"]
-    works = sorted((k, v) for k, v in sh.items()
-                   if v["parent"] == "darcy" and v["ungated_median"] < 0.88)
-    if works:
-        out.append("**Where it works** — a coherent region, not scattered "
-                   "luck. Every Darcy shard the baseline under-covered, under "
-                   "the *held-out* fold:\n")
-        out.append("| shard | ungated | LOMO | width ratio | seeds in band |")
-        out.append("|---|---|---|---|---|")
-        for k, v in works:
-            out.append(
-                f"| `{k.split('/')[1]}` | {v['ungated_median']:.3f} | "
-                f"**{v['scaled_median']:.3f}** | "
-                f"{v['width_ratio_median']:.2f}\u00d7 | "
-                f"{v['in_band_seeds']}/{sc['n_seeds']} |")
-        out.append("")
-    amp = sorted((k, v) for k, v in sh.items() if v["mechanism"] == "amp")
-    if amp and leak:
-        lks = leak["shards"]
-        out.append(
-            "**Where it fails, and the two failure modes are different.** The "
-            "amplitude axis is *learnable and not extrapolable* — the "
-            "sharpest fact this repo has about shift:\n")
-        out.append("| shard | LOMO coverage | in-sample coverage |")
-        out.append("|---|---|---|")
-        for k, v in amp:
-            out.append(
-                f"| `{k.split('/')[1]}` | {v['scaled_median']:.3f} | "
-                f"{lks[k]['scaled_median']:.3f} |")
-        out.append(
-            "\nHold the amplitude mechanism out and coverage is 0.000 on all "
-            "five. Let h see amplitude shifts and four of the five go to "
-            "0.89\u20130.99. So amplitude is not beyond a width model; it is "
-            "beyond *reach* from the other two axes. This is the same axis "
-            "H14 found \u03c3\u0303 blind to, measured from the other side.\n")
-        out.append(
-            "The in-sample ceiling being "
-            f"{leak['in_band_median']:g}/{n} is a **precision** limit and not "
-            "a capacity one: in-sample, h moves most shards from severe "
-            "under-coverage to at or *above* 0.90 and then misses a "
-            "\u00b12pp two-sided window on the high side. Reading it as "
-            "\u201cthe method cannot fit the shift\u201d would be wrong.\n")
-
-
-def _mean_sharp(a):
-    sh = [r["sharpness_rel"] for r in a["per_seed"]]
-    return sum(sh) / len(sh)
+        f"**This does not make the clause pass and was not expected to.** A "
+        f"width model would still have to span "
+        f"{e['required_range_eq']:.1f}\u00d7 while holding "
+        f"\u00b1{fm['tol_rel_median_over_shards']*50:.1f}%. What H17 "
+        f"establishes is that a large part of that requirement was our own "
+        f"broken equivariance rather than a fact about uncertainty "
+        f"quantification \u2014 the certificate could not be fixed without "
+        f"fixing the model.\n")
 
 
 def sec_h13(h, out):
@@ -1512,6 +1431,27 @@ def sec_degradation(cs, out):
                "detection.\n")
 
 
+def _amp_range(score_rec):
+    """"base_lo-base_hi x -> eq_lo-eq_hi x" over the *linear* amp2 shards.
+
+    Computed from `required_factor` rather than typed in: an earlier version of
+    the H17 verdict row carried this range as a string literal, which is the
+    one thing no number in this repo is allowed to be. `darcy_amp2` is excluded
+    because it is the control -- its channel 0 is log-permeability, so there is
+    no equivariance to restore and it belongs in its own cell, not in a range
+    that describes the shards the wrapper repairs.
+    """
+    rows = [v for n, v in score_rec.get("required_factor", {}).items()
+            if "amp2" in n and "darcy_amp2" not in n
+            and v.get("eq_median") is not None]
+    if not rows:
+        return NM
+    b = [v["base_median"] for v in rows]
+    e = [v["eq_median"] for v in rows]
+    return (f"{min(b):.1f}\u2013{max(b):.1f}\u00d7 \u2192 "
+            f"{min(e):.2f}\u2013{max(e):.2f}\u00d7")
+
+
 def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
             csu=None, fa_src="bench_fair.json", h13=None, sv=None,
             scj=None):
@@ -1659,7 +1599,7 @@ def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
                         f"standardization; a test-time wrapper s\u00b7F(a/s) "
                         f"restores it | shrink the required range | required "
                         f"width factor on `*_amp2` falls "
-                        f"**54.7\u2013107.6\u00d7 \u2192 0.96\u20131.19\u00d7** "
+                        f"**{_amp_range(fm)}** "
                         f"on those four, the registered control `darcy_amp2` "
                         f"(log-permeability, no equivariance to restore) "
                         f"stays at {c.get('eq', float('nan')):.1f}\u00d7, and "
@@ -1685,16 +1625,16 @@ def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
                     f"{op['n_reachable_majority_of_seeds']}/"
                     f"{op['n_covariate_shards']} with the oracle | "
                     f"`runs/selective.json` | \u274c |")
-        sv2 = (sv2 or {}).get("h15")
-        if sv2 is not None and "lomo" in sv2:
-            lo = sv2["lomo"]
-            lk = sv2["by_fold"].get("insample_leak", {})
+        scj = (scj or {}).get("h15")
+        if scj is not None and "lomo" in scj:
+            lo = scj["lomo"]
+            lk = scj["by_fold"].get("insample_leak", {})
             n = lo["n_shards"]
             lines.append(
                 f"| — the same clause with the interval **rescaled** by a "
                 f"learned difficulty model instead of the population being "
                 f"selected (H15; leave-one-mechanism-out, "
-                f"{sv2['n_seeds']} seeds) | 90\u00b12% | "
+                f"{scj['n_seeds']} seeds) | 90\u00b12% | "
                 f"**{lo['in_band_median']:g}/{n}** shards in band (per seed "
                 f"{min(lo['in_band_per_seed'])}\u2013"
                 f"{max(lo['in_band_per_seed'])}) against the ungated arm's "
@@ -1972,7 +1912,7 @@ def main():
     sec_h13(load('h13_clip.json'), body)
     sec_h14(load('selective.json'), body)
     sec_h15(load('scale.json'), body)
-    sec_h15(load('scale.json'), body)
+    sec_h16(load('scale.json'), body)
     sec_consistency(csu, body, 'uq')
     sec_degradation(csu, body)
     sec_probe(lp, body)

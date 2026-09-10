@@ -2792,3 +2792,32 @@ quantile on T = S/h, same width flag, same 8 checkpoints.
 
 I do **not** expect this to reach 29/32. H16 already bounds what is available:
 even a perfect amplitude fix leaves a 28.6–68.4× range to predict at 4–6%.
+
+### The H17 equivariance test was flaky, which would have hidden a real defect either way
+
+`tests/test_equivar.py::test_wrapper_is_exactly_equivariant_despite_a_nonlinear_predictor`
+failed **3 runs in 6**. Two causes, both mine to fix:
+
+1. **It did not seed.** The input was `torch.randn(12, 2, 8, 8)` off the ambient
+   RNG state, so whether the identity "held" depended on the draw.
+2. **The tolerance was invented.** It asserted `atol=1e-6` per entry. But the
+   prediction is `s · F(a/s)` in float32, so the absolute error on an entry
+   scales with the *largest* magnitude in the tensor, not with that entry's
+   own — and `m1` has entries near zero. At c = 50 the tensor max is ~50× the
+   unscaled one while some entries stay ~1e-4, so a per-entry `atol` fails on
+   exactly the draws where one entry is small and the tensor is large.
+
+The identity itself is fine: measured max absolute deviation 4.6e-05 against a
+tensor max of order 5, i.e. relative 8.4e-06, which is float32 doing its job.
+Fixed by seeding and asserting against `8·eps32·max|c·m1|` — what float32
+actually promises — over **8 seeds × 2 families × 3 scale factors**, so the
+tolerance cannot have been fitted to one lucky draw. Now 8 passes in 8.
+
+**Why this mattered more than a flaky test usually does.** H17's headline is
+that `advdiff_amp2`'s required width factor drops 107.60× → 0.96× while the
+registered control `darcy_amp2` stays at 68.44× (ratio exactly 1.000). The
+control is what rules out "the wrapper improves everything for a generic
+reason", and the equivariance identity is what rules out "the improvement came
+from the network rather than from the algebra". A test of that identity which
+fails a third of the time supports neither claim — and a reader who saw it go
+red once would learn to ignore it, which is the worse of the two failure modes.
