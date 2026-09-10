@@ -2821,3 +2821,91 @@ reason", and the equivariance identity is what rules out "the improvement came
 from the network rather than from the algebra". A test of that identity which
 fails a third of the time supports neither claim — and a reader who saw it go
 red once would learn to ignore it, which is the worse of the two failure modes.
+
+## H15/H16/H17 at 8 seeds — and four process failures that cost most of this turn
+
+### The numbers, all from `runs/scale.json`
+
+**H15, leave-one-mechanism-out** (the headline reading): in band per seed
+**3, 2, 5, 4, 4, 2, 8, 7** — median **4/32**, range 2–8. The ungated `group`
+arm measured in the same runs is **0/32 on all eight seeds**. Exact two-sided
+sign-flip **p = 0.0078**, the smallest attainable at 8 seeds, so the movement is
+real.
+
+**And it equals its own in-sample ceiling.** The `insample_leak` fold — h fitted
+*on the evaluation shards*, never a result — gives 4, 3, 4, 4, 3, 3, 5, 5.
+LOMO against that ceiling: **p = 0.5156**, i.e. no difference. So H15 is not
+limited by development data or by unseen mechanisms; it is limited by the
+feature set and model class. More dev shards would not have helped, and I would
+have spent a day generating them if the leak fold had not been in the run.
+
+Note the seed spread: **2 to 8 shards of 32**. That is 6 shards of run-to-run
+variation, larger than the entire effect most comparisons in this repo report.
+Anything quoted from a single seed here would have been noise.
+
+**H16, the width tolerance**, 8 seeds, no method in the loop:
+
+| score | median tolerance over 32 shards | in distribution | range | ungated in band /32 | framing disagreements |
+|---|---|---|---|---|---|
+| `field_max` | **4.47%** | 5.35% | 0.40–19.75% | 0 on all 8 seeds | **0/256** |
+| `norm_ratio` | **4.22%** | 3.50% | 0.38–18.32% | 0,0,0,0,0,1,0,0 | 2/256 |
+| `rel_l2` | **6.34%** | 5.01% | 0.11–43.04% | 0,1,0,1,0,0,1,0 | 1/256 |
+
+The framing survives its own falsification test: in-band membership agrees with
+"the deployed width sits inside the tolerance" on **253 of 256 cells** for the
+worst score and **256 of 256** for `field_max`. And the seed-0 explanation
+holds up: **"90±2% coverage" is "predict the width to ±2.2%"**, and switching
+to an aggregate score does not buy slack.
+
+**H17, the equivariance repair**, 8 seeds, paired:
+
+| shard | required width factor (median over seeds) |
+|---|---|
+| `advdiff_amp2` | 107.60× → **0.96×** |
+| `poisson_amp2` | 85.71× → **1.10×** |
+| `diffusion_amp2` | 84.79× → **0.99×** |
+| `helmholtz_amp2` | 54.71× → **1.19×** |
+| **`darcy_amp2` (registered control)** | 68.44× → **68.44×** (change 1.000) |
+
+All five registered predictions confirmed: the four linear families collapse to
+~1× (predicted < 1.3×), the control does not move (predicted > 20×), the
+non-amplitude shards change by ≤1.004×, in-distribution coverage is unchanged,
+and it does **not** make the clause pass. Ungated in-band goes 0/32 → 1,1,2,1,2,1,1,0
+on `field_max` (p = 0.0156) and 0→2–5 on `norm_ratio` and `rel_l2`
+(p = 0.0078 both). Required range **107.6× → 68.4×**, now set by the control
+shard, which is the honest ceiling: Darcy's amplitude shift scales
+log-permeability and no equivariance exists to restore there.
+
+**What H17 is worth saying about.** A ~100× share of what looked like an
+intrinsic limit on uncertainty quantification was our own broken equivariance,
+fixed at test time with no retraining and no new data. The certificate could
+not have been fixed without fixing the model — which is the useful engineering
+statement, and it is the opposite of where I was looking for three turns.
+
+### Four process failures, all mine, all in the tooling rather than the science
+
+1. **I overwrote a file with `Write` instead of extending it.** An
+   `agg_scale.py` already existed from earlier in this session; I wrote a new
+   one over it. The two happened to converge, but that was luck.
+2. **`scripts/report.py` ended up with two `sec_h15` definitions**, the later
+   shadowing the earlier, because I added a section that already existed
+   without checking.
+3. **The previous commit was broken and I did not notice**, because I committed
+   with `git add -A` *before* generating the report, so a `sec_h15` reading
+   `by_fold[...]["in_dist"]` — a key `agg_scale.py` does not emit — went in
+   with a `report.py` that could not run at all. `scripts/report.py` is now
+   guarded: it degrades to `[not measured]` on an unrecognised JSON shape
+   rather than raising. **New rule for myself: never commit without running
+   `scripts/report.py` and `scripts/run_tests.py` in the same breath**, which
+   is exactly what the repo already has a one-liner for.
+4. **I wrote a flaky test.** `tests/test_equivar.py` used unseeded `torch.randn`
+   and an elementwise `allclose`; it passed, then failed on the next run at
+   c = 50 for Poisson. The failure was an artefact of the *toy* predictor —
+   `tanh(x) + 0.3x²` passes through zero, so a rescaled copy differs there by
+   catastrophic cancellation — not of the wrapper. Seeded, and the claim is now
+   checked on the per-sample field norm, which is what "equivariant" actually
+   asserts. A test that fails intermittently on an artefact is worse than no
+   test, because next time I would have suspected the wrapper.
+
+None of these changed a reported number. All four cost time, and (3) would have
+shipped a repository whose report script did not run.

@@ -269,7 +269,11 @@ def sec_ood(o, out):
 
 def sec_consistency(cs, out, tag="M1"):
     """H6: the residual under the REQUESTED operator, and what it does not buy."""
-    out.append(f"\n### 3c. Solver-consistency detection, and the two deployments "
+    # one label per deployment: this function is called twice, once for the
+    # ensemble (M1) and once for the shipped single-network UQ model, and for a
+    # while both sections were numbered 3c.
+    _lab = {"M1": "3c", "uq": "3d"}.get(tag, "3c")
+    out.append(f"\n### {_lab}. Solver-consistency detection, and the two deployments "
                f"(`runs/consistency_{tag}.json`)\n")
     if cs is None:
         out.append(f"{NM} — `runs/consistency_{tag}.json` absent.\n")
@@ -624,7 +628,7 @@ def sec_uq_seeds(u, out):
 
 def sec_h14(sv, out):
     """H14: gating the certificate on competence, and its price curve."""
-    out.append("\n### 1d. H14 — the deliberate-abstention reading, and why no "
+    out.append("\n### 1e. H14 — the deliberate-abstention reading, and why no "
                "gate delivers the clause (`runs/selective.json`)\n")
     if sv is None:
         out.append(f"{NM} — `runs/selective.json` absent.\n")
@@ -781,7 +785,7 @@ def sec_h15(sc, out):
     guard: a gap in the report beats a report that cannot be generated.
     """
     sc = (sc or {}).get("h15")
-    out.append("\n### 1e. H15 \u2014 a learned interval width, and the "
+    out.append("\n### 1f. H15 \u2014 a learned interval width, and the "
                "ceiling it hits (`runs/scale.json`)\n")
     if not sc or "lomo" not in sc or "by_fold" not in sc:
         out.append(f"{NM} \u2014 `runs/scale.json` absent or unrecognised.\n")
@@ -884,7 +888,7 @@ def sec_h16(sc, out):
     what the metric demands.
     """
     w = (sc or {}).get("wtol")
-    out.append("\n### 1f. H16 \u2014 \u201c90\u00b12% coverage\u201d is a "
+    out.append("\n### 1g. H16 \u2014 \u201c90\u00b12% coverage\u201d is a "
                "\u201cpredict the width to \u00b12%\u201d requirement\n")
     if not w:
         out.append(f"{NM} \u2014 `runs/scale.json` has no `wtol` block.\n")
@@ -990,7 +994,7 @@ def sec_h16(sc, out):
 
 def sec_h13(h, out):
     """The clip sweep: what the weighted-conformal abstention actually was."""
-    out.append("\n### 1c. H13 — the weighted-conformal abstention was a "
+    out.append("\n### 1d. H13 — the weighted-conformal abstention was a "
                "constant we chose (`runs/h13_clip.json`)\n")
     if h is None:
         out.append(f"{NM} — `runs/h13_clip.json` absent.\n")

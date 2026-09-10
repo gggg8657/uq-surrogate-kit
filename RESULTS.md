@@ -514,7 +514,7 @@ Surrogate rel-L2 is unchanged at 0.05063 (was 0.05063), as bit-identity requires
 **What it would take to undo this.** The break-even is unchanged in kind and only moved in value: a reference solver reaching **51.2 ms** on a field takes that field back under 100×, against a current fastest field of 60.3 ms. The PCG loop is still a Python loop launching individual kernels, and fused stencil kernels, cached grid-dependent preconditioner data and graph-captured fixed-length PCG chunks are all admissible and all unmeasured. So the defensible statement is **"24/24 measured fields against this specified PCG implementation"**, not an established advantage against an equivalently optimized reference.
 
 
-### 1c. H13 — the weighted-conformal abstention was a constant we chose (`runs/h13_clip.json`)
+### 1d. H13 — the weighted-conformal abstention was a constant we chose (`runs/h13_clip.json`)
 
 `WeightedConformal` returns an infinite quantile — which covers everything and certifies nothing — exactly when a test point's importance weight exceeds `W·α/(1−α)`. With ratios clipped to `[1/clip, clip]` the worst case reduces to `clip² > n_cal·α/(1−α)`, i.e. **clip > 10.67** here. The shipped clip was **20.0**. This table straddles that bound: 8 seeds × 32 covariate-shift shards, operator-shift shards excluded because they change p(y|x) and no reweighting of x is the right tool for that.
 
@@ -551,7 +551,7 @@ Surrogate rel-L2 is unchanged at 0.05063 (was 0.05063), as bit-identity requires
 So the honest headline is **~2/32 shards in band**, and clause 1 under covariate shift is **not met**. What changed is that the reason is now correct: this repo previously attributed the whole failure to a distribution-free impossibility, and half of it was our clip. The remaining half is real — coverage decays monotonically with shift strength on both calibrators and both reach zero at the same shift, which is the signature of p(y|x) changing rather than only p(x).
 
 
-### 1d. H14 — the deliberate-abstention reading, and why no gate delivers the clause (`runs/selective.json`)
+### 1e. H14 — the deliberate-abstention reading, and why no gate delivers the clause (`runs/selective.json`)
 
 H13 left one route open for clause 1 under shift: certify where the model is still competent and abstain deliberately elsewhere. It is measured here over 8 seeds on the shipped M=1 `het` model, score `field_max`, at a registered in-distribution false-abstention rate β = 0.05. **The gate detects the shift almost perfectly and moves the clause not at all.**
 
@@ -603,7 +603,7 @@ In-band count by β, median over seeds:
 So the answer is not that the price is high. **There is no β on this grid that buys the clause** — refusing 95% of samples still leaves at most one shard of 32 in band, with an oracle gate. The shards that are ever reachable are the two that need it least: the mildest rung of the graded ladder, and an over-covering `smooth` shard that reaches 0.90 from above by discarding most of itself.
 
 
-### 1e. H15 — a learned interval width, and the ceiling it hits (`runs/scale.json`)
+### 1f. H15 — a learned interval width, and the ceiling it hits (`runs/scale.json`)
 
 H14 showed the failure is in the *scale* of the conformity score rather than the composition of the test set, so H15 rescales the width instead of selecting the population: fit h(z) to the conditional 90th percentile of the score on a **development** shift suite (75 shards × 256 samples, seed block 40000+, values checked disjoint from every evaluation shard, generated in memory and never written to disk), calibrate T = S/h(z) on a held-back half of the in-distribution calibration split, and emit q·h(z)·σ. h is linear in standardized log-features and fitted by pinball loss, so its coefficients are readable and it cannot rescue the clause by being a black box.
 
@@ -642,7 +642,7 @@ Shards the learned width brings into band on at least one seed, with the interva
 ⚠ marks a shard whose interval exceeded 3× the ungated one on at least one seed. Coverage bought by inflating the interval is not a deployable certificate, which is why the width column is not optional.
 
 
-### 1f. H16 — “90±2% coverage” is a “predict the width to ±2%” requirement
+### 1g. H16 — “90±2% coverage” is a “predict the width to ±2%” requirement
 
 No uncertainty method enters this measurement (8 seeds). For a per-sample score S the width achieving coverage exactly *p* **is** the *p*-th quantile of S, so the widths keeping coverage inside the KPI band span exactly [Q₀.₈₈(S), Q₀.₉₂(S)] and the relative tolerance is (Q₀.₉₂ − Q₀.₈₈)/Q₀.₉₀. Three order statistics; nothing to tune.
 
@@ -676,7 +676,7 @@ In-band shards, ungated, with no width model at all: 0,0,0,0,0,0,0,0 → **1,1,2
 **This does not make the clause pass and was not expected to.** A width model would still have to span 68.4× while holding ±2.2%. What H17 establishes is that a large part of that requirement was our own broken equivariance rather than a fact about uncertainty quantification — the certificate could not be fixed without fixing the model.
 
 
-### 3c. Solver-consistency detection, and the two deployments (`runs/consistency_uq.json`)
+### 3d. Solver-consistency detection, and the two deployments (`runs/consistency_uq.json`)
 
 An operator shift is observable only if the request *names* the operator. **(A)** scores the residual under `PARENT[task]`, the operator the surrogate is configured for — the process moved and nobody reconfigured the model. Under (A) every unsupervised detector is a function of (input, configured operator), neither of which changed, so it is at chance **by construction**; that is the strict reading and it stands. **(B)** scores it under the operator the request names. Of the 49 shards, exactly **6 change the operator** (`tests/test_sims.py::test_operator_key_partitions_the_ood_suite` pins the partition); on the rest (B) is byte-identical to (A), which is the control.
 
