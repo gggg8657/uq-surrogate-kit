@@ -217,6 +217,30 @@ work and would move the number against us, which is the reason to do it. A
 decision is needed on which side gets the next turn; the honest default is the
 reference, because that is the side a reader will attack.
 
+**1c. Should clause 1 under shift become a *conditional* coverage
+specification?** H13 established that the recoverable regime is bounded by the
+surrogate's own competence: coverage decays monotonically with shift strength on
+both calibrators and both die at the same shift, because past that point p(y|x)
+has changed and no reweighting of the inputs can reach it. Meanwhile the OOD
+detector already identifies exactly that boundary — **33/33** shards at AUROC
+≥0.9 conditional on the shift degrading the model.
+- *Option A — keep the unconditional specification.* Clause 1 under shift is
+  **not met** at ~2/32 shards and will stay not met. Defensible: an
+  unconditional 90±2% is what the KPI says, and a certificate with an escape
+  clause is worth less than one without.
+- *Option B — certify conditionally.* Emit an interval where the detector says
+  the model is in competence, and **abstain deliberately** elsewhere, with the
+  abstention rate as a reported quantity rather than an artefact of a clip
+  constant. Defensible: it is what a plant would actually want, and it is
+  honest in a way the current 100%-coverage-by-infinite-interval cells are not.
+- *Recommendation:* **B, but it is a specification change and we are not taking
+  it unilaterally.** It converts a failed clause into a met one by changing what
+  is being promised, which is precisely the move that needs a human to sign it.
+  Note the shape of the trade before signing: Option B's abstention rate would
+  be a *measured* number on each shard, so the deliverable becomes "90±2%
+  coverage on the x% of inputs we certify", and x is what the buyer is really
+  purchasing.
+
 **2. Does clause 3 mean "detect every shift" or "detect every shift that
 matters"?** Strict, all 49 shards: **47/49**. Conditional on the shift actually
 degrading the surrogate: **33/33**, minimum 0.9964. Both misses are `dam0p1`
