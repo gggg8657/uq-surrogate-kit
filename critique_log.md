@@ -2144,3 +2144,126 @@ verdict moves — but the tie handling was load-bearing and the earlier value wa
 wrong. This is the third time in this repo that an instrument, not a model, was
 the thing that needed fixing, and the second time a test rather than a critic
 found it.
+
+## H15 — written before the run: rescale the interval, do not select the population
+
+**What the measurement licenses.** H14 established, at 8 seeds and with an
+oracle, that the failure of clause 1 under covariate shift is in the *scale* of
+the conformity score S = max|μ−u|/σ̃ and not in the composition of the test set.
+Under shift σ̃ under-predicts the error at fixed error magnitude, so S's upper
+quantile rises uniformly rather than in a selectable tail. That kills selection
+and it names the alternative exactly: **make the interval width a function of
+deployment-observable difficulty, so that S/h(z) has a shift-stable quantile.**
+
+This is normalized (difficulty-conditioned) conformal prediction. It is a
+change of *algorithm*, which is ladder rung 2, and it is the route the adversary
+independently ranked first when asked the addendum's question — recorded below.
+
+### The change (one)
+
+Fit h(z) > 0 to predict the conditional (1−α) quantile of S from features z
+available at deployment. Calibrate T = S/h(z) by the same split-conformal
+machinery already in `uqkit/conformal.py`, and emit the half-width
+q·h(z)·σ̃(x) instead of q·σ̃(x). Nothing else moves: same score definitions,
+same alpha, same frozen sigma floor, same 32 evaluation shards, same 8
+checkpoints, one forward pass.
+
+- **h is a linear pinball-quantile regression on standardized log-features**,
+  not an MLP. It is convex, has no architecture to tune, and its coefficients
+  are readable — which matters because a black box here is indistinguishable
+  from memorising the dev shifts. An MLP variant gets measured only if the
+  linear one clears the band, so it can never be the thing that rescues it.
+- **z is strictly deployment-observable:** the input's spectral features
+  (`uqkit.features.spectral_features`, already used by the weighted-conformal
+  probe), summaries of σ̃ and of μ, and a family one-hot. **No ground truth, no
+  extra solve, and no operator apply in the headline variant**, so the 100× row
+  is untouched by construction rather than by argument.
+- The `consist` residual is a *separate labelled variant*, not part of the
+  headline h, because it exists for only three of five families and would make
+  the headline number a different number per family.
+
+### The leakage discipline, which is the whole ballgame
+
+h has to be fitted on shifted data or it cannot know anything about shift. So
+the fit needs its own shards, and if I fit on the 32 evaluation shards the
+resulting number is worthless. Registered now:
+
+- A **fresh dev shift suite** is generated with new seeds
+  (`scripts/gen_dev_shifts.py`, seed block 40000+, disjoint from the 20000+
+  block the evaluation shards use). Generation is cheap — 2.1 s for a 512-sample
+  Darcy shard, 0.1 s for Poisson — so there is no excuse for reusing evaluation
+  data.
+- The 32 evaluation shards are **never** touched by the fit. Not for feature
+  standardization, not for early stopping, not for choosing the feature set.
+- q is calibrated on the **in-distribution** `cal` split only, which is what a
+  deployment has. A variant calibrated on dev∪cal is reported separately and
+  labelled; it is not the headline.
+- **Two readings, both reported (rung 1):**
+  - **(A) unseen strength** — dev covers all three shift mechanisms at
+    strengths the evaluation shards do not use. The evaluation shards' α, τ and
+    amplitude then sit inside the dev range, so this is interpolation and it is
+    the *generous* reading.
+  - **(B) unseen mechanism** — leave-one-mechanism-out. The knobs are
+    `alpha` (which covers `rough`, `smooth` **and** the whole graded `dam`
+    ladder, since the ladder is the same axis), `tau`, and `amp`. Three folds;
+    each evaluation shard is scored only by the fold that never saw its
+    mechanism. **(B) is the headline**, because (A) lets the fit see the axis it
+    is tested on.
+
+### Predictions, registered now
+
+1. **(A) will beat (B), and I will report (B).** If (A) clears the band and (B)
+   does not, the honest statement is "this works when you have seen the shift
+   axis before", which is a real but much weaker product claim.
+2. The `smooth` shards are the ones h should fix most easily, because they
+   over-cover (0.990–0.998) and h only has to make the interval *narrower* on
+   inputs that are visibly smoother — a direction no gate could move. **If the
+   `smooth` shards do not come into band under (B), h is not learning
+   difficulty at all** and the route is in trouble regardless of what happens
+   elsewhere.
+3. The `*_amp2` shards are where I expect h to fail hardest under (B), because
+   amplitude was measured in H14 as the axis σ̃ extrapolates worst (true error
+   8.6–147× past its threshold, σ̃ 1.01–1.41×) and holding out `amp` removes the
+   only data that could teach h about it.
+4. **Width is a first-class output, not a footnote.** h can buy coverage by
+   inflating every interval, which would be H13's abstention trap wearing a
+   third disguise. So every coverage is reported with `width_rel`, and a shard
+   whose coverage enters the band while its width grows more than 3× against
+   the ungated interval is flagged. I expect the graded ladder's far rungs to
+   need widths that make the certificate useless, and **that** — a coverage in
+   band at a width nobody would deploy — is the outcome I think most likely for
+   the hard shards.
+5. 8 seeds, exact sign-flip against the ungated `group` arm on per-seed in-band
+   counts. A verdict, not a screen.
+
+### Rung 4, asked the addendum's way (`logs/critic_codex_howto_coverage2.log`)
+
+`codex`, asked "how would you make this clause pass" rather than "what is wrong
+with this", ranked three routes and put this one at the top and second:
+
+> "Initially freeze the mean and sigma network. Train a small predictor of the
+> **90th percentile of the existing conformal score**, using deployment-observable
+> features… At inference, replace the fixed score threshold with `q·h(z(x))`.
+> **How coverage changes:** for hard inputs, the threshold rises until
+> approximately 90% of their errors fall below it. For smooth inputs, it falls,
+> bringing approximately 99.9% coverage down toward 90%."
+
+and its falsification condition is the one I have adopted as reading (B):
+
+> "on independent development data, leave out intermediate shift strengths and
+> **entire shift mechanisms**… A pooled 90% result does not validate this
+> proposal."
+
+Its second proposal — invert the PDE residual into an approximate error map and
+condition the width on that — **I am declining for the elliptic families, and
+the reason is worth recording because it is a limit on the whole
+physics-residual-UQ story in this benchmark.** For Poisson and Helmholtz the
+operator is a Fourier multiplier, so applying `A⁻¹` costs exactly what applying
+`A` costs: `A⁻¹(f − Aμ) = u − μ` is the *exact* error, and obtaining it is
+literally the spectral solve. Any residual-inversion error estimate there is
+either free-lunch circularity or a deliberately crippled solve, and either way
+the surrogate has become irrelevant. Darcy is the honest case — variable
+coefficient, apply is cheap, solve is thousands of PCG iterations — so a
+residual-conditioned width is legitimate there and is a Darcy-only variant, not
+a headline. Codex did not distinguish these cases and its proposal 2 would have
+produced a spectacular and meaningless Poisson number.
