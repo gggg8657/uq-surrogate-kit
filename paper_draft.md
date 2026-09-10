@@ -31,13 +31,19 @@ head's measurable effect is a 13.1% sharper interval. On the timing side, the
 clause turned out to be decided by a subsidy in our own benchmark — the
 reference solver was timed with a device-to-host synchronization on every
 iteration of up to 2000, and the surrogate was timed with autograd tracking
-left on. Removing both, the batch-1 ratio is **328.5×** under CUDA-graph replay
-(verified bit-exact against eager, then re-verified against a mutated input so a
-stale buffer cannot pass) and **90.0×** eager, against 106.0× eager on the
-subsidized denominator: *the subsidy alone was the difference between passing
-and failing.* The win is a batch-1 latency win only — at batch 64, where both
-sides are dispatch-efficient, the ratio is 51.8× and graph capture is slightly
-*slower* than eager. **(ii)** Against a well-preconditioned
+left on. Removing that subsidy, and then two further ones we found in our own reference
+(face coefficients rebuilt every iteration on a fixed field; a preconditioner
+whose symbol did not match the stencil being applied), the batch-1 ratio under
+CUDA-graph replay falls from 602× to **216.4×** on the field this repository
+timed by default and to **21 of 24 distinct fields clearing 100×, worst 94.0×**
+when the reference is given its best admissible configuration on each field.
+Every fix is verified to leave the solver's answer bit-identical with its
+residual inside tolerance, so the clause is **not met** — and the sequence
+602× → 328× → 228× → 94–257× is the result, because an apparent 6× margin over
+the target was three layers of our own sloppiness in the baseline. The win is
+also a batch-1 latency win only: at batch 64, where both sides are
+dispatch-efficient, the ratio is 40.5× and graph capture is slightly *slower*
+than eager. **(ii)** Against a well-preconditioned
 iterative solver at *matched accuracy*, the surrogate's advantage is 2.2×, not
 the 26.8× obtained against the over-converged tolerance the corpus was generated
 at; against exact spectral propagators the surrogate is 15–220× slower.
@@ -106,22 +112,27 @@ Amortizing the solver's test over 50 iterations (which returns an iterate whose
 *measured* final residual is 6.8e-11 against a 1e-10 tolerance, so it is the
 same solver) and removing the surrogate's autograd and per-kernel dispatch:
 
-| arm at batch 1 | vs the repo's PCG | vs the *optimized* PCG | subsidized |
+| arm at batch 1, sample 0 | vs the repo's PCG | vs the *optimized* PCG | subsidized |
 |---|---|---|---|
-| eager, autograd on (the protocol above) | 90.0× | **72.3×** | 107.6× |
-| eager, no autograd | 113.6× ✅ | **90.5×** ❌ | 133.8× |
-| CUDA-graph replay | 328.5× | **228.2×** ✅ | 337.5× |
+| eager, autograd on (the protocol above) | 90.0× | **64.5×** | 106.2× |
+| eager, no autograd | 113.6× ✅ | **~90×** ❌ | — |
+| CUDA-graph replay | 328.5× | **216.4×** | 339.6× |
 
 The middle column is the one to read, and it exists because we went looking for
-work our own reference was doing redundantly. `_darcy_apply` rebuilt four
-face-coefficient arrays on every PCG iteration although the coefficient field is
-fixed for the whole solve. Hoisting them out is **bit-identical** — solution
-deviation 0.000e+00 against the original path, same achieved residual — so it is
-the same solver and an admissible denominator, and it cut the batch-1 solve by
-1.28×. It also **withdrew a passing arm**: no-grad eager went from 113.6× to
-90.5×, from met to not met. We regard this as the correct direction for a
-speedup claim to move under scrutiny, and we report it rather than stopping at
-the first configuration that cleared the line.
+work our own reference was doing redundantly. Three defects, each verified to
+leave the solver's answer **bit-identical** (solution deviation 0.000e+00) with
+its residual inside tolerance, so none of them changes the problem being solved:
+(i) the convergence test forced a device-to-host synchronization on every one of
+up to 2000 iterations; (ii) `_darcy_apply` rebuilt four face-coefficient arrays
+every iteration although the coefficient field is fixed for the whole solve;
+(iii) the FFT preconditioner used the *continuous* Laplacian symbol while the
+operator applies a 5-point stencil — a ~2.5× mismatch at Nyquist — costing
+iterations (839 → 775 with the matching discrete symbol).
+
+**Each round moved the number against us, and the third took the clause under
+the target.** We report the sequence rather than the endpoint, because the
+sequence is the finding: an apparent 6× margin over the KPI was three layers of
+our own sloppiness in the reference.
 
 The eager row crosses the 100× threshold *in the subsidy alone*. We report this
 as the paper's most uncomfortable measurement: for the protocol under which
@@ -135,20 +146,28 @@ the surrogate was graph-captured. `_darcy_apply` recomputes four coefficient-fac
 arrays on every iteration although the coefficient field is fixed for the whole
 solve; that optimization is named and unmeasured. A reference reaching 63.9 ms
 would take the clause back under 100×. Second, every batch-1 row in the
-literature-style table above times *one* coefficient field. Solve difficulty
-varies 3.74× across fields (68.8–257.5 ms), so we sweep 24 distinct ones against
-the optimized reference: 24 of 24 clear 100×, worst field 107.9×, median 154.3×.
-The clause holds per problem rather than on an average — but a 107.9× worst case
-is a **7.9% margin**, and the hardest field would fall below 100× against a
-reference reaching 63.73 ms on it, a further 7.3%. Two rounds of baseline
-improvement took this reading from 602× to 228× on the median field and 150× to
-108× on the worst; the remaining routes (fused stencil kernels, a
-discrete-Laplacian rather than continuous-spectral preconditioner,
-mixed-precision inner iterations with FP64 refinement, graph-capturing
-fixed-length PCG chunks) would each plausibly buy more than 7.3%. **We therefore
-report clause 2 as met and marginal, and we expect it to fail against a
-sufficiently well-engineered reference.** That is a more useful statement than a
-speedup figure, and it is the one our own measurements support.
+literature-style table above times *one* coefficient field, and that turns out to
+decide the clause. Solve difficulty varies 3.26× across fields (62.4–203.6 ms).
+Sweeping 24 distinct fields, with the reference given its best admissible
+convergence stride on **each field independently** — imposing one field's stride
+on all of them inflated our own worst case by 20%, because the stride rounds the
+stopping iteration up to a multiple of itself and so penalises the easy fields —
+**21 of 24 clear 100×; the worst reads 94.0× and the median 144.4×.**
+
+**Clause 2 is therefore not met**, and the three failures are the *easiest*
+fields, where the solver finishes in 62–64 ms against the surrogate's 0.638 ms.
+We had published the break-even before the run that reached it: "a reference
+reaching 63.73 ms on the hardest field ends the clause". The field that ended it
+solves in 63.77 ms.
+
+We keep the sample-0 figure of 216.4× in the table, labelled as one field and
+explicitly not the verdict, because it is the number this repository would have
+reported by default and the gap between it and 21/24 is the paper's point. What
+survives is narrower and better understood than the wall we started from: the
+surrogate is 94–257× faster than a well-optimized reference at 5.1% relative
+error, the spread across problems (3.26×) exceeds the remaining margin to the
+target, and the missing ~1.07× now has to come from the surrogate rather than
+from the solver — which has been optimized three times, each time against us.
 
 The third is the honest one and it is an *upper bound*: the sweep never made the
 PCG as inaccurate as the surrogate. At a 10⁻¹ residual tolerance the solver still

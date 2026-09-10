@@ -1017,7 +1017,14 @@ def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
                 continue
             bst = max(r, key=lambda k: r[k]["ratio_conservative"])
             rr = r[bst]
-            reading = "per-sample latency" if B == "1" else "batched"
+            # Label the batch-1 row as the ONE field it times. Sample 0 is
+            # favourable (it needs ~800 PCG iterations, so the solver looks
+            # expensive on it) and reading it as the clause verdict when the
+            # 24-field sweep says 21/24 would be reporting the flattering
+            # half. The per-problem row below is the load-bearing one.
+            reading = ("per-sample latency, ONE field (sample 0) — not the "
+                       "clause verdict, see the 24-field row below"
+                       if B == "1" else "batched")
             lines.append(
                 f"| inference speedup, {reading} (batch {B}), fair "
                 f"denominator | \u2265100\u00d7 | best arm `{bst}`: "
@@ -1032,8 +1039,9 @@ def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
         if sw:
             g = sw["ratio_graph_conservative"]
             lines.append(
-                f"| — the same batch-1 clause over {sw['n_samples']} "
-                f"**distinct** coefficient fields, not one repeated | "
+                f"| **inference speedup, batch 1, over {sw['n_samples']} "
+                f"distinct coefficient fields — THE clause verdict at batch "
+                f"1** | "
                 f"\u2265100\u00d7 on every problem | "
                 f"**{g['n_ge_100x']}/{g['n']}** clear it; worst field "
                 f"{g['min']:.1f}\u00d7, median {g['median']:.1f}\u00d7, best "

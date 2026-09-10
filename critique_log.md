@@ -1338,3 +1338,78 @@ degrade twice under exactly the kind of scrutiny it should get.
 **What I will not do.** Stop optimizing the reference here because the number is
 still above the line. The remaining routes are written down above so the next
 turn attacks them rather than protecting the tick.
+
+## H11 — two more rounds of fixing my own reference, and clause 2 crossed back under the line
+
+**Round one: the preconditioner.** `codex` named "a discrete-Laplacian FFT
+preconditioner" as an admissible faster reference. `solve_darcy` preconditioned
+with the *continuous* symbol `|ξ|²` while `_darcy_apply` applies a 5-point FD
+stencil; those agree at low frequency and disagree by ~2.5× at Nyquist (the
+continuous symbol reads ~π²N² where the discrete operator reads 4N²), so the
+preconditioner over-damps high-frequency modes and CG pays for it in
+iterations. `discrete_laplacian_symbol` fixes the mismatch.
+
+A preconditioner change cannot alter the solution, only the iteration count, so
+this is the same solver by construction — and the measurement confirms it:
+solution deviation **0.000e+00**, residual still inside `tol`, iteration count
+839 → **775** at `check_every=1` (1.08×). The mechanism is measured, not
+asserted: `solve_darcy.last_iters` is now recorded per cell.
+
+**Round two, and this is the one that mattered — a selection artefact I had
+introduced myself.** The first fast-apply run selected *one* denominator
+configuration on the reference sample and applied it to all 24 fields. But
+`check_every` rounds the stopping iteration up to a multiple of itself, so a
+stride tuned on a field needing 800 iterations forces a field needing 350 to run
+400. Selecting `check_every=100` on sample 0 therefore made the *easiest* fields
+slower and **inflated my own worst-case ratio from 107.9× to 129.3×**. I noticed
+because the worst-field number moved in the wrong direction — a better reference
+solver should never make my ratio go up.
+
+Fixed: the solver now gets its best admissible `check_every` on **every field
+independently**, and every configuration tried is recorded per cell
+(`solver_configs_timed`).
+
+**Result — the clause fails.**
+
+| reading | before H10 | after H10 | after H11 |
+|---|---|---|---|
+| `graph`, sample 0 only | 328.5× | 228.2× | 216.4× |
+| `graph`, **24 distinct fields** | 24/24, min 150.2× | 24/24, min 107.9× | **21/24, min 94.0×** |
+| `nograd`, sample 0 | 113.6× ✅ | 90.5× | 64.5× |
+| batch 64, best arm | 51.8× | 44.0× | 40.5× |
+
+**Clause 2 is NOT met.** Three of 24 fields fall below: sample 17 at **94.0×**,
+sample 18 at 95.5×, sample 2 at 99.8×. Median 144.4×, best 257.0×, solve
+difficulty spanning 3.26× (62.4–203.6 ms).
+
+Two things worth saying about how that number arrived.
+
+First, **I predicted it.** The break-even I published two commits ago was
+"a reference reaching 63.73 ms on the hardest field ends the clause". Sample 2
+now solves in 63.77 ms and reads 99.8×. The prediction was quantitative and it
+landed within 0.06%.
+
+Second, **every step that killed it was me tightening my own test.** The
+sequence was 602× → 328× (removed the solver's per-iteration sync subsidy) →
+228× (stopped the solver rebuilding face coefficients it already had) → 216×
+and 21/24 (stopped handicapping the solver with one field's `check_every`).
+Each change was verified to leave the solver's answer bit-identical and its
+residual inside tolerance, so none of them is a different problem — they are the
+same comparison, measured better. The clause's apparent margin was three layers
+of my own sloppiness in the reference.
+
+**So the honest verdict for clause 2 is `NOT MET`, at every reading I have.**
+Batch 64: 40.5×. Batch 1, per problem: 21/24, worst 94.0×. Batch 1 on the single
+favourable field: 216.4×, and that row is now labelled in `RESULTS.md` as one
+field and explicitly *not* the clause verdict, because reading it as one would
+be quoting the flattering half of my own measurement.
+
+**What this does not retract.** The architecture result stands and is
+independent of the denominator: the interval comes from **one forward pass**
+(0.9026 coverage, 8/8 seeds), so the structural "100× XOR an interval" identity
+that justified Friday's `UNREACHABLE` is genuinely dead. What replaced it is a
+plain quantitative shortfall — a 0.638 ms surrogate against a 62–204 ms
+reference is 94–257×, and 100× on *every* problem is simply past it. That is a
+much better-understood failure than the one I started the turn with, and it has
+a named route: the surrogate side, not the solver side, is now where the
+remaining factor has to come from.

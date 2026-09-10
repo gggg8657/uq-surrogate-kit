@@ -72,6 +72,13 @@ def main():
                     default=[1, 10, 50, 100])
     ap.add_argument("--trials", type=int, default=5)
     ap.add_argument("--iters", type=int, default=10)
+    ap.add_argument("--precond", nargs="+", default=["continuous"],
+                    choices=["continuous", "discrete"],
+                    help="FFT preconditioner symbol(s) to time. `discrete` "
+                         "matches the 5-point stencil the operator actually "
+                         "applies; a preconditioner change cannot alter the "
+                         "solution, only the iteration count, so it is the "
+                         "same solver and an admissible denominator.")
     ap.add_argument("--fast-apply", action="store_true",
                     help="also time the solver with the face coefficients "
                          "hoisted out of the PCG iteration. Verified "
@@ -159,24 +166,30 @@ def main():
         # named. It is verified bit-identical to the default path, so it is the
         # SAME solver and therefore an admissible denominator. Including it can
         # only make our own clause harder, which is the point.
-        combos = [(ce, fa) for fa in ([False, True] if args.fast_apply
-                                      else [False])
+        combos = [(ce, fa, pc)
+                  for pc in args.precond
+                  for fa in ([False, True] if args.fast_apply else [False])
                   for ce in args.check_every]
-        for ce, fap in combos:
+        for ce, fap, pc in combos:
             _, resid = P.solve_darcy(a_coef, f_rhs, tol=TOL, check_every=ce,
-                                     fast_apply=fap)
+                                     fast_apply=fap, precond=pc)
+            n_it = P.solve_darcy.last_iters
             t = trials(lambda: P.solve_darcy(a_coef, f_rhs, tol=TOL,
-                                             check_every=ce, fast_apply=fap),
+                                             check_every=ce, fast_apply=fap,
+                                             precond=pc),
                        args.trials, args.iters)
             t["achieved_residual"] = float(resid)
             t["admissible"] = bool(resid <= TOL)
             t["check_every"] = ce
             t["fast_apply"] = fap
-            key = f"check_every={ce}" + ("+fast_apply" if fap else "")
+            t["precond"] = pc
+            t["pcg_iters"] = int(n_it)
+            key = (f"check_every={ce}" + ("+fast_apply" if fap else "")
+                   + ("" if pc == "continuous" else f"+{pc}_precond"))
             entry["solver"][key] = t
-            print(f"  B={B:<3d} solver {key:<26s} "
+            print(f"  B={B:<3d} solver {key:<40s} "
                   f"{t['median_s']*1e3:8.2f} ms (min {t['min_s']*1e3:.2f}) "
-                  f"resid={resid:.2e} "
+                  f"{n_it:5d} it resid={resid:.2e} "
                   f"{'OK' if t['admissible'] else 'INADMISSIBLE'}", flush=True)
 
         eager = make_uq_fn(model, a_raw, st, tid, args.uq_source, autocast=True)
@@ -257,6 +270,8 @@ def main():
             entry["fair_denominator"] = {
                 "check_every": fastest["check_every"],
                 "fast_apply": fastest.get("fast_apply", False),
+                "precond": fastest.get("precond", "continuous"),
+                "pcg_iters": fastest.get("pcg_iters"),
                 "min_s": fastest["min_s"], "median_s": fastest["median_s"],
                 "achieved_residual": fastest["achieved_residual"],
                 "why": ("fastest solver setting that still meets tol; using a "
@@ -318,8 +333,10 @@ def main():
     if args.sample_sweep > 0:
         fd = res["batches"]["1"]["fair_denominator"]
         ce, fap = fd["check_every"], fd.get("fast_apply", False)
+        pc = fd.get("precond", "continuous")
         print(f"\nper-sample sweep at batch 1, check_every={ce}, "
-              f"fast_apply={fap}, {args.sample_sweep} distinct samples",
+              f"fast_apply={fap}, precond={pc}, "
+              f"{args.sample_sweep} distinct samples",
               flush=True)
         st = stats[PARENT.get(args.task, args.task)]
         tid = torch.full((1,), TASK_ID[PARENT.get(args.task, args.task)],
@@ -328,11 +345,40 @@ def main():
         for idx in range(min(args.sample_sweep, len(blob["a"]))):
             a_one = blob["a"][idx:idx + 1].to("cuda")
             a_c, f_r = torch.exp(a_one[:, 0]), a_one[:, 1]
-            _, resid = P.solve_darcy(a_c, f_r, tol=TOL, check_every=ce,
-                                     fast_apply=fap)
-            ts = trials(lambda: P.solve_darcy(a_c, f_r, tol=TOL,
-                                              check_every=ce, fast_apply=fap),
-                        args.sweep_trials, args.iters)
+            # Per-sample denominator selection. Picking ONE configuration on
+            # the reference sample and applying it to all 24 handicaps the
+            # solver on the others: `check_every` rounds the stopping iteration
+            # up to a multiple of itself, so a stride tuned to a field needing
+            # 800 iterations forces a field needing 350 to run 400. That is
+            # exactly what happened -- selecting check_every=100 on sample 0
+            # made the easiest fields *slower* and inflated our own ratio. The
+            # solver gets its best admissible configuration on every field
+            # independently, which can only make our clause harder.
+            per_cfg = {}
+            for ce_i in args.check_every:
+                _, r_i = P.solve_darcy(a_c, f_r, tol=TOL, check_every=ce_i,
+                                       fast_apply=fap, precond=pc)
+                if r_i > TOL:
+                    continue
+                it_i = P.solve_darcy.last_iters
+                t_i = trials(lambda: P.solve_darcy(a_c, f_r, tol=TOL,
+                                                   check_every=ce_i,
+                                                   fast_apply=fap, precond=pc),
+                             args.sweep_trials, args.iters)
+                t_i["achieved_residual"] = float(r_i)
+                t_i["pcg_iters"] = int(it_i)
+                t_i["check_every"] = ce_i
+                per_cfg[f"check_every={ce_i}"] = t_i
+            if not per_cfg:
+                print(f"  sample {idx:3d} no admissible solver config; "
+                      f"excluded", flush=True)
+                del a_one
+                torch.cuda.empty_cache()
+                continue
+            best_key = min(per_cfg, key=lambda k: per_cfg[k]["min_s"])
+            ts = per_cfg[best_key]
+            resid, n_it = ts["achieved_residual"], ts["pcg_iters"]
+            ce_used = ts["check_every"]
             fn1 = make_uq_fn(model, a_one, st, tid, args.uq_source,
                              autocast=True)
             tg = trials(no_grad_wrap(fn1), args.sweep_trials, args.iters)
@@ -340,9 +386,16 @@ def main():
             tgr = trials(gf, args.sweep_trials, args.iters)
             cell = {
                 "sample_index": idx,
+                "check_every_selected": ce_used,
+                "solver_configs_timed": {
+                    k: {"min_s": v["min_s"], "median_s": v["median_s"],
+                        "pcg_iters": v["pcg_iters"],
+                        "achieved_residual": v["achieved_residual"]}
+                    for k, v in per_cfg.items()},
                 "solver_median_s": ts["median_s"], "solver_min_s": ts["min_s"],
                 "achieved_residual": float(resid),
                 "admissible": bool(resid <= TOL),
+                "pcg_iters": int(n_it),
                 "nograd_median_s": tg["median_s"], "nograd_max_s": tg["max_s"],
                 "graph_median_s": tgr["median_s"], "graph_max_s": tgr["max_s"],
                 "ratio_graph_conservative": ts["min_s"] / max(tgr["max_s"], 1e-12),
@@ -351,7 +404,8 @@ def main():
             }
             cells.append(cell)
             print(f"  sample {idx:3d} solver {ts['median_s']*1e3:8.2f} ms "
-                  f"(min {ts['min_s']*1e3:.2f}) resid {resid:.1e} "
+                  f"(min {ts['min_s']*1e3:.2f}, best {best_key}, "
+                  f"{n_it} it) resid {resid:.1e} "
                   f"{'OK' if cell['admissible'] else 'INADM'} | graph "
                   f"{tgr['median_s']*1e3:.3f} ms | ratio "
                   f"{cell['ratio_graph_conservative']:8.1f}x", flush=True)
@@ -363,7 +417,9 @@ def main():
         rn = sorted(c["ratio_nograd_conservative"] for c in adm)
         sv = sorted(c["solver_median_s"] for c in adm)
         res["sample_sweep"] = {
-            "check_every": ce, "fast_apply": fap, "n_samples": len(cells),
+            "check_every": "selected per sample from "
+                             + str(args.check_every),
+            "fast_apply": fap, "precond": pc, "n_samples": len(cells),
             "n_admissible": len(adm), "trials_per_cell": args.sweep_trials,
             "cells": cells,
             "solver_median_s": {"min": sv[0], "max": sv[-1],
