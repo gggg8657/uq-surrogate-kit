@@ -66,6 +66,7 @@ reasons it is too low.
 | — the **abstention price** of the band (H14b, β swept to 0.95) | — | **no β buys it**: 2/32 shards reachable at *any* abstention rate, oracle included | ❌ |
 | — with a **learned interval width** (H15, leave-one-mechanism-out, 8 seeds) | — | median **4/32** (range 2–8) vs 0/32 ungated, p = 0.0078 — *but equal to its own in-sample ceiling*, p = 0.5156 | ❌ |
 | — the same width model **composed with the equivariance repair** (H18, 8 seeds, paired) | — | **1/32** median, *worse* than H15 alone at exact sign-flip p = 0.0234. H15's dominant coefficient was the **input amplitude** (`a_spec9`, +2.895, 5.8× the next largest); H17 does that correction in closed form, so composing removes the double count and nothing above 0.673 remains. **H15's gain and H17's gain were the same gain** | ❌ |
+| — the width model with the **two amplitude features ablated** (H19, 8 seeds, paired) | — | **0/32** on all 8 seeds — exactly the ungated baseline. Removing 2 of 44 features removes the *entire* H15 effect (vs H15 p = 0.0078). Its surviving coefficients are **larger** than H18's (`a_spec1` −1.605 against 0.673), so h is not signal-starved: it fits the other axes confidently and transfers none of it. The in-sample ceiling collapses too, 4,3,4,4,3,3,5,5 → 1,0,1,1,0,3,2,0 | ❌ |
 | — **what the clause demands** (H16, no method in the loop) | — | width must be predicted to **±2.2%** (`field_max`; `norm_ratio` is tighter at 4.22%), against a required range of **107.6×** | — |
 | — after the **equivariance repair** (H17, test-time, no retraining) | — | linear `*_amp2` shards **54.7–107.6× → 0.96–1.19×**; required range **107.6× → 68.4×**; ungated in-band 0/32 → median 1/32, p = 0.0156 | ❌ clause, ✅ repair |
 | **H17 read as a surrogate result: accuracy on the amplitude shifts** | rel-L2 **0.3111–0.4711** | **0.00257–0.00338**, i.e. **0.981–0.997×** the in-distribution error of the same checkpoints; control `darcy_amp2` unchanged at ratio 1.0000; every non-amplitude shard moves ≤ 2.4e-05 | ✅ |
@@ -207,6 +208,18 @@ where all three old detectors sat at chance.
   shift, which is p(y|x) changing rather than only p(x). The constructive
   complement is unchanged: **k = 1** label to notice the shift, nine to
   re-certify the interval at α=0.1.
+- **The learned width model, read correctly (H15 → H19).** Its 4/32 was real
+  and my reading of it was wrong. Ablating the two input-amplitude features
+  drops it to **0/32 on all 8 seeds — the ungated baseline exactly**. The
+  four-arm decomposition: ungated 0/32, h-with-amplitude 4/32, equivariance
+  alone 2–4/32, both composed 1/32, h-without-amplitude 0/32. **Every gain this
+  repo has measured on clause 1 under covariate shift traces to one axis, and
+  that axis was our own broken equivariance.** This rules out "a learned
+  difficulty model over input and prediction summaries can carry coverage under
+  shift" for this feature set — and not for lack of signal: without amplitude,
+  h fits *larger* coefficients (−1.605) on the other axes and transfers none of
+  them, because that structure is mechanism-specific. Fitting h *on the
+  evaluation shards themselves* without amplitude still reaches only ~1/32.
 - **Composing the two things that each worked (H18).** The learned width
   model (H15, 4/32) and the equivariance repair (H17) attack what looked like
   disjoint axes, so composing them should have added. It **subtracts**: 1/32

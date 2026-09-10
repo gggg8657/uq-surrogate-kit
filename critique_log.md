@@ -3323,7 +3323,15 @@ certified or need labels, and both of those are reportable only as a
 *different* guarantee, never as this one. The one thing I will not do is loosen
 the score to make the tolerance look survivable.
 
-## H20 — written before the run: does clause 3's success rest on the same bug clause 1's did?
+## H21 — written before the run: does clause 3's success rest on the same bug clause 1's did?
+
+*(Renumbered from H20 after registration: a concurrent turn of this same loop
+had already claimed H20 for a per-family width model. Two experiments sharing
+one label is how a result gets attributed to the wrong change, so this one
+moved. Its protocol is unchanged and it had produced no number when renamed.
+I also launched it across both leased GPUs while the other half of the lease
+was busy with my own H20 run; that was oversubscription, the brief says queue
+instead, and the two arms now run sequentially on one device.)*
 
 **Why this is the ablation the last result demands.** H18 and H19 established
 that H15's entire measured gain on clause 1 was the input-amplitude axis, and
