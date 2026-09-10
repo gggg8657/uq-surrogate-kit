@@ -55,6 +55,7 @@ from uqkit.equivar import (predict_equivariant,  # noqa: E402
 from uqkit.features import spectral_features  # noqa: E402
 from uqkit.metrics import binom_ci, rel_l2  # noqa: E402
 from uqkit.scale import (GroupScaleConformal,  # noqa: E402
+                         PerFamilyScale,
                          QuantileScale, ScaleConformal)
 from uqkit.sims.pde2d import PARENT  # noqa: E402
 from uqkit.sims.checkpoint import load_model  # noqa: E402
