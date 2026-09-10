@@ -49,6 +49,31 @@ def claims():
         out.append(("paper_draft.md", f"{over} of {len(elig)} covariate-shift "
                                       "shards sit at 99–100%", "over-coverage count"))
 
+    # H18: the composition arm, and the withdrawal it forces. These are the
+    # newest hand-written numbers in WEEKEND.md, so they are pinned here --
+    # the whole point of this script is that a prose number cannot outlive the
+    # run that produced it.
+    if scj and scj.get("h18") and scj["h18"].get("vs_h15"):
+        v = scj["h18"]["vs_h15"]
+        L = scj["h18"]["lomo"]
+        out.append(("WEEKEND.md", f"**{L['in_band_median']:g}/32** median",
+                    "H18 leave-one-mechanism-out median"))
+        out.append(("WEEKEND.md",
+                    f"p = {v['exact_sign_flip_p']:.4f}",
+                    "H18 vs H15 paired exact sign-flip p"))
+        # the coefficient that carried H15, read out of the per-seed runs
+        import glob as _g
+        import statistics as _st
+        co = []
+        for f in sorted(_g.glob("runs/scale_u*_het.json")):
+            d = json.loads(Path(f).read_text())
+            for cf in d["folds"]["all"]["coef_top"]:
+                if cf["feature"] == "a_spec9":
+                    co.append(cf["coef"])
+        if len(co) >= 2:
+            out.append(("WEEKEND.md", f"+{_st.median(co):.3f}",
+                        "H15 amplitude coefficient (a_spec9), median over seeds"))
+
     if b:
         gpu = [r for r in b["rows"] if r["device"] == "cuda" and r["trained"]]
         sp = [r["surrogate"]["ensemble"]["speedup"] for r in gpu]

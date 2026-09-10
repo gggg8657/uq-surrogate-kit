@@ -280,6 +280,19 @@ class PerFamilyScale:
         self.n_fit = int(len(s))
         return self
 
+    @property
+    def loss_curve(self):
+        """The pooled fit's curve, plus each family's final loss.
+
+        A per-family model has no single curve; convergence has to be
+        checkable for every fit or "the loss was flat" stops meaning anything.
+        """
+        return {"pooled": self.pooled.loss_curve,
+                "per_family_final": {k: (m.loss_curve[-1] if m.loss_curve
+                                         else None)
+                                     for k, m in sorted(self.models.items())},
+                "fellback": self.fellback}
+
     def __call__(self, z, fam):
         """h(z) using each row's own family model. `fam` is required here --
         a per-family model that silently pooled would be the pooled model

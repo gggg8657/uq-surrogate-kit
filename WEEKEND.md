@@ -65,6 +65,7 @@ reasons it is too low.
 | — read as **deliberate abstention** (H14: certify where competent, refuse elsewhere) | — | **0/32** on 8/8 seeds at median abstention 0.390; and **0/32 with an oracle gate on the true error** | ❌ |
 | — the **abstention price** of the band (H14b, β swept to 0.95) | — | **no β buys it**: 2/32 shards reachable at *any* abstention rate, oracle included | ❌ |
 | — with a **learned interval width** (H15, leave-one-mechanism-out, 8 seeds) | — | median **4/32** (range 2–8) vs 0/32 ungated, p = 0.0078 — *but equal to its own in-sample ceiling*, p = 0.5156 | ❌ |
+| — the same width model **composed with the equivariance repair** (H18, 8 seeds, paired) | — | **1/32** median, *worse* than H15 alone at exact sign-flip p = 0.0234. H15's dominant coefficient was the **input amplitude** (`a_spec9`, +2.895, 5.8× the next largest); H17 does that correction in closed form, so composing removes the double count and nothing above 0.673 remains. **H15's gain and H17's gain were the same gain** | ❌ |
 | — **what the clause demands** (H16, no method in the loop) | — | width must be predicted to **±2.2%** (`field_max`; `norm_ratio` is tighter at 4.22%), against a required range of **107.6×** | — |
 | — after the **equivariance repair** (H17, test-time, no retraining) | — | linear `*_amp2` shards **54.7–107.6× → 0.96–1.19×**; required range **107.6× → 68.4×**; ungated in-band 0/32 → median 1/32, p = 0.0156 | ❌ clause, ✅ repair |
 | **H17 read as a surrogate result: accuracy on the amplitude shifts** | rel-L2 **0.3111–0.4711** | **0.00257–0.00338**, i.e. **0.981–0.997×** the in-distribution error of the same checkpoints; control `darcy_amp2` unchanged at ratio 1.0000; every non-amplitude shard moves ≤ 2.4e-05 | ✅ |
@@ -205,6 +206,23 @@ where all three old detectors sat at chance.
   shift, which is p(y|x) changing rather than only p(x). The constructive
   complement is unchanged: **k = 1** label to notice the shift, nine to
   re-certify the interval at α=0.1.
+- **Composing the two things that each worked (H18).** The learned width
+  model (H15, 4/32) and the equivariance repair (H17) attack what looked like
+  disjoint axes, so composing them should have added. It **subtracts**: 1/32
+  median, paired sign-flip **p = 0.0234**, with in-distribution coverage still
+  exactly 0.9023 in both arms so it is not a calibration bug. The coefficients
+  say why — H15's model is to first order an *amplitude detector*
+  (`a_spec9` = +2.895, 5.8× the next largest coefficient), which is precisely
+  what the H17 wrapper computes exactly. **So H15's 4/32 was not a learned
+  difficulty model; it was a crude learned stand-in for a symmetry we had
+  broken.** The measurement stands and its interpretation is withdrawn. This
+  rules out "the width model and the equivariance repair are complementary",
+  and it is a warning about additivity: two interventions that each beat a
+  broken baseline can be beating it the same way.
+  H18 also fails in *both* directions at once — the `amp2` and `tau` shards
+  flip to **over**-coverage (0.999–1.000 at 1.75–4.91× width) while the
+  `smooth` shards and the far `darcy` rungs collapse at 0.05–0.44× width —
+  which is the signature of a model left with no dominant direction.
 - **The `navier_stokes` 366× row.** Withdrawn on sight: `trained: False`. An
   untrained network timed against a real 1000-step RK4 solver, accuracy
   `[not measured]`. It is the most seductive number in the repo and it is worth
@@ -303,16 +321,38 @@ there is a false alarm, not a detection.
 
 ## Still running / how to check
 
-Nothing is running. GPUs 2 and 3 (our lease) are both free.
+**H19 is running** in tmux `a4-h19` on GPU 3: the H15 arm refitted with the two
+input-amplitude features (`a_spec9`, `a_spec10`) ablated out of the feature
+vector, 8 seeds, writing `runs/scalena_u*_het.json`. It exists to separate the
+two explanations H18 left open, which recommend opposite things:
+
+- **(a) nothing left to learn** — amplitude was the only large learnable
+  signal, H17 removes it exactly, and the residual axes are not predictable
+  from these features. Then H15-minus-amplitude ≈ H18's 1/32 and the route is
+  finished.
+- **(b) lost dynamic range** — flattening the amplitude axis starves the *fit*
+  rather than exhausting what is learnable. Then H15-minus-amplitude stays near
+  4/32, and the next move is a richer fitting target, not stopping.
+
+Registered prediction is (a). Check with:
+
+```bash
+tmux capture-pane -pt a4-h19 | tail -5          # or: tail logs/h19_chain.log
+python scripts/agg_scale.py --out runs/scale.json
+```
+
+GPU 2 is free.
 
 ```bash
 python scripts/report.py                  # regenerates RESULTS.md from runs/
 python scripts/check_prose_numbers.py     # fails if any prose number drifted
-python scripts/run_tests.py               # 6 files
+python scripts/run_tests.py               # 7 files
 ./scripts/h14_chain.sh                    # gated certificate, 8 seeds, ~12 min
 ./scripts/h14b_chain.sh                   # the abstention price curve, ~12 min
 ./scripts/h15_chain.sh                    # learned interval width, ~15 min
 ./scripts/h16_chain.sh                    # width tolerance + equivariance, ~10 min
+./scripts/h18_chain.sh                    # width model o equivariance, ~15 min
+./scripts/h19_chain.sh                    # width model minus amplitude features, ~15 min
 python scripts/agg_selective.py --out runs/selective.json
 python scripts/agg_scale.py --out runs/scale.json
 CUDA_VISIBLE_DEVICES=2 python scripts/bench_fair.py \
