@@ -3468,3 +3468,69 @@ the only family of method anyone has tried, mine included. That distinction
 belongs in the board entry, because it is the difference between a bound and a
 failure to be clever. The decision on whether to re-scope the KPI text remains
 Option A/B in `WEEKEND.md`, which is a human's to make and not mine.
+
+## H20 result — per-family fitting changes nothing, and it corrects my H18 explanation
+
+`runs/scale.json → h20`, 8 seeds, `runs/scalepf_u0..u7_het.json`. One
+`QuantileScale` per family (`uqkit.scale.PerFamilyScale`) instead of one pooled
+fit with family one-hots. Everything else identical, so the arms pair by
+checkpoint.
+
+| arm | LOMO in band /32, per seed | median | paired vs H15 |
+|---|---|---|---|
+| H15 (pooled h) | 3,2,5,4,4,2,8,7 | 4 | — |
+| **H20 (per-family h)** | **4,1,5,7,1,4,2,8** | **4** | diff 1,−1,0,3,−3,2,−6,1 → **p = 0.8438** |
+| H19 (amplitude features dropped) | 0,0,0,0,0,0,0,0 | 0 | H20 vs H19 **p = 0.0078** |
+
+**Prediction 1 is met on the letter and empty in substance.** I registered "LOMO
+in-band ≥ H15's 4/32 median"; it is exactly 4/32, and the paired test says
+**there is no difference at all** (p = 0.8438). Isolating families neither
+recovers anything the pooled fit suppressed nor loses anything it gained.
+Prediction 3 ("I do not expect 29/32") held.
+
+### Prediction 2 was the diagnostic one, and it clears my H18 explanation away
+
+I registered: "if the Darcy ladder keeps the coverage H15 gave it, H15's win was
+a real Darcy difficulty model; if it collapses the way it did under H18, H15's
+win was loss-mass spillover and I say so." It **held**:
+
+| shard | ungated | H15 (pooled) | **H20 (per-family)** | seeds in band |
+|---|---|---|---|---|
+| `darcy_dam0p1` | 0.847 | 0.898 | **0.915** | 4/8 |
+| `darcy_dam0p2` | 0.822 | 0.918 | **0.907** | 4/8 |
+| `darcy_dam0p3` | 0.732 | 0.901 | **0.903** | 3/8 |
+| `darcy_dam0p5` | 0.571 | 0.907 | **0.901** | 4/8 |
+| `darcy_dam0p7` | 0.198 | 0.896 | 0.847 | 2/8 |
+| `darcy_dam1` | 0.000 | 0.943 | **0.926** | 1/8 |
+| `darcy_rough` | 0.547 | 0.903 | 0.893 | 4/8 |
+| `darcy_smooth` | 0.996 | 0.785 | 0.993 | 0/8 |
+
+A fit that never sees another family reproduces the whole ladder. **So the
+Darcy-ladder gain was not spillover from other families' amplitude rows, and
+the explanation I offered in the H18 entry — "the pooled h is driven by
+whichever rows carry the most pinball loss mass, across families" — is wrong as
+stated and is withdrawn.** The cross-family part of it never happened.
+
+What survives is the *within*-family version, and it is consistent with H19:
+`a_spec9` (log input amplitude) is still the top feature of the per-family fit,
+so Darcy's own h finds Darcy's own amplitude signal. Every arm that has moved
+this clause has moved it by correcting amplitude — pooled or per-family, it is
+the same effect found in two places. H19 remains the sharp statement: delete the
+two amplitude features and every arm collapses to 0/32.
+
+One thing per-family fitting does fix, without winning the clause:
+`darcy_smooth` goes 0.785 → **0.993**, i.e. the pooled fit had been
+over-narrowing it (H15's prediction-2 failure) and the per-family fit does not.
+0.993 is still out of band, on the high side, on 8 of 8 seeds.
+
+**In distribution nothing moved**: all five families at exactly 0.9023, as in
+every other arm. The in-sample ceiling rose to 3,6,6,7,4,10,9,6 against LOMO's
+4,1,5,7,1,4,2,8 (p = 0.125, not significant), so per-family fitting buys a
+little headroom that generalization does not collect.
+
+**And the seed spread is the number to quote with any of this.** H15's LOMO
+range is [2, 8] and H20's is [1, 8], on a median of 4/32. The comparison
+against the 0/32 ungated arm is solid — every seed of every arm that keeps the
+amplitude features beats it, p = 0.0078 — but *between* these arms the
+per-seed variance swamps everything, which is exactly what the brief's
+seed-count lesson says to expect and to say out loud.
