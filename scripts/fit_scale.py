@@ -87,6 +87,22 @@ def main():
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--sigma-source", default=None,
                     choices=["het", "cqr", "const"])
+    ap.add_argument("--drop-features", default="",
+                    help="H19: comma-separated feature names removed from z "
+                         "before fitting. Used to ablate the two amplitude "
+                         "features of input channel 0 (`a_spec9`, `a_spec10`) "
+                         "and so separate 'nothing left to learn' from 'lost "
+                         "dynamic range in the fitting target'. The names are "
+                         "checked against FEAT_NAMES and an unknown one is an "
+                         "error, not a silent no-op.")
+    ap.add_argument("--per-family-h", action="store_true",
+                    help="H19: fit a separate h per family instead of one "
+                         "pooled h with family one-hots. H18 measured that "
+                         "the pooled h is driven by whichever rows carry the "
+                         "most pinball loss mass: removing the amplitude "
+                         "effect (H17) changed what h learned on the Darcy "
+                         "axis and cost 4/32 -> 1/32. A per-family fit makes "
+                         "that contamination impossible by construction.")
     ap.add_argument("--equivariant", action="store_true",
                     help="H18: fit and evaluate h on top of the H17 test-time "
                          "scale-equivariant predictor F_eq(a) = s*F(a/s). "
@@ -141,6 +157,9 @@ def main():
 
     # ---- features: strictly deployment-observable ---------------------------
     FEAT_NAMES = None
+    #: column indices kept after --drop-features, fixed on the first call so
+    #: every later call uses an identical layout
+    KEEP: list[int] = []
 
     def features(a, mean, sigma, parent):
         """(n, d) from the input, the prediction and its spread. No truth."""
@@ -167,7 +186,14 @@ def main():
                           + ["log_sigrel", "log_signorm", "log_sigmax",
                              "log_sigmed", "log_munorm", "log_mumax"]
                           + [f"fam_{t}" for t in in_tasks])
-        return z.double().cpu()
+            drop = [d for d in args.drop_features.split(",") if d.strip()]
+            unknown = [d for d in drop if d not in FEAT_NAMES]
+            if unknown:
+                raise SystemExit(f"--drop-features names not in the feature "
+                                 f"vector: {unknown}; have {FEAT_NAMES}")
+            KEEP.extend(i for i, n in enumerate(FEAT_NAMES) if n not in drop)
+            FEAT_NAMES = [n for n in FEAT_NAMES if n not in drop]
+        return z.double().cpu()[:, KEEP]
 
     # ---- in-distribution calibration, split in two --------------------------
     import time as _t
@@ -196,7 +222,7 @@ def main():
 
     _tick("cal predictions done; splitting cal in two")
     rng = np.random.default_rng(0)
-    fit_z, fit_s, q_scores, q_groups = [], [], [], []
+    fit_z, fit_s, q_scores, q_groups, fit_fam = [], [], [], [], []
     for t in in_tasks:
         d = cal_rows[t]
         sc = fn(d["mean"], d["sigma"], d["truth"], med=MED).cpu().numpy()
@@ -207,6 +233,7 @@ def main():
         i_fit, i_q = perm[:half], perm[half:]
         fit_z.append(z[i_fit])
         fit_s.append(sc[i_fit])
+        fit_fam.append(np.array([t] * len(i_fit)))
         q_scores.append(sc[i_q])
         q_groups.append(np.array([t] * len(i_q)))
         cal_rows[t] = {"z_q": z[i_q], "s_q": sc[i_q]}   # keep only what is used
@@ -223,18 +250,21 @@ def main():
                 "split": "dev", "parent": parent}
         m, s, tr, ain = predict(blob)
         sc = fn(m, s, tr, med=MED).cpu().numpy()
-        dev.setdefault(mech, {"z": [], "s": [], "tasks": []})
+        dev.setdefault(mech, {"z": [], "s": [], "tasks": [], "fam": []})
         dev[mech]["z"].append(features(ain, m, s, parent))
         dev[mech]["s"].append(sc)
+        dev[mech]["fam"].append(np.array([parent] * len(sc)))
         dev[mech]["tasks"].append(task)
         del a, u, m, s, tr, ain, blob
         torch.cuda.empty_cache()
     for mech in dev:
         dev[mech]["z"] = torch.cat(dev[mech]["z"])
         dev[mech]["s"] = np.concatenate(dev[mech]["s"])
+        dev[mech]["fam"] = np.concatenate(dev[mech]["fam"])
 
     _tick("development suite reduced to rows")
     cal_fit_z, cal_fit_s = torch.cat(fit_z), np.concatenate(fit_s)
+    cal_fit_fam = np.concatenate(fit_fam)
     q_all = np.concatenate(q_scores)
     q_grp = np.concatenate(q_groups)
     # the like-for-like ungated baseline: same calibration half, same score
@@ -246,6 +276,10 @@ def main():
            "forward_passes_per_interval": 1 if single else len(models),
            "sigma_floor_median": MED, "sigma_floor_frac": 0.05,
            "equivariant": bool(args.equivariant),
+           "per_family_h": bool(args.per_family_h),
+           "dropped_features": [d for d in args.drop_features.split(",")
+                                if d.strip()],
+           "n_features": len(KEEP),
            "equivariant_ref": {k: float(v) for k, v in REF.items()},
            "dev": {"n_shards": len(dev_specs), "n_per_shard": args.dev_n,
                    "seed_base": D.SEED_BASE,
@@ -302,13 +336,28 @@ def main():
             ss += [e["s"] for e in eval_cache.values()]
         z = torch.cat(zs)
         s = np.concatenate(ss)
-        _tick(f"  fold {fold}: fitting h on {len(s)} rows x {z.shape[1]} feats")
-        h = QuantileScale(alpha=args.alpha, seed=0).fit(z, s)
+        fam = np.concatenate([cal_fit_fam] + [dev[k]["fam"] for k in mechs]
+                             + ([np.concatenate(
+                                 [[e["parent"]] * len(e["s"])
+                                  for e in eval_cache.values()])]
+                                if leak else []))
+        _tick(f"  fold {fold}: fitting h on {len(s)} rows x {z.shape[1]} "
+              f"feats{' per family' if args.per_family_h else ''}")
+        if args.per_family_h:
+            h = PerFamilyScale(alpha=args.alpha, seed=0).fit(z, s, fam)
+        else:
+            h = QuantileScale(alpha=args.alpha, seed=0).fit(z, s)
         _tick(f"  fold {fold}: h fitted")
         # q on the untouched calibration half, one quantile PER FAMILY -- the
         # calibrator the `group` baseline uses. Pooled is recorded beside it.
-        cal_h = np.concatenate([h(cal_rows[t]["z_q"]).cpu().numpy()
-                                for t in in_tasks])
+        def H(zz, parent):
+            """h(z) for rows all belonging to `parent`. One call shape for
+            both the pooled and the per-family model, so no call site has to
+            know which one is in use."""
+            return (h(zz, np.array([parent] * len(zz)))
+                    if args.per_family_h else h(zz)).cpu().numpy()
+
+        cal_h = np.concatenate([H(cal_rows[t]["z_q"], t) for t in in_tasks])
         cal_s = np.concatenate([cal_rows[t]["s_q"] for t in in_tasks])
         cal_g = np.concatenate([[t] * len(cal_rows[t]["s_q"])
                                 for t in in_tasks])
@@ -326,11 +375,12 @@ def main():
                "q": sc_conf.q, "q_pooled": sc_conf.pooled_q,
                "n_cal_q": sc_conf.n_cal,
                "coef_top": h.coef_table(FEAT_NAMES)[:12],
+               "per_family_h": bool(args.per_family_h),
                "loss_curve": h.loss_curve,
                "in_dist": {}, "shards": {}}
 
         for t in in_tasks:
-            hh = h(cal_rows[t]["z_q"]).cpu().numpy()
+            hh = H(cal_rows[t]["z_q"], t)
             sv = cal_rows[t]["s_q"]
             g = np.array([t] * len(sv))
             wm = sc_conf.width_multiplier(hh, g)
@@ -344,7 +394,7 @@ def main():
             }
 
         for name, e in eval_cache.items():
-            hh = h(e["z"]).cpu().numpy()
+            hh = H(e["z"], e["parent"])
             g = np.array([e["parent"]] * len(e["s"]))
             wm = sc_conf.width_multiplier(hh, g)
             cov = cov_entry(sc_conf.covered(e["s"], hh, g))

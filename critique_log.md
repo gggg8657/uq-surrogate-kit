@@ -3010,3 +3010,40 @@ the amplitude feature was *not* what carried H15 and explanation (b) is live.
    explanation, and the next move is a richer target rather than stopping.
 
 8 seeds, same checkpoints, paired sign-flip against both the H15 and H18 arms.
+
+## H17, second half — it is an accuracy result, and it was already on disk
+
+The width-tolerance runs record each shard's rel-L2 in both arms, so this
+needed no rerun; I simply had not looked. `runs/scale.json`, 8 seeds:
+
+| shard | rel-L2 deployed | rel-L2 equivariant | in-distribution rel-L2, same checkpoints | eq / in-dist |
+|---|---|---|---|---|
+| `poisson_amp2` | 0.4085 | **0.00303** | 0.00304 | **0.997** |
+| `helmholtz_amp2` | 0.3111 | **0.00338** | 0.00345 | **0.981** |
+| `diffusion_amp2` | 0.4188 | **0.00257** | 0.00258 | **0.995** |
+| `advdiff_amp2` | 0.4711 | **0.00261** | 0.00263 | **0.992** |
+| **`darcy_amp2` (control)** | 0.7612 | 0.76116 | 0.05086 | 14.965 (ratio 1.0000) |
+
+**The amplitude shift is not improved, it is neutralised.** The last column is
+0.981–0.997 for the four linear families: the error falls to the
+*in-distribution* error of the same checkpoints, which is what
+scale-equivariance predicts exactly — `a/s` has an in-distribution amplitude, so
+the network is no longer extrapolating at all. A 92–181× error reduction, no
+retraining, no new data, one reduction per sample. Every shard that is not an
+amplitude shift moves by at most **2.4e-05** in relative error, so the wrapper
+provably touches nothing else, and the control confirms the mechanism is the
+claimed one rather than a general repair.
+
+**This is the more valuable half of H17 and I nearly missed it**, because I was
+looking at the number the KPI asked about (interval width) and not at the number
+a user of the surrogate would ask about (accuracy). The lesson is narrow and
+practical: when a fix works, check what *else* it moved before writing it up.
+The reason the fix was available at all is that nobody had tested whether the
+network preserved a symmetry its own physics guarantees — `tests/test_equivar.py`
+now pins it, and the same question should be asked of every other surrogate in
+this portfolio.
+
+**What it does not do.** It does not move clause 1: the required dynamic range
+is still 68.4×, set by the control shard and by the `rough` shards at 1.4–19×,
+against a ±2.2% tolerance. Roughness is not a symmetry and there is no free
+repair for it.

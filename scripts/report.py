@@ -981,6 +981,55 @@ def sec_h16(sc, out):
         f"of 5 \u2014 the wrapper is near-identity in distribution, as it has "
         f"to be, and `tests/test_equivar.py` pins the exactness of "
         f"s\u00b7F(a/s) independently of the network.\n")
+    acc = e.get("accuracy")
+    if acc:
+        out.append(
+            f"\n**H17 is an accuracy result as well as a width one, and that "
+            f"came free** \u2014 the shard rel-L2 was already recorded in both "
+            f"arms, so noticing it needed no rerun. The wrapper does not merely "
+            f"shrink what the certificate must span; it removes the shift:\n")
+        out.append("| shard | rel-L2, deployed | rel-L2, equivariant | ratio | "
+                   "in-distribution rel-L2, same checkpoints | eq / in-dist |")
+        out.append("|---|---|---|---|---|---|")
+        for n in sorted(acc):
+            if "amp2" not in n:
+                continue
+            v = acc[n]
+            ctl = (" \u2014 **control**" if "darcy_amp2" in n else "")
+            out.append(
+                f"| `{n.split('/')[1]}`{ctl} | {v['rel_l2_base']:.4f} | "
+                f"**{v['rel_l2_eq']:.5f}** | {v['ratio']:.4f} | "
+                f"{v['in_dist_reference']:.5f} | "
+                f"**{v['eq_over_in_dist']:.3f}** |")
+        lin = [v for n, v in acc.items()
+               if "amp2" in n and "darcy" not in n]
+        ctlv = [v for n, v in acc.items() if "darcy_amp2" in n]
+        out.append(
+            f"\nThe last column is the claim. For the four families that are "
+            f"linear in the shifted field the amplitude shift is reduced to "
+            f"**{min(v['eq_over_in_dist'] for v in lin):.3f}\u2013"
+            f"{max(v['eq_over_in_dist'] for v in lin):.3f}\u00d7 the "
+            f"in-distribution error** \u2014 not improved, *neutralised*, "
+            f"which is exactly what scale-equivariance predicts: a/s has an "
+            f"in-distribution amplitude, so the network sees an "
+            f"in-distribution input. A "
+            f"{1/max(v['ratio'] for v in lin):.0f}\u2013"
+            f"{1/min(v['ratio'] for v in lin):.0f}\u00d7 error reduction with "
+            f"no retraining and no new data."
+            + (f" The control stays at "
+               f"{ctlv[0]['eq_over_in_dist']:.2f}\u00d7 the in-distribution "
+               f"error, unchanged (ratio {ctlv[0]['ratio']:.4f})."
+               if ctlv else "")
+            + f" Every shard that is *not* an amplitude shift moves by at most "
+            f"**{e['max_abs_rel_l2_change_off_amp']:.1e}** in relative error, "
+            f"so the wrapper provably touches nothing else.\n")
+        out.append(
+            "This is the more useful half of H17: read as a surrogate result "
+            "rather than a UQ one, a ten-line test-time wrapper turns a "
+            "31\u201347% error into a 0.26\u20130.34% error on the amplitude "
+            "shifts, and the reason it was available is that nobody had "
+            "checked whether the network preserved a symmetry its own physics "
+            "guarantees.\n")
     out.append(
         f"**This does not make the clause pass and was not expected to.** A "
         f"width model would still have to span "

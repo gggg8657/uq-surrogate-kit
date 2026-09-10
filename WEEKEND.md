@@ -14,7 +14,13 @@ given the ground-truth answer. **But a ~100× share of the 107.6× turned out to
 be our own bug** — four of the five PDE families are *linear* in the field the
 amplitude shift scales, and our frozen input standardization threw that
 equivariance away. A ten-line test-time wrapper gets it back, with no
-retraining. See "Clause 1 under shift" below.
+retraining — **and read as a surrogate result rather than a UQ one, that
+wrapper turns a 31–47% error into a 0.26–0.34% error on those shards, which is
+0.981–0.997× the in-distribution error of the same checkpoints. The amplitude
+shift is not improved, it is neutralised**, while every non-amplitude shard
+moves by at most 2.4e-05 in relative error. Nobody had checked whether the
+network preserved a symmetry its own physics guarantees. See "Clause 1 under
+shift" below.
 
 **The earlier one-line version, still true.** Friday's verdict was
 `UNREACHABLE` on the argument that ≥100× and a calibrated interval were
@@ -61,6 +67,7 @@ reasons it is too low.
 | — with a **learned interval width** (H15, leave-one-mechanism-out, 8 seeds) | — | median **4/32** (range 2–8) vs 0/32 ungated, p = 0.0078 — *but equal to its own in-sample ceiling*, p = 0.5156 | ❌ |
 | — **what the clause demands** (H16, no method in the loop) | — | width must be predicted to **±2.2%** (`field_max`; `norm_ratio` is tighter at 4.22%), against a required range of **107.6×** | — |
 | — after the **equivariance repair** (H17, test-time, no retraining) | — | linear `*_amp2` shards **54.7–107.6× → 0.96–1.19×**; required range **107.6× → 68.4×**; ungated in-band 0/32 → median 1/32, p = 0.0156 | ❌ clause, ✅ repair |
+| **H17 read as a surrogate result: accuracy on the amplitude shifts** | rel-L2 **0.3111–0.4711** | **0.00257–0.00338**, i.e. **0.981–0.997×** the in-distribution error of the same checkpoints; control `darcy_amp2` unchanged at ratio 1.0000; every non-amplitude shard moves ≤ 2.4e-05 | ✅ |
 | speedup, GPU, trained families (ensemble) | **0/10 rows ≥100×**, range 0.004×–27× | unchanged | ❌ |
 | speedup, batch 1, CUDA graph, **one favourable field (sample 0)** | not possible | **267.5×** — *not* the clause verdict | ✅ |
 | **— over 24 distinct fields — THE batch-1 verdict** | — | **24/24** clear 100×, worst field **117.0×**, median **187.4×** | ✅ |

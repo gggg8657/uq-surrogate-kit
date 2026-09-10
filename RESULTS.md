@@ -673,6 +673,21 @@ The four linear families collapse to about 1×. **`darcy_amp2` is the control be
 
 In-band shards, ungated, with no width model at all: 0,0,0,0,0,0,0,0 → **1,1,2,1,2,1,1,0** (exact sign-flip p = 0.0156), while in-distribution families in band stay 5,4,5,5,5,5,5,5 → 5,4,5,5,4,5,5,5 of 5 — the wrapper is near-identity in distribution, as it has to be, and `tests/test_equivar.py` pins the exactness of s·F(a/s) independently of the network.
 
+
+**H17 is an accuracy result as well as a width one, and that came free** — the shard rel-L2 was already recorded in both arms, so noticing it needed no rerun. The wrapper does not merely shrink what the certificate must span; it removes the shift:
+
+| shard | rel-L2, deployed | rel-L2, equivariant | ratio | in-distribution rel-L2, same checkpoints | eq / in-dist |
+|---|---|---|---|---|---|
+| `advdiff_amp2` | 0.4711 | **0.00261** | 0.0055 | 0.00263 | **0.992** |
+| `darcy_amp2` — **control** | 0.7612 | **0.76116** | 1.0000 | 0.05086 | **14.965** |
+| `diffusion_amp2` | 0.4188 | **0.00257** | 0.0061 | 0.00258 | **0.995** |
+| `helmholtz_amp2` | 0.3111 | **0.00338** | 0.0109 | 0.00345 | **0.981** |
+| `poisson_amp2` | 0.4085 | **0.00303** | 0.0074 | 0.00304 | **0.997** |
+
+The last column is the claim. For the four families that are linear in the shifted field the amplitude shift is reduced to **0.981–0.997× the in-distribution error** — not improved, *neutralised*, which is exactly what scale-equivariance predicts: a/s has an in-distribution amplitude, so the network sees an in-distribution input. A 92–181× error reduction with no retraining and no new data. The control stays at 14.97× the in-distribution error, unchanged (ratio 1.0000). Every shard that is *not* an amplitude shift moves by at most **2.4e-05** in relative error, so the wrapper provably touches nothing else.
+
+This is the more useful half of H17: read as a surrogate result rather than a UQ one, a ten-line test-time wrapper turns a 31–47% error into a 0.26–0.34% error on the amplitude shifts, and the reason it was available is that nobody had checked whether the network preserved a symmetry its own physics guarantees.
+
 **This does not make the clause pass and was not expected to.** A width model would still have to span 68.4× while holding ±2.2%. What H17 establishes is that a large part of that requirement was our own broken equivariance rather than a fact about uncertainty quantification — the certificate could not be fixed without fixing the model.
 
 

@@ -229,3 +229,74 @@ class ScaleConformal:
     def width_multiplier(self, h):
         """`q * h` -- what the interval is multiplied by, per sample."""
         return self.q * np.asarray(h, dtype=np.float64)
+
+
+class PerFamilyScale:
+    """One `QuantileScale` per family, behind the same callable.
+
+    H18 measured that a single pooled h -- even with family one-hots -- is
+    driven by whichever rows carry the most pinball loss mass. The loss is
+    linear in the residual of `log S`, so a shard whose score sits two orders
+    of magnitude out contributes about ten times the loss per sample of an
+    ordinary one. Removing the amplitude effect with the H17 equivariance
+    wrapper therefore did not just make four shards easy: it changed what h
+    learned everywhere else, and the Darcy graded ladder went from 0.896-0.943
+    coverage under H15 to 0.000-0.562 under H18 while the amplitude shards
+    over-shot to 1.000. Two interventions that each helped on their own
+    measured *worse* composed, at p = 0.0234.
+
+    A per-family fit makes that particular contamination impossible by
+    construction rather than by tuning: Darcy's width model cannot be pulled by
+    Poisson's amplitude rows because it never sees them. Within a family the
+    same loss-mass argument still applies across shift axes, so this is one
+    step and not a cure -- and it is registered as such.
+
+    Each family gets the full feature vector, family one-hots included and
+    harmless (constant within a fit, absorbed by the intercept). Families
+    absent from the fitting rows fall back to a pooled model, and which ones
+    did is recorded in `fellback`.
+    """
+
+    def __init__(self, alpha=0.1, min_n=200, **kw):
+        self.alpha, self.min_n, self.kw = alpha, min_n, kw
+        self.models = {}
+        self.pooled = None
+        self.fellback = []
+        self.n_fit = 0
+
+    def fit(self, z, s, fam):
+        z = torch.as_tensor(z, dtype=torch.float64)
+        s = np.asarray(s, dtype=np.float64)
+        fam = np.asarray(fam)
+        self.pooled = QuantileScale(alpha=self.alpha, **self.kw).fit(z, s)
+        self.models, self.fellback = {}, []
+        for u in np.unique(fam):
+            m = fam == u
+            if int(m.sum()) < self.min_n:
+                self.fellback.append(str(u))
+                continue
+            self.models[str(u)] = QuantileScale(
+                alpha=self.alpha, **self.kw).fit(z[m], s[m])
+        self.n_fit = int(len(s))
+        return self
+
+    def __call__(self, z, fam):
+        """h(z) using each row's own family model. `fam` is required here --
+        a per-family model that silently pooled would be the pooled model
+        wearing this class's name."""
+        z = torch.as_tensor(z, dtype=torch.float64)
+        fam = np.asarray(fam)
+        out = torch.empty(len(z), dtype=torch.float64)
+        for u in np.unique(fam):
+            m = fam == u
+            mdl = self.models.get(str(u), self.pooled)
+            out[torch.as_tensor(m)] = mdl(z[m])
+        return out
+
+    def coef_table(self, names=None):
+        """Coefficients per family, so the fits stay as readable as the one."""
+        out = []
+        for k, mdl in sorted(self.models.items()):
+            for row in mdl.coef_table(names)[:6]:
+                out.append({"family": k, **row})
+        return out
