@@ -34,15 +34,22 @@ iteration of up to 2000, and the surrogate was timed with autograd tracking
 left on. Removing that subsidy, and then two further ones we found in our own reference
 (face coefficients rebuilt every iteration on a fixed field; a preconditioner
 whose symbol did not match the stencil being applied), the batch-1 ratio under
-CUDA-graph replay falls from 602× to **216.4×** on the field this repository
-timed by default and to **21 of 24 distinct fields clearing 100×, worst 94.0×**
+CUDA-graph replay falls from 602× to 216.4× on the field this repository
+timed by default and to 21 of 24 distinct fields clearing 100×, worst 94.0×,
 when the reference is given its best admissible configuration on each field.
 Every fix is verified to leave the solver's answer bit-identical with its
-residual inside tolerance, so the clause is **not met** — and the sequence
-602× → 328× → 228× → 94–257× is the result, because an apparent 6× margin over
-the target was three layers of our own sloppiness in the baseline. The win is
-also a batch-1 latency win only: at batch 64, where both sides are
-dispatch-efficient, the ratio is 40.5× and graph capture is slightly *slower*
+residual inside tolerance. Only then did we audit the *surrogate*, and found
+the same class of defect on our own side: its spectral convolutions permuted a
+13.1 MB tensor of fixed weights on every forward pass, worth 1.246× once
+cached and bit-identical when removed. That restores the clause at batch 1 —
+**24 of 24 fields, worst 117.0×, median 187.4×, best 315.4×** — with the
+single-field reading at **267.5×**. We report the whole sequence rather than
+the endpoint, because the sequence is the finding: an apparent 6× margin over
+the target was three layers of our own sloppiness in the baseline, and the
+recovery was a fourth layer on the other side that three rounds of one-sided
+scrutiny never looked for. The win is also a batch-1 latency win only: at batch
+64, where both sides are dispatch-efficient, the ratio is 41.1× and graph
+capture is slightly *slower*
 than eager. **(ii)** Against a well-preconditioned
 iterative solver at *matched accuracy*, the surrogate's advantage is 2.2×, not
 the 26.8× obtained against the over-converged tolerance the corpus was generated
@@ -112,11 +119,11 @@ Amortizing the solver's test over 50 iterations (which returns an iterate whose
 *measured* final residual is 6.8e-11 against a 1e-10 tolerance, so it is the
 same solver) and removing the surrogate's autograd and per-kernel dispatch:
 
-| arm at batch 1, sample 0 | vs the repo's PCG | vs the *optimized* PCG | subsidized |
-|---|---|---|---|
-| eager, autograd on (the protocol above) | 90.0× | **64.5×** | 106.2× |
-| eager, no autograd | 113.6× ✅ | **~90×** ❌ | — |
-| CUDA-graph replay | 328.5× | **216.4×** | 339.6× |
+| arm at batch 1, sample 0 | vs the repo's PCG | vs the *optimized* PCG | + packed weights | subsidized |
+|---|---|---|---|---|
+| eager, autograd on (the protocol above) | 90.0× | 64.5× | **67.6×** | 79.5× |
+| eager, no autograd | 113.6× ✅ | ~90× ❌ | **101.4×** | 120.0× |
+| CUDA-graph replay | 328.5× | 216.4× | **267.5×** | 312.1× |
 
 The middle column is the one to read, and it exists because we went looking for
 work our own reference was doing redundantly. Three defects, each verified to
@@ -152,22 +159,59 @@ Sweeping 24 distinct fields, with the reference given its best admissible
 convergence stride on **each field independently** — imposing one field's stride
 on all of them inflated our own worst case by 20%, because the stride rounds the
 stopping iteration up to a multiple of itself and so penalises the easy fields —
-**21 of 24 clear 100×; the worst reads 94.0× and the median 144.4×.**
+21 of 24 clear 100×; the worst reads 94.0× and the median 144.4×, and the three
+failures are the *easiest* fields, where the solver finishes in 62–64 ms against
+the surrogate's 0.638 ms. We had published the break-even before the run that
+reached it: "a reference reaching 63.73 ms on the hardest field ends the
+clause". The field that ended it solves in 63.77 ms.
 
-**Clause 2 is therefore not met**, and the three failures are the *easiest*
-fields, where the solver finishes in 62–64 ms against the surrogate's 0.638 ms.
-We had published the break-even before the run that reached it: "a reference
-reaching 63.73 ms on the hardest field ends the clause". The field that ended it
-solves in 63.77 ms.
+### Auditing the numerator, three rounds late
 
-We keep the sample-0 figure of 216.4× in the table, labelled as one field and
-explicitly not the verdict, because it is the number this repository would have
-reported by default and the gap between it and 21/24 is the paper's point. What
-survives is narrower and better understood than the wall we started from: the
-surrogate is 94–257× faster than a well-optimized reference at 5.1% relative
-error, the spread across problems (3.26×) exceeds the remaining margin to the
-target, and the missing ~1.07× now has to come from the surrogate rather than
-from the solver — which has been optimized three times, each time against us.
+At that point the missing factor had to come from the surrogate, and we had
+never looked. A kernel census of the batch-1 forward says the arithmetic is 5%
+of it: eight matmuls and eight FFTs total 65.6 µs against 258.7 µs of
+`aten::copy_`. The cause is a lowering detail. `einsum("bixy,ioxy->boxy", ·)`
+becomes a batched matmul over the `(x, y)` mode grid, so it must permute the
+`(in, out, m1, m2)` weight — 13.1 MB per spectral layer — into `(x, y, in, out)`
+order on **every forward pass**, although those weights are frozen at inference
+and the permutation is identical every time. Packing them once at load and
+contracting with `bmm` costs +105 MB of device memory (a second copy of the
+spectral weights) and returns **1.246×** at batch 1.
+
+This is an execution change, not a model change, and we hold it to the bar we
+held the solver's fixes to: `max|Δ| = 0`, exact equality rather than a
+tolerance, on the predicted mean *and* both conformal interval bounds, across
+**64 of 64** data shards at resolutions 64, 128 and 256 — the bounds because a
+change confined to σ would leave the mean identical while silently moving every
+coverage number, and the resolutions because the weight cache is keyed on the
+retained mode counts, which saturate above N = 40. Relative error is unchanged
+to every stored digit.
+
+**Clause 2 is therefore met at batch 1: 24 of 24 fields, worst 117.0×, median
+187.4×.** The paired comparison is what makes it credible rather than a lucky
+draw. The three fields that had failed carry denominators that moved by less
+than 1% between the two runs while their ratios rose 23–25%, matching the
+surrogate's own 1.246×; two unrelated fields show 1.7× denominator swings, which
+is inside the 1.71 max/min this reference exhibits on repeated identical work,
+and those rows are excluded rather than banked.
+
+Three conditions travel with the result. At batch 64 the ratio is 41.1× — the
+reference batches better than the surrogate does (1.41× wall clock for 64× the
+arithmetic, against 8.5×). Without graph capture the same 24 fields give 2 of
+24. And the reference remains a Python PCG loop launching individual kernels;
+fused stencil kernels, cached grid-dependent preconditioner data and
+graph-captured fixed-length PCG chunks are all admissible and all unmeasured, so
+the defensible claim is *24/24 measured fields against this specified PCG
+implementation*, not an advantage over an equivalently optimized reference. At a
+0.512 ms surrogate, a reference reaching 51.2 ms on a field ends the clause on
+it; the fastest field currently solves in 60.3 ms.
+
+The methodological point is the one we would keep if we kept only one. Three
+consecutive rounds of scrutiny went into the denominator, each correctly, each
+moving the number against us — and none into the numerator, where a repeated
+memcpy of constants was worth 1.246× and took four minutes to find. One-sided
+scrutiny is not conservatism. It finds every reason a number is too high and
+none of the reasons it is too low, and it feels like rigour the entire time.
 
 The third is the honest one and it is an *upper bound*: the sweep never made the
 PCG as inaccurate as the surrogate. At a 10⁻¹ residual tolerance the solver still

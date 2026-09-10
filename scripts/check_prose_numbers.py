@@ -102,8 +102,12 @@ def claims():
                     "pooled spread error-detection AUROC"))
 
     # ---- the M=1 single-network results (the reopened clauses) ----
-    u, fa, csu = load("uq_seeds.json"), load("bench_fair.json"), \
-        load("consistency_uq.json")
+    u, csu = load("uq_seeds.json"), load("consistency_uq.json")
+    # The H12 run (packed spectral weights) supersedes the H11 one as the
+    # clause reading; the H11 file is kept for the before/after in RESULTS.md
+    # but no hand-written prose should still be quoting it.
+    fa = load("bench_fair_h12.json") or load("bench_fair.json")
+    pe = load("packed_equivalence.json")
     if u:
         arms = {k: v for k, v in u["arms"].items() if k != "const"}
         best = min(arms, key=lambda k: sum(
@@ -125,7 +129,7 @@ def claims():
         for arm in ("graph", "eager"):
             r = b1.get("ratios", {}).get(arm)
             if r:
-                for f in ("WEEKEND.md", "paper_draft.md"):
+                for f in ("WEEKEND.md", "paper_draft.md", "README.md"):
                     out.append((f, f"{r['ratio_conservative']:.1f}×",
                                 f"batch-1 {arm} ratio, fair denominator"))
         eag = b1.get("ratios", {}).get("eager")
@@ -136,16 +140,33 @@ def claims():
         b64 = fa["batches"].get("64", {}).get("ratios", {})
         if b64:
             bst = max(b64, key=lambda k: b64[k]["ratio_conservative"])
-            out.append(("WEEKEND.md", f"{b64[bst]['ratio_conservative']:.1f}×",
-                        "batch-64 batched reading, which does NOT meet 100x"))
+            for f in ("WEEKEND.md", "README.md"):
+                out.append((f, f"{b64[bst]['ratio_conservative']:.1f}×",
+                            "batch-64 batched reading, which does NOT meet 100x"))
         sw = fa.get("sample_sweep")
         if sw:
             g = sw["ratio_graph_conservative"]
-            out.append(("WEEKEND.md",
-                        f"{g['n_ge_100x']}/{g['n']}",
-                        "distinct batch-1 samples clearing 100x"))
-            out.append(("WEEKEND.md", f"{g['min']:.1f}×",
-                        "worst single-sample batch-1 ratio"))
+            for f in ("WEEKEND.md", "README.md"):
+                out.append((f, f"{g['n_ge_100x']}/{g['n']}",
+                            "distinct batch-1 samples clearing 100x"))
+                out.append((f, f"{g['min']:.1f}×",
+                            "worst single-sample batch-1 ratio"))
+                out.append((f, f"{g['median']:.1f}×",
+                            "median single-sample batch-1 ratio"))
+            # The pass is conditional on CUDA-graph capture and every prose
+            # file that claims the pass must also carry what it is conditional
+            # on -- that is the whole reason this row exists.
+            ng = sw.get("ratio_nograd_conservative")
+            if ng:
+                for f in ("WEEKEND.md", "README.md"):
+                    out.append((f, f"{ng['n_ge_100x']}/{ng['n']}",
+                                "the same fields WITHOUT CUDA-graph capture"))
+    if pe:
+        su = pe["summary"]
+        for f in ("WEEKEND.md", "README.md"):
+            out.append((f, f"{su['n_identical']}/{su['n_shards']}",
+                        "shards where the packed spectral path is "
+                        "bit-identical to einsum"))
     if csu:
         rows = []
         for n_, v in csu["shards"].items():
