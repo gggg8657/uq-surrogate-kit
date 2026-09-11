@@ -3870,3 +3870,57 @@ to the feature set makes the in-band count go **down**, because the width it
 implies is not the width the band wants. That is a fifth distinct method
 failing against the bound H16 states without reference to any of them: predict
 the interval width to a median 4.47% across a 28.6–68.4× range.
+
+### H22, two corrections from the measured widths — one to my reading of the coefficient, one to "it over-covers"
+
+**My claim about the sign was wrong.** I wrote that the negative coefficients on
+`log_resid` and `log_consist` mean "the fit *narrows* the interval on samples
+whose prediction violates its own equation more… backwards from the physical
+reading". That was an inference from a coefficient in a **standardized,
+correlated** basis, and the emitted widths contradict it. Measured, per shard,
+against shard difficulty:
+
+* Spearman(shard rel-L2, width ratio) = **+0.653** for H22 against **+0.556**
+  for H15 — the residual features make the interval respond *more* strongly to
+  difficulty, not less;
+* on Darcy the width ratio runs **1.18× → 2.71×** across the graded ladder,
+  monotonically upward.
+
+So the features do what physics says they should. A coefficient sign in a
+standardized basis is not a statement about behaviour, and I should have read
+the widths — which were already in the JSON — before writing a mechanism.
+
+**And "it loses by over-covering" is half the story.** The loss is not spread
+across the subset; it is **one family**:
+
+| family | shards | H15: in band / over / under | H22: in band / over / under |
+|---|---|---|---|
+| **darcy** | 10 | **6** / 1 / 3 | **0** / **7** / 3 |
+| helmholtz | 4 | 0 / 0 / 4 | 0 / 0 / 4 |
+| poisson | 10 | 1 / 0 / 9 | 1 / 0 / 9 |
+
+**Every shard H15 had in band was Darcy, and H22 pushes seven of them out
+through the top.** On poisson and helmholtz the residual features change
+essentially nothing — both arms fail identically, and mostly by under-covering.
+So the arm is not "worse everywhere"; it is inert on two families and
+over-corrects on the third.
+
+That pattern matches the repo's own residual-floor measurement rather than
+contradicting it. Applying `L` amplifies the round-off already in the
+prediction, so the check is informative only where the surrogate's error clears
+the floor by a margin: the floors are 6.2e-5 (Poisson), 2.5e-5 (Helmholtz) and
+7.8e-5 (Darcy), while the shifted errors are 1e-3–2.7e-2 on Poisson and
+5.4e-2–1.7e-1 on Darcy. **Darcy is where the residual has the most headroom,
+and it is the only family where the feature moved anything at all.** It moved it
+too far.
+
+This is a better result than "the residual does not help". The signal is real,
+it is concentrated exactly where the floor argument predicts it should be, and
+the failure is one of *scale* rather than of information — which is the third
+time on this clause that a real signal has been available and mis-scaled
+(H15 on the `smooth` shards, H18's double count, now this).
+
+**Still not attributable.** The 3-family fit remains confounded with the feature
+addition until the control (`runs/h22_ctl_u*_het.json`, 3/8 seeds done) lands.
+Nothing above turns on the H15-vs-H22 gap; the per-family split and the width
+correlations are properties of the H22 arm read against its own shards.
