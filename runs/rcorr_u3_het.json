@@ -1,0 +1,256 @@
+{
+  "ckpt": "runs/u3/best.pt",
+  "seed": 3,
+  "score": "field_max",
+  "sigma_source": "het",
+  "families": [
+    "poisson",
+    "helmholtz",
+    "darcy"
+  ],
+  "sigma_floor_median": 0.0002412213070783764,
+  "uses_ground_truth": true,
+  "note": "univariate rank correlations, no fitting. Separates a suppression effect in H22's multivariate fit from a real statement about the sigma head.",
+  "shards": {
+    "input_shift/poisson_rough/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "rel_l2_mean": 0.02593999356031418,
+      "spearman_logresid_vs_logS": 0.8223652023895355,
+      "spearman_logconsist_vs_logS": 0.8102438065769446,
+      "spearman_logresid_vs_numerator": 0.7945278793444799,
+      "spearman_logresid_vs_denominator": -0.019065221193015937,
+      "n": 512
+    },
+    "input_shift/poisson_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "rel_l2_mean": 0.0025676246732473373,
+      "spearman_logresid_vs_logS": 0.5054460673659034,
+      "spearman_logconsist_vs_logS": 0.5058292670889553,
+      "spearman_logresid_vs_numerator": 0.5606504239057826,
+      "spearman_logresid_vs_denominator": 0.4602417511472652,
+      "n": 512
+    },
+    "input_shift/poisson_tau/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "rel_l2_mean": 0.008558635599911213,
+      "spearman_logresid_vs_logS": 0.14626356130051155,
+      "spearman_logconsist_vs_logS": 0.11190978659548415,
+      "spearman_logresid_vs_numerator": 0.1196241173710532,
+      "spearman_logresid_vs_denominator": -0.14955941347487584,
+      "n": 512
+    },
+    "input_shift/poisson_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "rel_l2_mean": 0.4099169373512268,
+      "spearman_logresid_vs_logS": 0.4471146831118893,
+      "spearman_logconsist_vs_logS": 0.4042051654535883,
+      "spearman_logresid_vs_numerator": 0.5902120634062324,
+      "spearman_logresid_vs_denominator": 0.2986239214183586,
+      "n": 512
+    },
+    "input_shift/helmholtz_rough/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "rel_l2_mean": 0.009632902219891548,
+      "spearman_logresid_vs_logS": 0.20486781665922799,
+      "spearman_logconsist_vs_logS": 0.2028754642027443,
+      "spearman_logresid_vs_numerator": 0.884271895492155,
+      "spearman_logresid_vs_denominator": 0.9395627576152464,
+      "n": 512
+    },
+    "input_shift/helmholtz_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "rel_l2_mean": 0.004570845514535904,
+      "spearman_logresid_vs_logS": 0.17660071268353533,
+      "spearman_logconsist_vs_logS": 0.17689933309300648,
+      "spearman_logresid_vs_numerator": 0.2997829861014101,
+      "spearman_logresid_vs_denominator": 0.6397520807160819,
+      "n": 512
+    },
+    "input_shift/helmholtz_tau/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "rel_l2_mean": 0.008134722709655762,
+      "spearman_logresid_vs_logS": 0.6875620486719081,
+      "spearman_logconsist_vs_logS": 0.6874532399777984,
+      "spearman_logresid_vs_numerator": 0.9434599569579799,
+      "spearman_logresid_vs_denominator": 0.9692123435956823,
+      "n": 512
+    },
+    "input_shift/helmholtz_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "rel_l2_mean": 0.3670969009399414,
+      "spearman_logresid_vs_logS": -0.35639916715304243,
+      "spearman_logconsist_vs_logS": -0.36394612744761445,
+      "spearman_logresid_vs_numerator": 0.9256981459070049,
+      "spearman_logresid_vs_denominator": 0.785406067132507,
+      "n": 512
+    },
+    "input_shift/darcy_rough/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "rel_l2_mean": 0.07509422302246094,
+      "spearman_logresid_vs_logS": 0.2775358416017212,
+      "spearman_logconsist_vs_logS": 0.27710373608107025,
+      "spearman_logresid_vs_numerator": 0.04100165510808986,
+      "spearman_logresid_vs_denominator": 0.16449272266982323,
+      "n": 512
+    },
+    "input_shift/darcy_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "rel_l2_mean": 0.028427477926015854,
+      "spearman_logresid_vs_logS": -0.1233404215447294,
+      "spearman_logconsist_vs_logS": -0.12317090528833499,
+      "spearman_logresid_vs_numerator": -0.11029902453050434,
+      "spearman_logresid_vs_denominator": -0.003978205074830267,
+      "n": 512
+    },
+    "input_shift/darcy_tau/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "rel_l2_mean": 0.10495198518037796,
+      "spearman_logresid_vs_logS": 0.05686805484029709,
+      "spearman_logconsist_vs_logS": 0.05726967246884334,
+      "spearman_logresid_vs_numerator": -0.036014962491846055,
+      "spearman_logresid_vs_denominator": 0.14124668385723915,
+      "n": 512
+    },
+    "input_shift/darcy_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "rel_l2_mean": 0.7657796740531921,
+      "spearman_logresid_vs_logS": -0.27099095841773385,
+      "spearman_logconsist_vs_logS": -0.2703810278045336,
+      "spearman_logresid_vs_numerator": -0.3875628891006054,
+      "spearman_logresid_vs_denominator": -0.2421951706048949,
+      "n": 512
+    },
+    "graded_rough/poisson_dam0p1/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "rel_l2_mean": 0.0032805504743009806,
+      "spearman_logresid_vs_logS": -0.18140608727869903,
+      "spearman_logconsist_vs_logS": -0.18994775282660656,
+      "spearman_logresid_vs_numerator": 0.4004719364975628,
+      "spearman_logresid_vs_denominator": 0.4100911246447794,
+      "n": 512
+    },
+    "graded_rough/poisson_dam0p2/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "rel_l2_mean": 0.0035931142047047615,
+      "spearman_logresid_vs_logS": -0.022222410474280974,
+      "spearman_logconsist_vs_logS": -0.042936385514129254,
+      "spearman_logresid_vs_numerator": 0.3745897629389757,
+      "spearman_logresid_vs_denominator": 0.29543619665145743,
+      "n": 512
+    },
+    "graded_rough/poisson_dam0p3/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "rel_l2_mean": 0.004020761698484421,
+      "spearman_logresid_vs_logS": 0.18607323817534704,
+      "spearman_logconsist_vs_logS": 0.1550075960449068,
+      "spearman_logresid_vs_numerator": 0.35291816986442504,
+      "spearman_logresid_vs_denominator": 0.18030107595419326,
+      "n": 512
+    },
+    "graded_rough/poisson_dam0p5/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "rel_l2_mean": 0.005872873589396477,
+      "spearman_logresid_vs_logS": 0.6351684719790344,
+      "spearman_logconsist_vs_logS": 0.605764567619207,
+      "spearman_logresid_vs_numerator": 0.5913900626143982,
+      "spearman_logresid_vs_denominator": 3.0805968254209084e-05,
+      "n": 512
+    },
+    "graded_rough/poisson_dam0p7/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "rel_l2_mean": 0.01006804034113884,
+      "spearman_logresid_vs_logS": 0.7890057886986523,
+      "spearman_logconsist_vs_logS": 0.7707810472863865,
+      "spearman_logresid_vs_numerator": 0.7541933984279648,
+      "spearman_logresid_vs_denominator": -0.09840575697223446,
+      "n": 512
+    },
+    "graded_rough/poisson_dam1/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "rel_l2_mean": 0.02651878260076046,
+      "spearman_logresid_vs_logS": 0.8379540818370126,
+      "spearman_logconsist_vs_logS": 0.8272018695425779,
+      "spearman_logresid_vs_numerator": 0.7636799440095673,
+      "spearman_logresid_vs_denominator": -0.08619313196638237,
+      "n": 512
+    },
+    "graded_rough/darcy_dam0p1/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "rel_l2_mean": 0.053266726434230804,
+      "spearman_logresid_vs_logS": 0.23496008142502375,
+      "spearman_logconsist_vs_logS": 0.23596341023792358,
+      "spearman_logresid_vs_numerator": 0.04574667977020176,
+      "spearman_logresid_vs_denominator": 0.04672840588131667,
+      "n": 512
+    },
+    "graded_rough/darcy_dam0p2/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "rel_l2_mean": 0.057736314833164215,
+      "spearman_logresid_vs_logS": 0.23991735903686157,
+      "spearman_logconsist_vs_logS": 0.24048142974445247,
+      "spearman_logresid_vs_numerator": -0.0272202338036873,
+      "spearman_logresid_vs_denominator": 0.03800181639894276,
+      "n": 512
+    },
+    "graded_rough/darcy_dam0p3/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "rel_l2_mean": 0.06438742578029633,
+      "spearman_logresid_vs_logS": 0.2222121191963928,
+      "spearman_logconsist_vs_logS": 0.221231857469015,
+      "spearman_logresid_vs_numerator": -0.019671664177567206,
+      "spearman_logresid_vs_denominator": 0.06456505177739755,
+      "n": 512
+    },
+    "graded_rough/darcy_dam0p5/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "rel_l2_mean": 0.07453835010528564,
+      "spearman_logresid_vs_logS": 0.3057275752165803,
+      "spearman_logconsist_vs_logS": 0.3053826418214486,
+      "spearman_logresid_vs_numerator": 0.11043492363900619,
+      "spearman_logresid_vs_denominator": 0.17643551737256466,
+      "n": 512
+    },
+    "graded_rough/darcy_dam0p7/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "rel_l2_mean": 0.09789975732564926,
+      "spearman_logresid_vs_logS": 0.15837288712649203,
+      "spearman_logconsist_vs_logS": 0.15835643618177864,
+      "spearman_logresid_vs_numerator": 0.01410802620134812,
+      "spearman_logresid_vs_denominator": 0.20555094345830377,
+      "n": 512
+    },
+    "graded_rough/darcy_dam1/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "rel_l2_mean": 0.16085436940193176,
+      "spearman_logresid_vs_logS": -0.17955598184960117,
+      "spearman_logconsist_vs_logS": -0.1805600259209668,
+      "spearman_logresid_vs_numerator": -0.2000108540472185,
+      "spearman_logresid_vs_denominator": 0.09624461152780259,
+      "n": 512
+    }
+  }
+}

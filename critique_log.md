@@ -4182,3 +4182,183 @@ in the same entry that said "no attribution is claimed from this table". Naming
 a confound is not the same as declining to lean on it, and the headline of that
 entry leaned on it. The rule that would have caught this: **if a comparison
 needs a control that has not finished, the arm gets no adjective until it has.**
+
+## Rung 4 on H17 — `codex` audited the equivariance result and found a real overclaim. Transcript: `logs/critic_codex_h17.log`
+
+I asked for the strongest reason H17 might be wrong, leaked or an artefact, with
+five specific attacks named. It found no label leak and no circular denominator,
+and it found two things that are true and that I had been claiming too much
+from. Both are verified in the source below, not taken on its word.
+
+### 1. The `darcy_amp2` control is a plumbing check, not evidence about nonlinear channels — CONFIRMED
+
+> "**Darcy is effectively an untreated control.** `pde2d.py:467` scales
+> permeability through `g`, then independently generates a unit-variance forcing
+> `f`. The wrapper selects **forcing channel 1** (`equivar.py:54`). Its RMS stays
+> at REF, so s≈1, and practically nothing changes. **Any predictor would remain
+> unchanged under this near-identity intervention, regardless of whether its
+> Darcy physics were correct.**"
+
+Verified. `uqkit/sims/pde2d.py` builds Darcy as
+`coef = exp(contrast·g); f = grf(...); a = _pack(log(coef), f)` — the `amp`
+multiplier is applied to `g`, which reaches the input through **channel 0**
+(log-permeability), while **channel 1** is a *fresh* unit-variance field that
+`amp` never touches. `LINEAR_CHANNELS["darcy"] = (1,)`. So on `darcy_amp2` the
+wrapper measures the scale of a channel the shift did not move, gets s≈1, and
+is a near-identity **by construction**.
+
+**So the claim I have been making is wrong.** I wrote that the control shows
+"the algebra must not apply, and it does not" — implying the wrapper correctly
+*declines* to rescale a nonlinearly-entering channel. It never looks at that
+channel. What `darcy_amp2` actually establishes is narrower and still worth
+having: **the wrapper does not fire on a shift that moves a channel it does not
+rescale**, i.e. it is not a generic "make everything better" transform. That is
+a negative control against blind rescaling, not evidence about nonlinearity.
+The ratio of 1.0000 is exactly what "did nothing" looks like, and I presented it
+as if it were what "did the right thing" looks like.
+
+### 2. The `amp2` shift is unusually easy, and the benchmark nearly hands the wrapper the answer — CONFIRMED
+
+> "at fixed resolution ordinary inputs have RMS approximately √((M−1)/M), and
+> `amp2` inputs have exactly twice that... **REF is essentially a known
+> constant, s≈2, and the wrapper computes 2F(a/2)**. It returns the input to the
+> original distribution by construction. Near-ID relative error is the expected
+> consequence, not evidence of robustness to a more general shift."
+
+Verified: `grf()` subtracts each field's mean and divides by its own standard
+deviation (`pde2d.py:139–140`) before `generate` applies `amp`. Every input has
+per-sample RMS ≈ 1; `amp2` has exactly 2. There is **no natural amplitude
+variation and no amplitude–shape dependence in this corpus**, so `s` is a
+constant the generator effectively published.
+
+The repair is still real *for a pure global amplitude shift*, and the
+mechanism — frozen standardization statistics — is still the reason the network
+broke a homogeneity its physics has. But "0.981–0.997× the in-distribution
+error" is the expected consequence of returning the input exactly to the
+training amplitude, not independent evidence that the wrapper generalizes.
+
+### 3. Two audit weaknesses in how the accuracy ratio is computed — accepted
+
+> "the ID loader does not enforce checkpoint/seed matching against the H17 arms.
+> It also reports a **ratio of medians**, not a median of paired ratios."
+
+Both true of `scripts/agg_scale.py:in_dist_rel_l2`. Neither is an error today —
+the artefacts do come from the same checkpoints — but "same checkpoints" rests
+on provenance rather than an assertion, and a ratio of medians is not the
+paired statistic the sentence implies.
+
+### 4. Where I disagree, in one line each
+
+* "Frozen standardization is not established as the *sole* cause — a nonlinear
+  network can violate homogeneity without it." **Correct, and I should not have
+  implied sole causation.** But it is established as *a* cause sufficient to
+  explain the size of the effect, because the wrapper removes it and the error
+  returns to the in-distribution level; a residual nonlinear violation would
+  have left a gap and did not, to within 0.981–0.997×.
+* "`provably touches nothing else` exceeds the evidence — the aggregator
+  measures the maximum fractional change in shard *median* errors, not a
+  per-sample invariance guarantee." **Accepted without qualification.** That
+  wording is being changed.
+
+### What this costs, and what it does not
+
+It does not touch the *clause* verdicts: H17 never made clause 1 pass, and the
+H18/H19 findings that every arm's gain is the amplitude feature are unaffected —
+if anything this strengthens them, because it explains why the amplitude axis
+was so learnable. What it costs is the strength of the control argument, which I
+had repeated in the board entry, `WEEKEND.md` and the paper draft.
+
+### H23 — registered now: the two controls this audit says are missing
+
+Codex's recommended measurement is right and it is the one I am taking:
+
+1. **A positive control on the same family.** Darcy's channel 1 *is* linear, and
+   `amp` never touches it. Generate a Darcy shift that scales **channel 1** and
+   check the wrapper repairs it. If the wrapper is a real equivariance repair
+   this must work on Darcy too; if it only ever worked on the four families
+   whose shifted channel happened to be channel 0, that is a much smaller claim.
+2. **A negative control that can actually fail.** Point the wrapper at Darcy's
+   **channel 0**, the log-permeability, where the algebra genuinely does not
+   hold, and measure the damage. `darcy_amp2` today cannot fail because the
+   wrapper never reads that channel. A control that cannot fail is not a control.
+3. **The generator shortcut, removed.** Fields generated *without* per-sample
+   variance normalization and with an independently randomized amplitude
+   multiplier, REF frozen beforehand, wrapped shifted error reported against the
+   bare predictor's paired unshifted error on identical checkpoints. This is the
+   measurement that decides whether the repair survives when `s` is not a
+   constant the benchmark published.
+
+**Prediction, registered:** (1) works and (2) does damage. If (2) does *not*
+damage anything, the wrapper is doing less than I think even on the four linear
+families, and I will say so. (3) is where I expect the effect to shrink — the
+per-sample `s` estimate will be noisy where it is currently exact, and the
+question is by how much.
+
+## H23 — written before the run: is the Darcy over-response extrapolation in the residual feature?
+
+**What H22 left.** The residual features are real signal (top-five on 8/8
+seeds), they are exactly scale-invariant so they cannot be the amplitude
+effect, and they move exactly one family: Darcy from 6/10 shards in band to
+0/10, pushed through the **top** of the band at 1.18–2.71× width, while poisson
+and helmholtz are untouched in both arms. The failure is one of **scale, not of
+information** — h responds to the residual in the right direction
+(Spearman(shard rel-L2, width ratio) = +0.653 against the baseline's +0.556)
+and responds too strongly.
+
+**The candidate cause, and it is checkable without fitting anything.** h is
+linear in standardized features and is fitted on the **development** suite. A
+linear model with a substantial coefficient extrapolates without bound: if the
+evaluation shards' residual features lie outside the range the development
+shards covered, a coefficient that is correctly signed and correctly sized
+*inside* the fitting range produces an arbitrarily large width *outside* it.
+Darcy is the family with the most residual headroom — its shifted error
+(5.4e-2–1.7e-1) clears the operator's round-off floor (7.8e-5) by the widest
+margin of the three — so it is also the family whose residual feature moves
+furthest under shift, and therefore the one most likely to leave the fitted
+range.
+
+### The change (one): a measurement, not a model
+
+`scripts/diag_feature_coverage.py` — for each family, compute the two residual
+features on the development shards h is fitted on and on the 24 evaluation
+shards, and report, **per family**:
+
+* the fraction of evaluation samples whose feature lies outside the
+  development min–max;
+* the max standardized distance beyond the development range, in units of the
+  development standard deviation (the same standardization h uses, so the
+  number is directly the size of the extrapolation h performs);
+* the same two quantities for `a_spec9`, the amplitude feature, as a **within-run
+  control**: it is the coefficient that carries every arm, so if it is
+  extrapolating just as far and *not* producing this failure, extrapolation
+  distance alone is not the explanation.
+
+No model is fitted and no coverage is computed, so this cannot flatter anything.
+It runs one forward pass per shard and one operator apply — it does not touch
+the timing benchmark's device.
+
+### Predictions, registered now
+
+1. **Darcy's evaluation residual features sit outside the development range by
+   a substantially larger standardized distance than poisson's or
+   helmholtz's.** That is the whole hypothesis in one number.
+2. The `a_spec9` control does **not** show the same family ordering. If
+   amplitude extrapolates just as far on Darcy and the amplitude coefficient
+   (6.3× larger) does not blow the band, then extrapolation distance is not
+   sufficient and prediction 1 being true would still not establish the cause.
+3. **Falsified if Darcy's evaluation residuals lie inside the development
+   range.** Then h is mis-fitting *within* its fitted range, which is a
+   different and harder problem than covering the range, and the follow-up
+   below is the wrong follow-up.
+
+### What follows if it holds, and the trap in it
+
+The implied fix is to extend the **development** suite's Darcy roughness range
+until it brackets the evaluation shards' residuals — a change to data that is
+ours to design, never to the 24 evaluation shards. **The trap:** bracketing the
+evaluation values is exactly the "unseen strength" reading H15 already labelled
+as the *generous* one, and it would weaken the leave-one-mechanism-out headline
+if it were quietly folded in. So if that run happens it is reported under both
+readings, as H15's was, and the leave-one-mechanism-out number remains the
+headline. Widening the development suite until the test looks better, without
+saying so, is the one move this brief forbids outright.
