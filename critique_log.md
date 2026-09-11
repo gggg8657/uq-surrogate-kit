@@ -4686,3 +4686,138 @@ So the gap is not "the residual is uninformative". It is that **a marginal rank
 correlation of 0.241 does not buy a conditional quantile accurate to ±4.47%**,
 which is what H16 measured the clause to require. Those are different
 quantities, and this repo has now measured both.
+
+## H24 result — the sign constraint did not make the residual usable, it removed it. Prediction 1 falsified
+
+`runs/h24_nn_u0..u7_het.json`, 8 seeds, paired by checkpoint against the
+unconstrained residual arm and against the control, all three on the same 24
+shards and the same three families.
+
+| arm | in band /24, per seed | median |
+|---|---|---|
+| control — 3-family fit, **no** residual features | 4,3,3,3,0,5,3,0 | **3.0** |
+| H22 — residual features, **unconstrained** | 0,1,1,2,1,0,1,3 | 1.0 |
+| **H24 — residual features, coefficients ≥ 0** | **0,6,4,6,0,5,1,0** | **2.5** |
+
+| comparison | diffs | exact sign-flip p |
+|---|---|---|
+| H24 vs H22 (the registered test) | 0,+5,+3,+4,−1,+5,0,−3 | **0.2188** |
+| H24 vs control | −4,+3,+1,+3,0,0,−2,0 | **1.0000** |
+
+**Prediction 1 is falsified exactly as registered.** I wrote: "the constrained
+arm beats the unconstrained residual arm on the paired 8-seed sign-flip.
+Falsified if p > 0.05 or the point estimate is negative." The point estimate is
+positive — median 2.5 against 1.0 — and **p = 0.2188**, so it does not clear the
+bar I set. The seed spread is [0, 6] on a median of 2.5, which is the widest of
+any arm in this line and is most of why nothing is significant.
+
+### Why, and it is not the reason I expected
+
+The constraint did not teach the fit to use the residual with its physical sign.
+**It removed the feature.** In the unconstrained arm `log_resid` and
+`log_consist` were top-four coefficients on **8 of 8** seeds. Under the
+projection onto [0, ∞) they appear in the top twelve on **0 of 8** seeds — the
+optimizer drives them to the boundary and they stay there at zero.
+
+That explains the second row of the table exactly: H24 versus the control is
+**p = 1.0000**, dead level, because a fit whose two residual coefficients are
+pinned at zero *is* the control with two dead columns.
+
+So the three measurements compose into one statement, and it is sharper than
+what I was testing for:
+
+* H23: the residual's **marginal** rank correlation with the conformity score is
+  **+0.241**, positive on 8/8 seeds, and it tracks the error (+0.374) far more
+  than σ̃ (+0.107). The information is real and physically signed.
+* H22: the **multivariate** fit gives it a negative coefficient on 8/8 seeds —
+  suppression against the amplitude and σ columns it is collinear with.
+* H24: **forbid the negative sign and the fit declines to use it at all.**
+
+**The residual's unique information is only reachable, by this model class, as a
+suppressor.** It is not that a linear fit cannot see the signal; it is that the
+part of the signal that is not already in the amplitude and σ features enters
+only as a correction to those features' over-prediction, and a sign constraint
+that is right about the *marginal* relationship destroys the *partial* one.
+That is a real statement about the feature set, and it closes the residual line:
+unconstrained it is worse than the control, constrained it equals the control,
+and the honest summary is that this feature set cannot convert an equation
+violation into interval width.
+
+### A provenance gap in my own run records
+
+`runs/h24_nn_u*_het.json` contains **no field recording `--nonneg-features`**.
+The arm's single defining parameter is absent from its own output, so the run
+JSON cannot be verified in isolation — only the filename and the committed
+chain script say what it is. Every other flag in this script records itself
+(`residual_features`, `per_family_h`, `families`, `dropped_features`), and this
+one was added without following that. The evidence that the constraint applied
+is indirect but strong (the two coefficients go from top-four on 8/8 to absent
+on 8/8), and indirect is not the standard this repo holds elsewhere. Fixed for
+future runs below; the existing eight files stay as they are rather than being
+regenerated, and this note is what they are read with.
+
+## H25 — written before the run: take the interval's *shape* from σ̃ and its *magnitude* from the residual
+
+**What the last three results jointly say.** The residual has been used twice
+and failed twice, but in two specific roles:
+
+* **as a gate** (H14) — dead, at every abstention rate, including with an
+  oracle, because selection acts on the population and the failure is in scale;
+* **as a feature of the width model** (H22, H24) — an exact null against not
+  having it, constrained or not.
+
+And yet H23 measured that the signal is real and says something specific:
+ρ(`log_resid`, log **error**) = **+0.374** against ρ(`log_resid`, log **σ̃**) =
+**+0.107**, numerator above denominator on 8 of 8 seeds, p = 0.0078. **The
+residual sees error that the heteroscedastic head does not.** The third role
+has not been tried: use it as the interval's *scale* rather than as an input to
+something that fits a scale.
+
+### The change (one), and it has no fitted parameter
+
+σ̃ is a field: it says *where* in the domain the error is likely to be. Its
+magnitude is what fails under shift. So keep its shape and take its magnitude
+from the residual:
+
+    sigma' = sigma * ( relresid / median_cal(relresid) ),
+    relresid = ||L(mu) - f|| / ||f||   (one apply, no solve)
+
+`median_cal(relresid)` is a constant frozen on the **calibration** split, the
+same way the σ floor already is, so in distribution the modulation is ~1 and
+the in-distribution pass should be undisturbed. Then the ordinary per-family
+split conformal runs on `S' = max|μ−u| / floor(sigma')`, unchanged.
+
+**Nothing here is fitted.** There is no h, no coefficient, no penalty and no
+threshold — which is what separates this from H22/H24 and means it cannot be
+tuned toward the band. If it works it works for the reason stated; if it does
+not, the reason is not that I chose a bad hyperparameter.
+
+### Same restrictions, same controls, stated up front
+
+* The residual exists for poisson, helmholtz and darcy, so this is the **same
+  24 shards**, and the baseline is the plain per-family conformal on those same
+  24 — not the 32-shard headline. The denominator does not move.
+* Cost is one operator apply per sample. Clause 2 for this arm is
+  **`[not measured]`** until `bench_fair.py` times it with the apply inside the
+  captured graph, and no speedup number for it goes in any document before then.
+
+### Predictions, registered now
+
+1. **In distribution, coverage is undisturbed** (all five... three families at
+   ~0.90, the modulation being ~1 by construction). If it is not, the frozen
+   constant is wrong and nothing downstream is interpretable.
+2. H25 beats the plain baseline on the 24 shards, exact paired sign-flip over
+   8 seeds. The baseline is close to 0/24, so this is a low bar and clearing it
+   is the *minimum* for the residual to be usable as a scale at all.
+3. **Leak test.** `relresid` is exactly invariant to rescaling the linear
+   channel, so the four `*_amp2` shards **must not** be repaired by this. If
+   they are, the invariance argument is wrong and I look for the error before
+   believing any other row.
+4. **Falsification, and it closes the route.** If H25 is not distinguishable
+   from the plain baseline, then the residual has failed in all three of its
+   possible roles — gate, feature, and scale — and the honest statement is that
+   a one-apply equation-violation signal does not convert into calibrated width
+   on this surrogate at this precision. That is a stronger and more transferable
+   negative than any of the three individually, and it is the outcome I expect,
+   because H16 measured the requirement as ±4.47% conditional-quantile accuracy
+   and H23 measured the available signal as a rank correlation of 0.241.
