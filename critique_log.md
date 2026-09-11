@@ -4509,3 +4509,66 @@ slowed the benchmark, it would have corrupted the number the benchmark exists
 to produce — and the corruption would have been invisible in the output. Now
 gated on the benchmark **process**, which is exact. Caught by watching the
 utilisation trace flicker 31 → 0 → 0 while the run was plainly still going.
+
+## Clause 3 at 8 seeds — the strict headline is rock solid, and one supporting sentence is a single-draw artefact
+
+`runs/clause3.json`, from `runs/cons3_base_u0..u7_het.json`, detector `combo`,
+the same 49 shards. The published clause-3 numbers came from **one checkpoint**
+(`runs/consistency_uq.json`, `runs/u0`), and the brief's seed-count rule applies
+to a passing clause exactly as it does to a failing one.
+
+**The strict reading reproduces exactly.** 47/49 on **8 of 8 seeds** — not a
+median of a spread, the identical count every time. The two misses are the same
+two shards on every seed, with tight spreads:
+
+| shard | seeds below 0.9 | AUROC range |
+|---|---|---|
+| `darcy_dam0p1` | 8/8 | 0.8378–0.8422 |
+| `poisson_dam0p1` | 8/8 | 0.8792–0.8900 |
+
+That is worth stating plainly because it is the opposite of what happened to
+clause 1, where the per-seed spread (1–8 of 32) swamped every effect measured
+on it. **Clause 3's headline was not a lucky draw**, and the single-checkpoint
+publication understated its own reliability rather than overstating it.
+
+**But the conditional reading's denominator is not stable, and the published
+ratio is the most favourable of eight draws.** That reading admits a shard when
+its error degrades past a threshold, so shards near the threshold move in and
+out per seed and the *denominator* is itself a random variable:
+
+| threshold | (n≥0.9, n in population) per seed | denominator stable? |
+|---|---|---|
+| **> 1.06×** | (33,33) (33,34) (33,35) (33,33) (34,36) (33,34) (34,36) (33,35) | **no**, 33–36 |
+| **≥ 1.10×** | (33,33) on all 8 seeds | **yes** |
+
+The cause is measured, not guessed: the two boundary shards straddle 1.06×.
+
+| shard | degradation range over 8 seeds | seeds above 1.06× |
+|---|---|---|
+| `darcy_dam0p1` | 1.0489–1.0770 | 4/8 |
+| `poisson_dam0p1` | 1.0581–1.0841 | 6/8 |
+
+Seed 0 — the published checkpoint — is one of only two seeds on which *neither*
+crosses, which is what produces the clean 33/33. On **6 of 8 seeds** one or both
+cross into the conditional population and then fail inside it.
+
+### What has to change in the documents, and what does not
+
+**The clause-3 verdict does not change.** `RESULTS.md` states the pass at the
+**≥1.10×** threshold, and at 1.10× it is 33/33 on 8 of 8 seeds. The pass is
+sound as published and is now stronger than it was, because it has eight seeds
+behind it instead of one.
+
+**One sentence is wrong as written.** `RESULTS.md` also says "any cut placed
+anywhere above 1.06× yields 100%". That is a property of seed 0, not of the
+method: on six of eight seeds a cut just above 1.06× admits a shard scoring
+0.838–0.890. The honest version names 1.10× as the cut and reports the
+boundary shards' degradation as the range it is, not as the single value
+"1.06×" that four separate lines currently quote.
+
+This is the same class of error the repo has caught twice before — a number
+with a measured spread quoted from one draw — and it is worth noting that it
+surfaced here on a clause that **passes**. Auditing only the failing clauses
+would have left it in place, which is the mirror image of the lesson from
+clause 2, where auditing only the side whose improvement hurt the claim hid a
+1.246× defect on our own side for three rounds.
