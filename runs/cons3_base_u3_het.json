@@ -1,0 +1,2764 @@
+{
+  "n_members": 1,
+  "equivariant": false,
+  "equivariant_ref": {},
+  "ckpts": [
+    "runs/u3/best.pt"
+  ],
+  "sigma_source": "het",
+  "seed": 3,
+  "pretrain_tasks": [
+    "poisson",
+    "helmholtz",
+    "diffusion",
+    "advdiff",
+    "darcy"
+  ],
+  "presentation": {
+    "A": "residual under PARENT[task] -- the configured operator. The process moved and nobody reconfigured the model. Provably at chance for operator shift; strict reading.",
+    "B": "residual under the REQUESTED operator (the shard's own task). The request names an operator the surrogate was not trained on."
+  },
+  "shards": {
+    "input_shift/poisson_rough/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.02593999356031418,
+      "rel_l2_in_dist": 0.0031004929915070534,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 1.7769703845260665e-05,
+      "cons_B_median": 0.8217198848724365,
+      "headroom": 46242.74609375,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_B": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/poisson_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.0025676246732473373,
+      "rel_l2_in_dist": 0.0031004929915070534,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 2.5541587092448026e-05,
+      "cons_B_median": 0.5469362139701843,
+      "headroom": 21413.556640625,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.7092761993408203,
+          "ci95": [
+            0.6812370551368417,
+            0.7364139309276612
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.7092761993408203,
+          "ci95": [
+            0.6812370551368417,
+            0.7364139309276612
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/poisson_tau/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.008558634668588638,
+      "rel_l2_in_dist": 0.0031004929915070534,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 1.704407623037696e-05,
+      "cons_B_median": 0.5585826635360718,
+      "headroom": 32772.83203125,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 0.9981155395507812,
+          "ci95": [
+            0.9971265301363532,
+            0.9989565745925544
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.8438224792480469,
+          "ci95": [
+            0.8236215090450268,
+            0.8636069614484151
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.8438224792480469,
+          "ci95": [
+            0.8236215090450268,
+            0.8636069614484151
+          ]
+        },
+        "combo": {
+          "auroc": 0.9981193542480469,
+          "ci95": [
+            0.9971348357044675,
+            0.9989520531196815
+          ]
+        },
+        "router": {
+          "auroc": 0.9981155395507812,
+          "ci95": [
+            0.9971265301363532,
+            0.9989565745925544
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/poisson_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.4099169373512268,
+      "rel_l2_in_dist": 0.0031004929915070534,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 2.5607843781472184e-05,
+      "cons_B_median": 0.4628804326057434,
+      "headroom": 18075.728515625,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.017157554626464844,
+          "ci95": [
+            0.01248490374330981,
+            0.022252824675639604
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.017157554626464844,
+          "ci95": [
+            0.01248490374330981,
+            0.022252824675639604
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/helmholtz_rough/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.009632902219891548,
+      "rel_l2_in_dist": 0.003478625789284706,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 1.273940688406583e-05,
+      "cons_B_median": 0.41217583417892456,
+      "headroom": 32354.3984375,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.9925804138183594,
+          "ci95": [
+            0.9893586781045496,
+            0.9955978403938744
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.9925804138183594,
+          "ci95": [
+            0.9893586781045496,
+            0.9955978403938744
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/helmholtz_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.004570845514535904,
+      "rel_l2_in_dist": 0.003478625789284706,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 3.928611477022059e-06,
+      "cons_B_median": 0.166743203997612,
+      "headroom": 42443.29296875,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.010097503662109375,
+          "ci95": [
+            0.006181303115185468,
+            0.014467507554968204
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.010097503662109375,
+          "ci95": [
+            0.006181303115185468,
+            0.014467507554968204
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/helmholtz_tau/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.008134722709655762,
+      "rel_l2_in_dist": 0.003478625789284706,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 1.4662447028968018e-05,
+      "cons_B_median": 0.3454049229621887,
+      "headroom": 23557.11328125,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 0.9991798400878906,
+          "ci95": [
+            0.998541199951425,
+            0.9996490170575584
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.9544334411621094,
+          "ci95": [
+            0.9444001674652099,
+            0.9643218865157752
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.9544334411621094,
+          "ci95": [
+            0.9444001674652099,
+            0.9643218865157752
+          ]
+        },
+        "combo": {
+          "auroc": 0.996612548828125,
+          "ci95": [
+            0.9943747332060756,
+            0.998469052851947
+          ]
+        },
+        "router": {
+          "auroc": 0.9991798400878906,
+          "ci95": [
+            0.998541199951425,
+            0.9996490170575584
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/helmholtz_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.3670969009399414,
+      "rel_l2_in_dist": 0.003478625789284706,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 8.486933438689448e-06,
+      "cons_B_median": 0.26092246174812317,
+      "headroom": 30744.021484375,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.7474479675292969,
+          "ci95": [
+            0.7225054043878607,
+            0.7716021674760285
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.7474479675292969,
+          "ci95": [
+            0.7225054043878607,
+            0.7716021674760285
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/diffusion_rough/N64": {
+      "kind": "input_shift",
+      "parent": "diffusion",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.05230109021067619,
+      "rel_l2_in_dist": 0.0027193957939743996,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": null,
+      "cons_B_median": null,
+      "headroom": null,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": null,
+        "cons_B": null,
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/diffusion_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "diffusion",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.0025105932727456093,
+      "rel_l2_in_dist": 0.0027193957939743996,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": null,
+      "cons_B_median": null,
+      "headroom": null,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": null,
+        "cons_B": null,
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/diffusion_tau/N64": {
+      "kind": "input_shift",
+      "parent": "diffusion",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.011194553226232529,
+      "rel_l2_in_dist": 0.0027193957939743996,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": null,
+      "cons_B_median": null,
+      "headroom": null,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": null,
+        "cons_B": null,
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/diffusion_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "diffusion",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.4196951389312744,
+      "rel_l2_in_dist": 0.0027193957939743996,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": null,
+      "cons_B_median": null,
+      "headroom": null,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": null,
+        "cons_B": null,
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/advdiff_rough/N64": {
+      "kind": "input_shift",
+      "parent": "advdiff",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.06466860324144363,
+      "rel_l2_in_dist": 0.0027671526186168194,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": null,
+      "cons_B_median": null,
+      "headroom": null,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": null,
+        "cons_B": null,
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/advdiff_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "advdiff",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.002544921822845936,
+      "rel_l2_in_dist": 0.0027671526186168194,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": null,
+      "cons_B_median": null,
+      "headroom": null,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": null,
+        "cons_B": null,
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/advdiff_tau/N64": {
+      "kind": "input_shift",
+      "parent": "advdiff",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.01499444805085659,
+      "rel_l2_in_dist": 0.0027671526186168194,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": null,
+      "cons_B_median": null,
+      "headroom": null,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 0.9999980926513672,
+          "ci95": [
+            0.9999884992035698,
+            1.0
+          ]
+        },
+        "cons_A": null,
+        "cons_B": null,
+        "combo": {
+          "auroc": 0.9999980926513672,
+          "ci95": [
+            0.9999884992035698,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 0.9999980926513672,
+          "ci95": [
+            0.9999884992035698,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/advdiff_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "advdiff",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.4700116515159607,
+      "rel_l2_in_dist": 0.0027671526186168194,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": null,
+      "cons_B_median": null,
+      "headroom": null,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": null,
+        "cons_B": null,
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/darcy_rough/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.07509422302246094,
+      "rel_l2_in_dist": 0.0507846400141716,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 1.7907124856719747e-05,
+      "cons_B_median": 0.960701584815979,
+      "headroom": 53649.125,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.9571304321289062,
+          "ci95": [
+            0.9477212739424438,
+            0.9651082446729362
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.9571304321289062,
+          "ci95": [
+            0.9477212739424438,
+            0.9651082446729362
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/darcy_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.028427477926015854,
+      "rel_l2_in_dist": 0.0507846400141716,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 1.2018394954793621e-05,
+      "cons_B_median": 0.8007490634918213,
+      "headroom": 66626.953125,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.13578414916992188,
+          "ci95": [
+            0.11703958700948655,
+            0.15594858045273316
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.13578414916992188,
+          "ci95": [
+            0.11703958700948655,
+            0.15594858045273316
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/darcy_tau/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.10495198518037796,
+      "rel_l2_in_dist": 0.0507846400141716,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 2.186075653298758e-05,
+      "cons_B_median": 0.9657166004180908,
+      "headroom": 44175.80859375,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 0.9968147277832031,
+          "ci95": [
+            0.9951637757474646,
+            0.9982582700254299
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.9806671142578125,
+          "ci95": [
+            0.974730051786413,
+            0.986107144976923
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.9806671142578125,
+          "ci95": [
+            0.974730051786413,
+            0.986107144976923
+          ]
+        },
+        "combo": {
+          "auroc": 0.9965896606445312,
+          "ci95": [
+            0.9947551223276261,
+            0.9981486724374037
+          ]
+        },
+        "router": {
+          "auroc": 0.9968147277832031,
+          "ci95": [
+            0.9951637757474646,
+            0.9982582700254299
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "input_shift/darcy_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.7657796144485474,
+      "rel_l2_in_dist": 0.0507846400141716,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 0.24022109806537628,
+      "cons_B_median": 0.9972623586654663,
+      "headroom": 4.151435375213623,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.9999351501464844,
+          "ci95": [
+            0.99983930117421,
+            0.9999888313565735
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.9999351501464844,
+          "ci95": [
+            0.99983930117421,
+            0.9999888313565735
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "param_oor/darcy_c3/N64": {
+      "kind": "param_oor",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.7874779105186462,
+      "rel_l2_in_dist": 0.0507846400141716,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 0.28613796830177307,
+      "cons_B_median": 0.9970995187759399,
+      "headroom": 3.4846808910369873,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.9999542236328125,
+          "ci95": [
+            0.9998753544501682,
+            0.9999980575566467
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.9999542236328125,
+          "ci95": [
+            0.9998753544501682,
+            0.9999980575566467
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "param_oor/frac_s3/N64": {
+      "kind": "param_oor",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 1702.267333984375,
+      "rel_l2_in_dist": 0.0031004929915070534,
+      "operator_changed": true,
+      "B_equals_A": false,
+      "floor_c": 0.9809330701828003,
+      "cons_B_median": 1.0,
+      "headroom": 1.019437551498413,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 0.49231529235839844,
+          "ci95": [
+            0.4613618123381932,
+            0.5256558186813456
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.5022821426391602,
+          "ci95": [
+            0.471182368764385,
+            0.5317086168978461
+          ]
+        },
+        "cons_B": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    "param_oor/frac_s0p25/N64": {
+      "kind": "param_oor",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.9491395950317383,
+      "rel_l2_in_dist": 0.0031004929915070534,
+      "operator_changed": true,
+      "B_equals_A": false,
+      "floor_c": 2.1040088427071169e-07,
+      "cons_B_median": 0.9102271199226379,
+      "headroom": 4326156.5,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 0.49733924865722656,
+          "ci95": [
+            0.4659391995617463,
+            0.5256440126568509
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.5085468292236328,
+          "ci95": [
+            0.4778012158194782,
+            0.5388227759785553
+          ]
+        },
+        "cons_B": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    "param_oor/frac_s0p5/N64": {
+      "kind": "param_oor",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.8574607372283936,
+      "rel_l2_in_dist": 0.0031004929915070534,
+      "operator_changed": true,
+      "B_equals_A": false,
+      "floor_c": 9.052054110725294e-07,
+      "cons_B_median": 0.7779345512390137,
+      "headroom": 859401.125,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 0.5025062561035156,
+          "ci95": [
+            0.47121142908840646,
+            0.5320466666945509
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.4990653991699219,
+          "ci95": [
+            0.4651009190731115,
+            0.5308561510775224
+          ]
+        },
+        "cons_B": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    "unseen_operator/biharmonic/N64": {
+      "kind": "unseen_operator",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 41.247947692871094,
+      "rel_l2_in_dist": 0.0031004929915070534,
+      "operator_changed": true,
+      "B_equals_A": false,
+      "floor_c": 0.021620474755764008,
+      "cons_B_median": 0.9999853372573853,
+      "headroom": 46.251773834228516,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 0.4971179962158203,
+          "ci95": [
+            0.467230158460839,
+            0.5267183230295126
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.5098810195922852,
+          "ci95": [
+            0.48028104957166307,
+            0.5403048382203173
+          ]
+        },
+        "cons_B": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    "unseen_operator/navier_stokes/N64": {
+      "kind": "unseen_operator",
+      "parent": "diffusion",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.8446696996688843,
+      "rel_l2_in_dist": 0.0027193957939743996,
+      "operator_changed": true,
+      "B_equals_A": false,
+      "floor_c": null,
+      "cons_B_median": null,
+      "headroom": null,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": null,
+        "cons_B": null,
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    "unseen_operator/ns_T0p25/N64": {
+      "kind": "unseen_operator",
+      "parent": "diffusion",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.8073464035987854,
+      "rel_l2_in_dist": 0.0027193957939743996,
+      "operator_changed": true,
+      "B_equals_A": false,
+      "floor_c": null,
+      "cons_B_median": null,
+      "headroom": null,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": null,
+        "cons_B": null,
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    "graded_rough/poisson_dam0p1/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.0032805507071316242,
+      "rel_l2_in_dist": 0.0031004929915070534,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 2.536133979447186e-05,
+      "cons_B_median": 0.5375414490699768,
+      "headroom": 21195.310546875,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 0.8999099731445312,
+          "ci95": [
+            0.8837829853841886,
+            0.9144581794763176
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.5938186645507812,
+          "ci95": [
+            0.56421591898403,
+            0.6227904431044579
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.5938186645507812,
+          "ci95": [
+            0.56421591898403,
+            0.6227904431044579
+          ]
+        },
+        "combo": {
+          "auroc": 0.8814792633056641,
+          "ci95": [
+            0.8642219812317423,
+            0.8992028547885268
+          ]
+        },
+        "router": {
+          "auroc": 0.8999099731445312,
+          "ci95": [
+            0.8837829853841886,
+            0.9144581794763176
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "graded_rough/poisson_dam0p2/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.0035931142047047615,
+      "rel_l2_in_dist": 0.0031004929915070534,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 2.4631450287415646e-05,
+      "cons_B_median": 0.5486876964569092,
+      "headroom": 22275.8984375,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 0.9994621276855469,
+          "ci95": [
+            0.9990477955366598,
+            0.9997807882324641
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.7427330017089844,
+          "ci95": [
+            0.7178087444653484,
+            0.7665254445414523
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.7427330017089844,
+          "ci95": [
+            0.7178087444653484,
+            0.7665254445414523
+          ]
+        },
+        "combo": {
+          "auroc": 0.9994621276855469,
+          "ci95": [
+            0.9990477955366598,
+            0.9997807882324641
+          ]
+        },
+        "router": {
+          "auroc": 0.9994621276855469,
+          "ci95": [
+            0.9990477955366598,
+            0.9997807882324641
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "graded_rough/poisson_dam0p3/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.004020761698484421,
+      "rel_l2_in_dist": 0.0031004929915070534,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 2.3959335521794856e-05,
+      "cons_B_median": 0.5674895644187927,
+      "headroom": 23685.529296875,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.9165115356445312,
+          "ci95": [
+            0.9026650944925914,
+            0.9303755886607671
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.9165115356445312,
+          "ci95": [
+            0.9026650944925914,
+            0.9303755886607671
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "graded_rough/poisson_dam0p5/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.005872873589396477,
+      "rel_l2_in_dist": 0.0031004929915070534,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 2.265519287902862e-05,
+      "cons_B_median": 0.6299326419830322,
+      "headroom": 27805.220703125,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.9998798370361328,
+          "ci95": [
+            0.9996456964658421,
+            1.0
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.9998798370361328,
+          "ci95": [
+            0.9996456964658421,
+            1.0
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "graded_rough/poisson_dam0p7/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.01006804034113884,
+      "rel_l2_in_dist": 0.0031004929915070534,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 2.1284999093040824e-05,
+      "cons_B_median": 0.7155241370201111,
+      "headroom": 33616.35546875,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_B": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "graded_rough/poisson_dam1/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.02651878260076046,
+      "rel_l2_in_dist": 0.0031004929915070534,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 1.744451219565235e-05,
+      "cons_B_median": 0.8215395212173462,
+      "headroom": 47094.4375,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_B": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "graded_rough/darcy_dam0p1/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.053266726434230804,
+      "rel_l2_in_dist": 0.0507846400141716,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 1.595434696355369e-05,
+      "cons_B_median": 0.9050092697143555,
+      "headroom": 56724.93359375,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 0.8762798309326172,
+          "ci95": [
+            0.8588277534402249,
+            0.8935835044742357
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.6122188568115234,
+          "ci95": [
+            0.5811749592453227,
+            0.641027724299473
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.6122188568115234,
+          "ci95": [
+            0.5811749592453227,
+            0.641027724299473
+          ]
+        },
+        "combo": {
+          "auroc": 0.8377628326416016,
+          "ci95": [
+            0.8166712083669632,
+            0.8583501532481125
+          ]
+        },
+        "router": {
+          "auroc": 0.8762798309326172,
+          "ci95": [
+            0.8588277534402249,
+            0.8935835044742357
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "graded_rough/darcy_dam0p2/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.057736318558454514,
+      "rel_l2_in_dist": 0.0507846400141716,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 1.579543277330231e-05,
+      "cons_B_median": 0.9204590320587158,
+      "headroom": 58273.74609375,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 0.9994411468505859,
+          "ci95": [
+            0.9990029926963205,
+            0.999781026528477
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.713958740234375,
+          "ci95": [
+            0.6867510403709651,
+            0.7390352958471116
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.713958740234375,
+          "ci95": [
+            0.6867510403709651,
+            0.7390352958471116
+          ]
+        },
+        "combo": {
+          "auroc": 0.9994049072265625,
+          "ci95": [
+            0.998935139265662,
+            0.9997740116607284
+          ]
+        },
+        "router": {
+          "auroc": 0.9994411468505859,
+          "ci95": [
+            0.9990029926963205,
+            0.999781026528477
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "graded_rough/darcy_dam0p3/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.06438742578029633,
+      "rel_l2_in_dist": 0.0507846400141716,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 1.6005340512492694e-05,
+      "cons_B_median": 0.9342855215072632,
+      "headroom": 58373.359375,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.8239688873291016,
+          "ci95": [
+            0.8036038079204607,
+            0.8443206097340243
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.8239688873291016,
+          "ci95": [
+            0.8036038079204607,
+            0.8443206097340243
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "graded_rough/darcy_dam0p5/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.07453835010528564,
+      "rel_l2_in_dist": 0.0507846400141716,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 1.625830918783322e-05,
+      "cons_B_median": 0.9589759707450867,
+      "headroom": 58983.74609375,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.9532260894775391,
+          "ci95": [
+            0.9433773265699535,
+            0.9621871007725403
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.9532260894775391,
+          "ci95": [
+            0.9433773265699535,
+            0.9621871007725403
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "graded_rough/darcy_dam0p7/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.09789976477622986,
+      "rel_l2_in_dist": 0.0507846400141716,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 1.8148024537367746e-05,
+      "cons_B_median": 0.9753654599189758,
+      "headroom": 53744.9921875,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.9934844970703125,
+          "ci95": [
+            0.9897978133588545,
+            0.9965714043920402
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.9934844970703125,
+          "ci95": [
+            0.9897978133588545,
+            0.9965714043920402
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "graded_rough/darcy_dam1/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "N": 64,
+      "n": 512,
+      "rel_l2_mean": 0.16085436940193176,
+      "rel_l2_in_dist": 0.0507846400141716,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 1.952497405000031e-05,
+      "cons_B_median": 0.9861697554588318,
+      "headroom": 50508.12109375,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.9997959136962891,
+          "ci95": [
+            0.9995054437441392,
+            0.9999766739588605
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.9997959136962891,
+          "ci95": [
+            0.9995054437441392,
+            0.9999766739588605
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "resolution_128/poisson/N128": {
+      "kind": "resolution_128",
+      "parent": "poisson",
+      "N": 128,
+      "n": 256,
+      "rel_l2_mean": 0.003184589557349682,
+      "rel_l2_in_dist": 0.0031004929915070534,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 0.00010718630073824897,
+      "cons_B_median": 0.8361365795135498,
+      "headroom": 7800.7783203125,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_B": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "resolution_128/helmholtz/N128": {
+      "kind": "resolution_128",
+      "parent": "helmholtz",
+      "N": 128,
+      "n": 256,
+      "rel_l2_mean": 0.003381073474884033,
+      "rel_l2_in_dist": 0.003478625789284706,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 3.503970947349444e-05,
+      "cons_B_median": 0.605780839920044,
+      "headroom": 17288.41015625,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.9999885559082031,
+          "ci95": [
+            0.9999536709714675,
+            1.0
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.9999885559082031,
+          "ci95": [
+            0.9999536709714675,
+            1.0
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "resolution_128/diffusion/N128": {
+      "kind": "resolution_128",
+      "parent": "diffusion",
+      "N": 128,
+      "n": 256,
+      "rel_l2_mean": 0.0027459491975605488,
+      "rel_l2_in_dist": 0.0027193957939743996,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": null,
+      "cons_B_median": null,
+      "headroom": null,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": null,
+        "cons_B": null,
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "resolution_128/advdiff/N128": {
+      "kind": "resolution_128",
+      "parent": "advdiff",
+      "N": 128,
+      "n": 256,
+      "rel_l2_mean": 0.0027812914922833443,
+      "rel_l2_in_dist": 0.0027671526186168194,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": null,
+      "cons_B_median": null,
+      "headroom": null,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": null,
+        "cons_B": null,
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "resolution_128/darcy/N128": {
+      "kind": "resolution_128",
+      "parent": "darcy",
+      "N": 128,
+      "n": 256,
+      "rel_l2_mean": 0.052825864404439926,
+      "rel_l2_in_dist": 0.0507846400141716,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 6.211132858879864e-05,
+      "cons_B_median": 0.9602770805358887,
+      "headroom": 15460.5791015625,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.9578704833984375,
+          "ci95": [
+            0.9482391205709925,
+            0.9673124265826037
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.9578704833984375,
+          "ci95": [
+            0.9482391205709925,
+            0.9673124265826037
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "resolution_256/poisson/N256": {
+      "kind": "resolution_256",
+      "parent": "poisson",
+      "N": 256,
+      "n": 256,
+      "rel_l2_mean": 0.0031723957508802414,
+      "rel_l2_in_dist": 0.0031004929915070534,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 0.00039617455331608653,
+      "cons_B_median": 0.9556643962860107,
+      "headroom": 2412.230712890625,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_B": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "resolution_256/helmholtz/N256": {
+      "kind": "resolution_256",
+      "parent": "helmholtz",
+      "N": 256,
+      "n": 256,
+      "rel_l2_mean": 0.0033608281519263983,
+      "rel_l2_in_dist": 0.003478625789284706,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 0.0001368353550788015,
+      "cons_B_median": 0.8753296732902527,
+      "headroom": 6396.95556640625,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_B": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "resolution_256/diffusion/N256": {
+      "kind": "resolution_256",
+      "parent": "diffusion",
+      "N": 256,
+      "n": 256,
+      "rel_l2_mean": 0.0027636727318167686,
+      "rel_l2_in_dist": 0.0027193957939743996,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": null,
+      "cons_B_median": null,
+      "headroom": null,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": null,
+        "cons_B": null,
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "resolution_256/advdiff/N256": {
+      "kind": "resolution_256",
+      "parent": "advdiff",
+      "N": 256,
+      "n": 256,
+      "rel_l2_mean": 0.002793238265439868,
+      "rel_l2_in_dist": 0.0027671526186168194,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": null,
+      "cons_B_median": null,
+      "headroom": null,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": null,
+        "cons_B": null,
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    },
+    "resolution_256/darcy/N256": {
+      "kind": "resolution_256",
+      "parent": "darcy",
+      "N": 256,
+      "n": 256,
+      "rel_l2_mean": 0.05228695273399353,
+      "rel_l2_in_dist": 0.0507846400141716,
+      "operator_changed": false,
+      "B_equals_A": true,
+      "floor_c": 0.00024645100347697735,
+      "cons_B_median": 0.9877099394798279,
+      "headroom": 4007.7333984375,
+      "auroc": {
+        "mahalanobis": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "cons_A": {
+          "auroc": 0.9996566772460938,
+          "ci95": [
+            0.9992146169561578,
+            0.9999400558041475
+          ]
+        },
+        "cons_B": {
+          "auroc": 0.9996566772460938,
+          "ci95": [
+            0.9992146169561578,
+            0.9999400558041475
+          ]
+        },
+        "combo": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "router": {
+          "auroc": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "lookup": {
+          "auroc": 0.5,
+          "ci95": [
+            0.5,
+            0.5
+          ]
+        }
+      }
+    }
+  },
+  "in_dist": {
+    "poisson": {
+      "rel_l2_mean": 0.0031004929915070534,
+      "cons_A_mean": 0.5274926424026489,
+      "floor_c_mean": 2.5279598048655316e-05,
+      "n": 1024
+    },
+    "helmholtz": {
+      "rel_l2_mean": 0.003478625789284706,
+      "cons_A_mean": 0.23599958419799805,
+      "floor_c_mean": 8.580444045946933e-06,
+      "n": 1024
+    },
+    "diffusion": {
+      "rel_l2_mean": 0.0027193957939743996,
+      "cons_A_mean": null,
+      "floor_c_mean": null,
+      "n": 1024
+    },
+    "advdiff": {
+      "rel_l2_mean": 0.0027671526186168194,
+      "cons_A_mean": null,
+      "floor_c_mean": null,
+      "n": 1024
+    },
+    "darcy": {
+      "rel_l2_mean": 0.0507846400141716,
+      "cons_A_mean": 0.8845047950744629,
+      "floor_c_mean": 1.790349961083848e-05,
+      "n": 1024
+    }
+  },
+  "summary": {
+    "mahalanobis": {
+      "n_shards_scored": 49,
+      "n_ge_0p9": 43,
+      "n_total_shards": 49,
+      "min": 0.49231529235839844,
+      "median": 1.0
+    },
+    "cons_A": {
+      "n_shards_scored": 35,
+      "n_ge_0p9": 20,
+      "n_total_shards": 49,
+      "min": 0.010097503662109375,
+      "median": 0.9544334411621094
+    },
+    "cons_B": {
+      "n_shards_scored": 35,
+      "n_ge_0p9": 24,
+      "n_total_shards": 49,
+      "min": 0.010097503662109375,
+      "median": 0.9925804138183594
+    },
+    "combo": {
+      "n_shards_scored": 49,
+      "n_ge_0p9": 47,
+      "n_total_shards": 49,
+      "min": 0.8377628326416016,
+      "median": 1.0
+    },
+    "router": {
+      "n_shards_scored": 49,
+      "n_ge_0p9": 47,
+      "n_total_shards": 49,
+      "min": 0.8762798309326172,
+      "median": 1.0
+    },
+    "lookup": {
+      "n_shards_scored": 49,
+      "n_ge_0p9": 6,
+      "n_total_shards": 49,
+      "min": 0.5,
+      "median": 0.5
+    }
+  },
+  "operator_shift_shards": [
+    "param_oor/frac_s3/N64",
+    "param_oor/frac_s0p25/N64",
+    "param_oor/frac_s0p5/N64",
+    "unseen_operator/biharmonic/N64",
+    "unseen_operator/navier_stokes/N64",
+    "unseen_operator/ns_T0p25/N64"
+  ],
+  "summary_operator_shift": {
+    "mahalanobis": {
+      "n_scored": 6,
+      "n_ge_0p9": 2,
+      "n_total": 6
+    },
+    "cons_A": {
+      "n_scored": 4,
+      "n_ge_0p9": 0,
+      "n_total": 6
+    },
+    "cons_B": {
+      "n_scored": 4,
+      "n_ge_0p9": 4,
+      "n_total": 6
+    },
+    "combo": {
+      "n_scored": 6,
+      "n_ge_0p9": 6,
+      "n_total": 6
+    },
+    "router": {
+      "n_scored": 6,
+      "n_ge_0p9": 6,
+      "n_total": 6
+    },
+    "lookup": {
+      "n_scored": 6,
+      "n_ge_0p9": 6,
+      "n_total": 6
+    }
+  }
+}
