@@ -4821,3 +4821,67 @@ not, the reason is not that I chose a bad hyperparameter.
    negative than any of the three individually, and it is the outcome I expect,
    because H16 measured the requirement as ±4.47% conditional-quantile accuracy
    and H23 measured the available signal as a rank correlation of 0.241.
+
+## H23 (mine) — amended before it runs, because another route answered its primary question
+
+My H23 is still queued behind the H17 cost benchmark and has produced nothing.
+Between registering it and its turn on the device, two runs answered the
+question it was built to ask, so I am amending it now rather than letting it
+burn a device on a settled point. The amendment is recorded before any of its
+own numbers exist.
+
+**What it was for.** H22's residual arm over-widened Darcy through the top of
+the band (six shards, 1.18–2.71× width). I hypothesised extrapolation: h is
+linear in standardized features, so if the evaluation shards' residual features
+lie outside the development range, a correctly-sized coefficient produces an
+arbitrarily large width outside it.
+
+**Why that is no longer the live question.** Two measurements landed:
+
+* the rank-correlation diagnostic showed the residual's *marginal* correlation
+  with the conformity score is **positive** (+0.241 median, 8/8 seeds), while
+  H22's fit gave it a **negative** partial coefficient on every seed — the
+  signature of **suppression**, not of a mis-scaled physical response;
+* constraining those coefficients to `[0, ∞)` (H24) removed them from the
+  top-12 on **0 of 8** seeds and made the arm an **exact null** against the arm
+  with no residual features at all (p = 1.0000).
+
+Together those say the over-widening came from the fit using the residual as a
+*suppressor* of the other features — a negative weight on a positively
+correlated variable distorts its neighbours — and not from extrapolating a
+physically-signed response. Measuring how far that feature extrapolates would
+now be measuring the reach of a coefficient we know contributes nothing once it
+is not allowed to suppress.
+
+**What is still live, and it is the part I registered as the control.** The
+script also measures `a_spec9`, log input amplitude — the coefficient that
+carries *every* arm at **+2.69**, 6.3× the next largest, and whose deletion
+takes every arm to 0/32. Whether that coefficient is being applied inside or
+far outside the range it was fitted on is not answered by anything above, and it
+bears directly on the H15/H19 headline: if the amplitude term is extrapolating,
+then "the learned width model works" is a statement about interpolation on the
+development suite, and the gap between the leave-one-mechanism-out and
+unseen-strength readings has a mechanism rather than just a label.
+
+**Amended predictions, replacing the originals:**
+
+1. **Primary (was the control).** `a_spec9` on the evaluation shards lies
+   outside its development range on the `*_amp2` shards by a large standardized
+   distance, and inside it on the `rough`/`tau`/`smooth` shards. If amplitude is
+   *inside* the fitted range everywhere, then H15's amplitude term is
+   interpolating and its failure is not a reach problem — which is a cleaner
+   result than the one I originally expected.
+2. **Secondary (was primary), retained but demoted.** Darcy's residual features
+   sit further outside the development range than poisson's or helmholtz's. This
+   is now descriptive: whatever it shows, the suppression finding already
+   explains H22's over-response, and I will not re-explain it with this.
+3. Unchanged: no coverage is computed and no quantile calibrated in this script,
+   so nothing in it can flatter a clause.
+
+**Process note.** Amending a registered hypothesis is a move that can be abused
+— it is one edit away from rewriting a prediction after seeing the result. Two
+things keep it honest here and both are checkable: the amendment is written
+while the run has produced **zero** output (`runs/feat_coverage_*` does not
+exist, the chain is still printing "waiting: a timing benchmark holds the
+lease"), and the new primary prediction is the *unchanged text* of the control I
+registered in the original entry, promoted rather than invented.
