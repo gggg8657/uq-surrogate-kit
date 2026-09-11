@@ -2162,13 +2162,14 @@ def sec_h31(h, out):
         "clause verdict.\n")
     for name, A in h["arms"].items():
         if "c" not in A:
-            out.append(f"\n**{name} path** \u2014 {A['status']}.\n")
+            out.append(f"\n#### {name} path\n\n{A['status']}.\n")
             continue
         dv, orc = A["dev"], A["oracle_max_eval_s_star"]
         ov = A["overpayment_dev_p100_over_oracle"]
         lab = ("equivariant prediction path (H17 wrapper)" if name == "eq"
                else "base prediction path")
-        out.append(f"\n**{lab}** \u2014 {A['n_seeds']} seeds, "
+        out.append(f"\n#### {lab}\n")
+        out.append(f"{A['n_seeds']} seeds, "
                    f"{A['n_shards']} covariate-shift shards, "
                    f"{dv['dev_n_shards']['median']:.0f} development shards "
                    f"\u00d7 {dv['dev_n_per_shard']} samples from seed block "
@@ -2260,7 +2261,62 @@ def sec_h31(h, out):
             f"the base path.\n")
 
 
-def sec_h32(g, out):
+
+def _gate_reps(gr, grd, out):
+    """The gate's error rates replicated over INPUTS, not over model seeds.
+
+    In the in-run gate every probe AUC is identical on all 8 model seeds,
+    because the gate is a function of the inputs alone. So the in-run
+    false-alarm count is one realization replicated eight times, and this
+    paragraph is the number that may be quoted.
+    """
+    out.append("\n**The gate has no model seed, so the row above is one input "
+               "realization.** Every probe AUC in `runs/gt*_u*_het.json` is "
+               "identical across the 8 model seeds to four decimals: the gate "
+               "compares *input* spectra against the calibration inputs and "
+               "never sees the surrogate. `scripts/eval_gate_only.py` "
+               "therefore replicates over what actually varies \u2014 the "
+               "calibration batch and the judged batch \u2014 and needs no "
+               "checkpoint and no GPU.\n")
+    if not gr:
+        out.append(f"{NM} \u2014 `runs/gate_reps.json` absent.\n")
+        return
+    rows = [("sample maximum of the nulls (the first rule)", gr)]
+    if grd:
+        rows.append((grd.get("theta_rule", "quantile rule"), grd))
+    out.append("| threshold rule | \u03b8 | in-dist false-alarm rate | shards "
+               "firing on every replicate | lowest shard AUC |")
+    out.append("|---|---|---|---|---|")
+    for lab, d in rows:
+        lo = min(min(r["aucs"]) for r in d["shards"].values())
+        out.append(
+            f"| {lab} | {d['theta']:.4f} | "
+            f"**{d['in_dist_false_alarm_rate_pooled']:.4f}** "
+            f"({int(round(d['in_dist_false_alarm_rate_pooled'] * len(d['families']) * d['reps']))}"
+            f"/{len(d['families']) * d['reps']} replicate-family cells) | "
+            f"{d['shards_fired_every_rep']}/{d['n_shards']} | {lo:.4f} |")
+    fa = gr["in_dist_false_alarm_rate_pooled"]
+    out.append(
+        f"\nThe first rule's false-alarm rate is **{fa:.4f}**, not the 0/3 the "
+        f"model-seeded run reports, and the direction is the one a single "
+        f"realization can only get wrong in: it understated it. A false alarm "
+        f"applies the conservative constant to an in-distribution batch, so "
+        f"that rate is the fraction of in-distribution deployments handed a "
+        f"useless interval. The defect is the *rule*: \u03b8 as the maximum of "
+        f"{len(gr['null_aucs'])} null draws is an extreme order statistic, and "
+        f"a fresh draw exceeds it with probability about "
+        f"1/{len(gr['null_aucs']) + 1}"
+        + (f". Replacing it with a per-family quantile at a stated "
+           f"\u03b4 = {grd['delta']} over {grd['null_reps_per_family']} nulls "
+           f"per family takes the measured rate to "
+           f"**{grd['in_dist_false_alarm_rate_pooled']:.4f}** with "
+           f"{grd['shards_fired_every_rep']}/{grd['n_shards']} shards still "
+           f"firing on every replicate, so the error rate becomes a design "
+           f"point rather than an accident.\n" if grd else
+           ", which is what happened. The quantile rule is registered in "
+           "`critique_log.md` as H32b and is not measured here yet.\n"))
+
+def sec_h32(g, out, gr=None, grd=None):
     """H32: the regime gate, and both of its error rates."""
     out.append("\n### 1j. H32 \u2014 a regime gate: two-sided in "
                "distribution *and* one-sided under shift "
@@ -2276,12 +2332,13 @@ def sec_h32(g, out):
         "decision. " + g["method"] + "\n")
     for name, A in g["arms"].items():
         if "shift" not in A:
-            out.append(f"\n**{name} path** \u2014 {A['status']}.\n")
+            out.append(f"\n#### {name} path\n\n{A['status']}.\n")
             continue
         idd, sh = A["in_dist"], A["shift"]
         lab = ("equivariant prediction path" if name == "eq"
                else "base prediction path")
-        out.append(f"\n**{lab}** \u2014 {A['n_seeds']} seeds, threshold "
+        out.append(f"\n#### {lab}\n")
+        out.append(f"{A['n_seeds']} seeds, threshold "
                    f"\u03b8 = {_rng(A['theta'], '{:.4f}')} from "
                    f"in-distribution null probes at batch {A['probe_n']} "
                    f"(null median AUC "
@@ -2319,6 +2376,8 @@ def sec_h32(g, out):
             + ". "
             + (f"Shards the gate missed: {', '.join('`'+m+'`' for m in miss)}."
                if miss else "No shard was missed on any seed.") + "\n")
+        if name == "eq":
+            _gate_reps(gr, grd, out)
         out.append(
             f"**What this does and does not say.** In distribution the clause "
             f"reading is met and the interval is unchanged "
@@ -2366,7 +2425,8 @@ def main():
     sec_h15(load('scale.json'), body)
     sec_h16(load('scale.json'), body)
     sec_h31(load('h31_onesided.json'), body)
-    sec_h32(load('h32_gate.json'), body)
+    sec_h32(load('h32_gate.json'), body, load('gate_reps.json'),
+            load('gate_reps_d01.json'))
     sec_consistency(csu, body, 'uq')
     sec_degradation(csu, body)
     sec_clause3_seeds(load('clause3.json'), body)
