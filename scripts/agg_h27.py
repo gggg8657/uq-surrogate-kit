@@ -18,6 +18,7 @@ codex's conditioning-proxy routes as special cases. Emits runs/h27_target.json.
 """
 from __future__ import annotations
 
+import argparse
 import itertools
 import json
 import statistics as st
@@ -45,8 +46,15 @@ def sign_flip_p(d):
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--glob", default="starget_u*_het.json",
+                    help="starget_* is the plain prediction path; stargeq_* is "
+                         "the equivariant one. They are separate runs and are "
+                         "aggregated separately, never pooled.")
+    ap.add_argument("--out", default=None)
+    a = ap.parse_args()
     runs = [json.loads(f.read_text())
-            for f in sorted((ROOT / "runs").glob("starget_u*_het.json"))]
+            for f in sorted((ROOT / "runs").glob(a.glob))]
     if not runs:
         raise SystemExit("no H27 runs")
     for r in runs:
@@ -162,7 +170,10 @@ def main():
     have_band = all("s_band" in r["shards"][n] for r in runs for n in names)
     out["s_band_present"] = have_band
     if have_band:
-        for key, tag in ((best, "best"), ("relresid_ratio_med", "relresid")):
+        arms = [(best, "best")]
+        if best != "relresid_ratio_med":
+            arms.append(("relresid_ratio_med", "relresid"))
+        for key, tag in arms:
             out[f"loso_{tag}"] = {
                 "observable": key,
                 "global_link_n_band_per_seed":
@@ -177,10 +188,13 @@ def main():
                             "H27 JSON, so the link ceiling is [not measured] "
                             "here; scripts/eval_scale_band.py adds it")
 
-    p = ROOT / "runs" / "h27_target.json"
+    out["source_glob"] = a.glob
+    out["equivariant"] = runs[0].get("equivariant", False)
+    p = ROOT / "runs" / (a.out or "h27_target.json")
     p.write_text(json.dumps(out, indent=2))
 
-    print(f"H27 aggregate, {out['n_seeds']} seeds, {out['n_shards']} shards\n")
+    print(f"H27 aggregate, {out['n_seeds']} seeds, {out['n_shards']} shards, "
+          f"equivariant={out['equivariant']}\n")
     print(f"in-distribution s* (must be ~1.00): "
           + "  ".join(f"{t} {v:.4f}"
                       for t, v in out["in_dist_s_star_median"].items()))
@@ -196,7 +210,7 @@ def main():
               f"median over seeds {c['spearman_median_over_seeds']:+.3f}")
     print(f"\nbest observable: {best} at rho = {out['best_rank_corr']:+.3f}")
     if have_band:
-        for tag in ("best", "relresid"):
+        for tag in [t for _, t in arms]:
             d = out[f"loso_{tag}"]
             print(f"\nLOSO isotonic link on {d['observable']} (A CEILING):")
             print(f"  one global link : median "

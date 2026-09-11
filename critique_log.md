@@ -5452,3 +5452,188 @@ for OOD — promote the k=1 labelled probe and price it honestly as one label �
 arriving independently at the coverage clause from the opposite direction. It is
 the next hypothesis, and `scripts/eval_label_budget.py` and `runs/label_probe.json`
 already exist, so the next turn reads those before writing anything new.
+
+---
+
+## A correction to H27 that I caught from my own repo before publishing it, and it withdraws the mechanism claim
+
+I had written H27's headline mechanism as an identity: `relresid` is exactly
+invariant to rescaling the linear channel, the `*_amp2` shards need `s*` = 55–83,
+so a relative residual is blind to the shift needing the largest correction.
+The mathematics is right. **The empirical weight behind it is a defect this
+repository already fixed**, and I found that by reading `WEEKEND.md` for the
+document pass rather than by any check of my own.
+
+`runs/wtol_{base,eq}_u*_het.json` (H17, already on disk) measure the required
+width factor per shard with and without the **equivariance wrapper**
+`F_eq(a) = s·F(a/s)` from `uqkit/equivar.py`. Four of the five families are
+linear in the field the amplitude shift scales, and the frozen input
+standardisation threw that equivariance away:
+
+| shard | required quantile, no wrapper | with wrapper | `q_group` | factor still needed |
+|---|---|---|---|---|
+| `poisson_amp2` | 298.9 | **3.824** | 3.4825 | **1.098×** |
+| `helmholtz_amp2` | 154.4 | **3.399** | 2.8390 | **1.197×** |
+| `advdiff_amp2` | 471.7 | 4.281 | 4.4925 | 0.953× |
+| `diffusion_amp2` | 372.1 | 4.255 | 4.4345 | 0.959× |
+| `darcy_amp2` | 1645 | **1645** | 21.372 | unchanged |
+
+So on the two shards my mechanism claim rested on, the correction the method
+actually has to supply is **1.10× and 1.20×**, not 83× and 55×. My H27 ran the
+**non-equivariant** prediction path, so its `s*` on those shards is measuring a
+surrogate bug that has a ten-line test-time fix in this same repo, and
+`darcy_amp2` is unchanged for exactly the reason my own analysis gave — the
+amplitude enters `L` there, so no scale-equivariance exists to restore.
+
+**What I am withdrawing and what survives.**
+
+* **Withdrawn:** that the residual's invariance is the *binding* constraint on
+  the coverage clause. It is not, because with the wrapper the shift it is blind
+  to needs a 10–20% correction rather than a 100× one.
+* **Survives, unchanged:** the invariance itself, which is an identity and which
+  `darcy_amp2` confirms by contrast (no equivariance, so `relresid` tracks it at
+  45.46 against 67.08).
+* **Survives, and is now a cross-check rather than a discovery:** the tolerance.
+  H27's bisection gives ±2.52%; `eval_width_tolerance.py` had already computed
+  the same quantity from three order statistics of the score distribution, and
+  reports `tol_rel` median 0.0436. Two unrelated methods, the same requirement.
+  I should have found that script before writing H27's, and the entry that
+  claimed the number as new is corrected here.
+* **Unknown, and the reason for the next run:** H27's *ceiling* — 2/24 — was
+  measured on the non-equivariant path too, so it is a ceiling on a
+  configuration this repo has superseded, and every H27 count must be labelled
+  that way until re-measured.
+
+This is the third time this weekend that auditing our own side moved a number
+against a claim I had already written down, and the second time the defect was
+in the *surrogate* rather than in the reference or the metric. The pattern is
+specific enough to name: **I audit the thing the claim is about and not the
+thing the claim is measured on.**
+
+## H29 — written before the run: re-measure the ceiling on the equivariant path
+
+**The change (one):** add `--equivariant` to `scripts/eval_scale_target.py`,
+wiring in the same `predict_equivariant` wrapper and calibration-split
+`reference_scale` that `eval_width_tolerance.py` already uses, and re-run the
+8-seed sweep. Everything else — the frozen quantile, the bisection, the
+observables, the LOSO link — is byte-identical, so the two runs are comparable
+and both are reported.
+
+**Predictions, registered now:**
+
+1. **`s*` on `poisson_amp2` and `helmholtz_amp2` collapses to 1.05–1.35**, from
+   83.26 and 55.10, and **`darcy_amp2` is unchanged within noise** at ~67. The
+   first two are read off H17's `q_target` ratios (1.098, 1.197) so this is
+   close to a consistency check; the darcy row is the real prediction, because
+   if the wrapper moves darcy it is doing something other than restoring a
+   symmetry that exists.
+2. **The span of `s*` stays above 50×** despite the collapse, because
+   `darcy_amp2` alone spans it: 0.58 to ~67 is still 115×. So "the span is a
+   surrogate bug" would be the wrong lesson to draw from prediction 1.
+3. **Primary: `relresid`'s rank correlation with `log s*` rises above +0.60**
+   (from +0.441), because the two shards it was invariant to stop being
+   outliers, and **the LOSO in-band ceiling rises above 2/24 but stays below
+   12/24.** The tolerance is still ±2.52% and that is what binds. If the
+   ceiling clears 20/24 the clause is reachable on the equivariant path and
+   that is the headline; if it does not move at all, the amp2 shards were never
+   what limited the link and I have mislocated the constraint twice.
+4. **In-distribution `s*` stays at 1.00 ± 0.02.** The wrapper is near-identity
+   in distribution by construction (`ref` is the calibration median scale), so
+   if this moves, the reference scale is being computed on the wrong split and
+   nothing else in the run is interpretable.
+
+**The cost, stated up front and not hidden in the coverage win.**
+`scripts/bench_equivar_cost.py` already measured the wrapper at **+206%**
+inference cost, so anything it buys on clause 1 is spent on clause 2. Clause 2
+on the equivariant path is `[not measured]` here and the two clauses can no
+longer be read off the same row if this route is taken — which is itself a
+result, and the opposite of the one that made the σ-head route attractive.
+
+## H29 measured: the correlation nearly doubled and the ceiling did not move, which is the separating evidence H28 failed to get
+
+`runs/stargeq_u*_het.json` (8 seeds), aggregated to `runs/h29_target_eq.json`.
+Identical protocol to H27 with one change: `--equivariant`.
+
+**Predictions 1, 2 and 4 — CONFIRMED, and 1 is a controlled result rather than
+just a consistency check.**
+
+| shard | `s*` plain path | `s*` equivariant | ratio |
+|---|---|---|---|
+| `poisson_amp2` | 83.26 | **1.014** | **0.012** |
+| `helmholtz_amp2` | 55.10 | **1.064** | **0.019** |
+| `darcy_amp2` | 67.08 | **67.08** | **1.000** |
+| all 21 other shards | — | — | 1.000 – 1.002 |
+
+The wrapper moves the two shards where the symmetry exists by a factor of ~60
+and ~50, moves `darcy_amp2` by **1.000** — where the amplitude enters `L` so no
+scale-equivariance exists — and leaves every other shard within **0.2%**. That
+is as clean a controlled intervention as this repo has produced: the prediction
+named which shards must move, which must not, and by roughly how much, and all
+three parts held. In-distribution `s*` is 0.9887 / 1.0006 / 1.0098 with
+`reference_scale` = 0.9999 on all three families (prediction 4). The span stays
+at **115.6×** (from 143.5×), carried entirely by `darcy_amp2` (prediction 2), so
+"the span was a surrogate bug" would have been the wrong lesson.
+
+The median in-band window is **1.0503** on both paths — identical to four
+decimals. The ±2.52% tolerance is a property of the score distribution and has
+nothing to do with the amplitude defect.
+
+**Prediction 3 — half confirmed, half falsified, and the falsified half is the
+result.**
+
+| | plain path | equivariant path |
+|---|---|---|
+| best observable | `input_amp`, ρ = +0.472 | **`relresid_ratio_med`, ρ = +0.821** |
+| `relresid_ratio_med` | +0.441 | **+0.821** |
+| `input_amp` | +0.472 | +0.197 |
+| `diag_mean` (codex's Darcy diagonal) | −0.143 | **−0.508** |
+| isotonic link, LOSO, per-family | **2.0/24** | **2.0/24** |
+| isotonic link, LOSO, global | 1.0/24 | 1.0/24 |
+
+I predicted ρ > +0.60 and got **+0.821**: repairing the surrogate's broken
+equivariance *unmasked* the physics observable, which went from fourth-best to
+best while the input-amplitude feature collapsed from +0.472 to +0.197. The
+residual's signal had been buried under our own defect. `diag_mean` also
+tripled, so codex's conditioning intuition was right and had been untestable on
+the broken path.
+
+**And the in-band ceiling did not move. 2.0/24 on both paths, to the shard.**
+I registered the contingency in those words: *"if it does not move at all, the
+amp2 shards were never what limited the link and I have mislocated the
+constraint twice."* They were not, and I had.
+
+**Why this is worth more than the prediction I got right.** H28 was built to
+separate two explanations — "the obstacle is magnitude accuracy" versus "we
+picked bad features" — by looking for good ranking with a failing count, and it
+returned *bad* ranking with a failing count, which separates nothing. H29
+delivers exactly that separation as a by-product: **ρ = 0.821 with the most
+expressive monotone link there is, fitted leave-one-shard-out, still yields
+2/24.** Ranking the required scale well is not close to sufficient, because the
+clause asks for its *magnitude* to ±2.52%. Feature choice, link expressiveness
+and the amplitude defect are all now excluded as the binding constraint, each by
+a measurement rather than an argument.
+
+**The cost, which must not be buried in the coverage win.** The wrapper is
+`[not measured]` for clause 2 in this run and `scripts/bench_equivar_cost.py`
+previously measured it at **+206%** inference. So the equivariant path spends
+clause 2's margin to buy a rank correlation that does not buy the clause. On
+present evidence it is the wrong trade for this kit, and the reason to keep it
+is that it makes the *surrogate* right, not that it makes the interval pass.
+
+### Clause 1 under covariate shift: the four-rung record, closed
+
+| rung | what was attacked | outcome |
+|---|---|---|
+| 1 — both readings | strict point-in-band vs the shard's 95% binomial CI | **both 0/24** for the base arm. Also measured the strict reading's own ceiling: a perfect method scores **21.09/24**, never 24/24 |
+| 2 — architecture/algorithm | ensemble spread → σ head (one forward pass) → residual as gate → as feature → as the interval's scale → free isotonic link on 10 observables → two features | in distribution **0.9026**, 8/8 seeds; under shift the family's deployable ceiling is **2/24** |
+| 3 — our own setup | the `clip`=20 abstention (bound 10.67), the aggregator's objective, the σ-floor share, the broken input-scale equivariance | every one moved a number; **none** moved the clause |
+| 4 — the adversary, asked how to *pass* | codex's four ranked routes | its metric objection was right and changed no verdict; its conditioning proxy was untestable until rung 3 fixed equivariance, and then tripled to −0.508; its top-ranked route needs labels, which is the finding |
+
+**The statement I am prepared to defend.** `s*` exists on 24/24 shards and is
+1.00 in distribution, so the clause is not impossible and the target is one
+number per shift regime. What no method here supplies is that number to ±2.52%
+from unlabelled data, and the obstacle is magnitude rather than ranking
+(ρ = 0.821 → 2/24). **The clause looks reachable from one labelled shard per
+regime and unreachable from zero**, and the next hypothesis should price exactly
+that against `scripts/eval_label_budget.py` and `runs/label_probe.json`, which
+already exist and which I have not yet read properly.

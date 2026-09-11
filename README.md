@@ -44,6 +44,12 @@ reasoning and every correction in **[`critique_log.md`](critique_log.md)**.
 | speedup ≥100×, ensemble / iso-accuracy | **23.5×** best row; **2.2×** iso-accuracy; 0/10 rows ≥100× | ❌ |
 | OOD AUROC ≥0.9, all 49 shards, strict | 47/49 (`combo`); the old **0.486–0.503** on operator shift was an identity, not a limit | ❌ |
 | OOD AUROC ≥0.9, conditional on the shift degrading the surrogate | **33/33**, min 0.9964; both misses sit at 1.06× degradation, where firing is a false alarm | ✅ |
+| — **the strict coverage clause's own ceiling**, which is not 24/24 | At n=512 fields per shard, a method with coverage *exactly* 0.90 lands inside 90±2% on a given shard with probability **0.8787**, so it scores **21.09/24** in expectation and **24/24** with probability **0.0449**. Our strict reading is a test a perfect method fails 95.5% of the time. It changes no verdict here — the base arm is 0/24 under the CI reading too, because our shards miss by 30–90 points, not by 2 — but every count below must be read against 21.09, not 24 | — |
+| coverage under shift, **residual as the interval's scale**, zero fitted parameters (H25) | Mean shard \|coverage−0.90\| **0.5610 → 0.2543**, 8/8 seeds, exact sign-flip **p = 0.0039** — the largest movement in shift coverage in this repo. Still **0/24** in band: the modulation has the right sign on all three families and the wrong gain on each | ❌ |
+| — the ceiling of that route over its exponent (H26) | best single exponent **3/24**; per-family oracle exponent **7/24**; exponent leave-one-shard-out **1/24**. In-distribution coverage moves ≤ **0.0166** over γ ∈ [0,3], so γ cannot be selected in distribution — but the binding constraint is that **no γ exists**, not that we cannot find it | ❌ |
+| — the ceiling of **every** scalar interval-modulation (H27) | `s*`, the σ scale making a shard's coverage exactly 0.90, **exists on 24/24** shards (in distribution 0.988–1.009), spans **144×**, and must be hit to **±2.52%**. Best deployment-observable predictor of it: `input_amp`, Spearman **+0.472**. With a free isotonic link leave-one-shard-out **2/24**, and two features leave-one-shard-out **1/24** even though they span both shift axes | ❌ |
+| — the same ceiling on the **equivariant** prediction path (H29) | Repairing the scale-equivariance our input standardisation threw away collapses `s*` on `poisson_amp2` **83.26 → 1.014** and `helmholtz_amp2` **55.10 → 1.064**, leaves `darcy_amp2` at **1.000×** (its amplitude enters `L`, so no symmetry exists to restore) and every other shard within 0.2%. The residual's rank correlation with the target nearly doubles, **+0.441 → +0.821**, becoming the best observable — and the ceiling stays at **isotonic link leave-one-shard-out 2/24**, unchanged to the shard. Costs +206% inference | ❌ |
+| — so the binding constraint is magnitude, not ranking or features | ρ = **+0.821** with the most expressive monotone link there is, fitted leave-one-shard-out, still gives 2/24, because the clause asks for the scale to **±2.52%**. Feature choice, link expressiveness and the amplitude defect are each excluded by a measurement, not an argument. An earlier draft of this table made the residual's invariance to source-term rescaling the binding constraint; **that is withdrawn** — the identity is real, and with the wrapper the shift it is blind to needs a 1.10–1.20× correction rather than 83× | — |
 
 **What the ✅ on clause 2 does and does not say.** It is *"24/24 measured fields
 against this specified PCG implementation"* — not an established advantage over
@@ -54,6 +60,18 @@ and unmeasured. At a 0.512 ms surrogate, a reference reaching **51.2 ms** on a
 field takes the clause back under 100× on it, and the fastest field currently
 solves in **60.3 ms** — a 15% margin. The three previous rounds of solver work
 bought 1.28×, 1.08× and a selection fix.
+
+**Where the coverage clause stands after four attacks.** `s*` exists on every
+shard, so the clause is **not impossible** — a single constant per shift regime
+passes it. What fails is generalising that constant across regimes from
+unlabelled data, and the failure is now quantified rather than asserted: the
+required precision is **±2.52%**, and the best observable ranks the target at
+ρ = **+0.821** on the equivariant path yet still delivers 2/24 — so what is
+missing is magnitude, not ordering. Read together: **the clause looks reachable
+from one labelled shard per regime and unreachable from zero**, which is the
+same conclusion the OOD work reached from the opposite direction. Four rungs of
+attack are recorded clause by clause in [`critique_log.md`](critique_log.md);
+three of the four moved a number and none moved the clause.
 
 The remaining failures are structural, not budgetary, and the OOD one is an
 identity rather than a tuning gap — see [why](#the-shift-suite) and

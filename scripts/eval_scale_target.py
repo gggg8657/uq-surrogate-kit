@@ -43,6 +43,7 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from uqkit.conformal import GroupConformal, get_score  # noqa: E402
+from uqkit.equivar import predict_equivariant, reference_scale  # noqa: E402
 from uqkit.metrics import binom_ci, rel_l2  # noqa: E402
 from uqkit.sims.pde2d import PARENT  # noqa: E402
 from uqkit.sims.checkpoint import load_model  # noqa: E402
@@ -72,6 +73,12 @@ def main():
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--sigma-source", default="het",
                     choices=["het", "cqr", "const"])
+    ap.add_argument("--equivariant", action="store_true",
+                    help="wrap the prediction in F_eq(a) = s*F(a/s), the H17 "
+                         "test-time restoration of the scale equivariance the "
+                         "frozen input standardisation throws away. The "
+                         "reference scale is the CALIBRATION median, so the "
+                         "wrapper is near-identity in distribution.")
     args = ap.parse_args()
 
     man = json.loads(Path(args.root, "manifest.json").read_text())
@@ -97,11 +104,27 @@ def main():
         return (r.flatten(1).norm(dim=1)
                 / f.flatten(1).norm(dim=1).clamp_min(1e-12))
 
+    def predict_raw(blob):
+        return predict_shard_single(model, blob, stats, args.device,
+                                    sigma_source=args.sigma_source)
+
+    # The reference scale is the median per-sample scale on the CALIBRATION
+    # split, so s ~ 1 in distribution and the wrapper is near-identity there.
+    # Computed before any evaluation shard is touched, exactly as
+    # eval_width_tolerance.py does it.
+    REF = {}
+    if args.equivariant:
+        for t in in_tasks:
+            REF[t] = reference_scale(load_shard(args.root, t, "cal")["a"], t)
+
     def gather(task, split, N=64):
         blob = load_shard(args.root, task, split, N)
-        m, s, t, a = predict_shard_single(model, blob, stats, args.device,
-                                          sigma_source=args.sigma_source)
         parent = PARENT.get(task, task)
+        if args.equivariant:
+            m, s, t, a = predict_equivariant(predict_raw, blob, parent,
+                                             REF[parent])
+        else:
+            m, s, t, a = predict_raw(blob)
         return {"mean": m, "sigma": s, "truth": t, "a": a,
                 "rr": relresid(a, m, parent), "parent": parent, "task": task}
 
@@ -222,6 +245,8 @@ def main():
            "seed": ck["args"].get("seed"), "sigma_source": args.sigma_source,
            "families": in_tasks, "band": list(BAND), "target": TARGET,
            "clause_eligible": False,
+           "equivariant": bool(args.equivariant),
+           "reference_scale": {k: float(v) for k, v in REF.items()},
            "note": ("s* is the sigma scale making a shard's coverage exactly "
                     "0.90, found by bisection with the calibration quantile "
                     "FROZEN. It is computed from the truth, so it is an "

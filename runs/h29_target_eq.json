@@ -1,0 +1,712 @@
+{
+  "n_seeds": 8,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "n_shards": 24,
+  "band": [
+    0.88,
+    0.92
+  ],
+  "clause_eligible": false,
+  "note": "s* is an oracle target computed from the truth. The `loso` counts below are CEILINGS on the scalar-modulation family, not method results.",
+  "shards": {
+    "graded_rough/darcy_dam0p1/N64": {
+      "parent": "darcy",
+      "base_coverage_median": 0.853515625,
+      "s_star_median": 1.1103579998016357,
+      "s_star_range": [
+        1.0861150622367859,
+        1.1342756152153015
+      ]
+    },
+    "graded_rough/darcy_dam0p2/N64": {
+      "parent": "darcy",
+      "base_coverage_median": 0.830078125,
+      "s_star_median": 1.1563347578048706,
+      "s_star_range": [
+        1.103720247745514,
+        1.1873288750648499
+      ]
+    },
+    "graded_rough/darcy_dam0p3/N64": {
+      "parent": "darcy",
+      "base_coverage_median": 0.7294921875,
+      "s_star_median": 1.2657859325408936,
+      "s_star_range": [
+        1.2185127139091492,
+        1.3723699450492859
+      ]
+    },
+    "graded_rough/darcy_dam0p5/N64": {
+      "parent": "darcy",
+      "base_coverage_median": 0.5830078125,
+      "s_star_median": 1.376878023147583,
+      "s_star_range": [
+        1.3559789061546326,
+        1.4176200032234194
+      ]
+    },
+    "graded_rough/darcy_dam0p7/N64": {
+      "parent": "darcy",
+      "base_coverage_median": 0.203125,
+      "s_star_median": 1.6711291074752808,
+      "s_star_range": [
+        1.6415882706642153,
+        1.804490149021149
+      ]
+    },
+    "graded_rough/darcy_dam1/N64": {
+      "parent": "darcy",
+      "base_coverage_median": 0.0,
+      "s_star_median": 2.329095482826233,
+      "s_star_range": [
+        2.2029441595077515,
+        2.5532063245773315
+      ]
+    },
+    "graded_rough/poisson_dam0p1/N64": {
+      "parent": "poisson",
+      "base_coverage_median": 0.822265625,
+      "s_star_median": 1.0630722045898438,
+      "s_star_range": [
+        1.0570992827415466,
+        1.1113505959510803
+      ]
+    },
+    "graded_rough/poisson_dam0p2/N64": {
+      "parent": "poisson",
+      "base_coverage_median": 0.5849609375,
+      "s_star_median": 1.2135668396949768,
+      "s_star_range": [
+        1.1530165076255798,
+        1.283682644367218
+      ]
+    },
+    "graded_rough/poisson_dam0p3/N64": {
+      "parent": "poisson",
+      "base_coverage_median": 0.283203125,
+      "s_star_median": 1.380707561969757,
+      "s_star_range": [
+        1.3393880724906921,
+        1.5161469578742983
+      ]
+    },
+    "graded_rough/poisson_dam0p5/N64": {
+      "parent": "poisson",
+      "base_coverage_median": 0.0,
+      "s_star_median": 1.9852927029132843,
+      "s_star_range": [
+        1.8755896687507632,
+        2.233894944190979
+      ]
+    },
+    "graded_rough/poisson_dam0p7/N64": {
+      "parent": "poisson",
+      "base_coverage_median": 0.0,
+      "s_star_median": 2.902145981788635,
+      "s_star_range": [
+        2.706920027732849,
+        3.4138516187667842
+      ]
+    },
+    "graded_rough/poisson_dam1/N64": {
+      "parent": "poisson",
+      "base_coverage_median": 0.0,
+      "s_star_median": 5.418123245239258,
+      "s_star_range": [
+        5.026582479476929,
+        6.580767393112182
+      ]
+    },
+    "input_shift/darcy_amp2/N64": {
+      "parent": "darcy",
+      "base_coverage_median": 0.0,
+      "s_star_median": 67.07931518554688,
+      "s_star_range": [
+        51.670446395874016,
+        85.89125442504883
+      ]
+    },
+    "input_shift/darcy_rough/N64": {
+      "parent": "darcy",
+      "base_coverage_median": 0.556640625,
+      "s_star_median": 1.4453314542770386,
+      "s_star_range": [
+        1.396052062511444,
+        1.4559271931648257
+      ]
+    },
+    "input_shift/darcy_smooth/N64": {
+      "parent": "darcy",
+      "base_coverage_median": 0.9970703125,
+      "s_star_median": 0.5804698467254639,
+      "s_star_range": [
+        0.5522288978099823,
+        0.64714714884758
+      ]
+    },
+    "input_shift/darcy_tau/N64": {
+      "parent": "darcy",
+      "base_coverage_median": 0.2490234375,
+      "s_star_median": 1.8706961870193481,
+      "s_star_range": [
+        1.7136047482490542,
+        1.8920231461524966
+      ]
+    },
+    "input_shift/helmholtz_amp2/N64": {
+      "parent": "helmholtz",
+      "base_coverage_median": 0.8310546875,
+      "s_star_median": 1.063798189163208,
+      "s_star_range": [
+        1.0463473200798035,
+        1.0725060105323792
+      ]
+    },
+    "input_shift/helmholtz_rough/N64": {
+      "parent": "helmholtz",
+      "base_coverage_median": 0.0,
+      "s_star_median": 2.8317432403564453,
+      "s_star_range": [
+        2.246946692466736,
+        3.4128073453903194
+      ]
+    },
+    "input_shift/helmholtz_smooth/N64": {
+      "parent": "helmholtz",
+      "base_coverage_median": 0.99609375,
+      "s_star_median": 0.8257845640182495,
+      "s_star_range": [
+        0.7791051566600798,
+        0.8990128934383391
+      ]
+    },
+    "input_shift/helmholtz_tau/N64": {
+      "parent": "helmholtz",
+      "base_coverage_median": 0.0283203125,
+      "s_star_median": 1.963357925415039,
+      "s_star_range": [
+        1.7796657681465151,
+        2.1237796545028687
+      ]
+    },
+    "input_shift/poisson_amp2/N64": {
+      "parent": "poisson",
+      "base_coverage_median": 0.884765625,
+      "s_star_median": 1.0140341520309448,
+      "s_star_range": [
+        0.9995380342006682,
+        1.0373886227607727
+      ]
+    },
+    "input_shift/poisson_rough/N64": {
+      "parent": "poisson",
+      "base_coverage_median": 0.0,
+      "s_star_median": 5.345276832580566,
+      "s_star_range": [
+        5.044451951980591,
+        6.431735754013061
+      ]
+    },
+    "input_shift/poisson_smooth/N64": {
+      "parent": "poisson",
+      "base_coverage_median": 1.0,
+      "s_star_median": 0.8326262831687927,
+      "s_star_range": [
+        0.792622536420822,
+        0.8626295626163484
+      ]
+    },
+    "input_shift/poisson_tau/N64": {
+      "parent": "poisson",
+      "base_coverage_median": 0.0,
+      "s_star_median": 2.0489730834960938,
+      "s_star_range": [
+        1.9289670586586,
+        2.4318710565567017
+      ]
+    }
+  },
+  "n_sstar_missing": {},
+  "s_star_median": {
+    "graded_rough/darcy_dam0p1/N64": 1.1103579998016357,
+    "graded_rough/darcy_dam0p2/N64": 1.1563347578048706,
+    "graded_rough/darcy_dam0p3/N64": 1.2657859325408936,
+    "graded_rough/darcy_dam0p5/N64": 1.376878023147583,
+    "graded_rough/darcy_dam0p7/N64": 1.6711291074752808,
+    "graded_rough/darcy_dam1/N64": 2.329095482826233,
+    "graded_rough/poisson_dam0p1/N64": 1.0630722045898438,
+    "graded_rough/poisson_dam0p2/N64": 1.2135668396949768,
+    "graded_rough/poisson_dam0p3/N64": 1.380707561969757,
+    "graded_rough/poisson_dam0p5/N64": 1.9852927029132843,
+    "graded_rough/poisson_dam0p7/N64": 2.902145981788635,
+    "graded_rough/poisson_dam1/N64": 5.418123245239258,
+    "input_shift/darcy_amp2/N64": 67.07931518554688,
+    "input_shift/darcy_rough/N64": 1.4453314542770386,
+    "input_shift/darcy_smooth/N64": 0.5804698467254639,
+    "input_shift/darcy_tau/N64": 1.8706961870193481,
+    "input_shift/helmholtz_amp2/N64": 1.063798189163208,
+    "input_shift/helmholtz_rough/N64": 2.8317432403564453,
+    "input_shift/helmholtz_smooth/N64": 0.8257845640182495,
+    "input_shift/helmholtz_tau/N64": 1.963357925415039,
+    "input_shift/poisson_amp2/N64": 1.0140341520309448,
+    "input_shift/poisson_rough/N64": 5.345276832580566,
+    "input_shift/poisson_smooth/N64": 0.8326262831687927,
+    "input_shift/poisson_tau/N64": 2.0489730834960938
+  },
+  "s_star_span": [
+    0.5804698467254639,
+    67.07931518554688
+  ],
+  "s_star_span_orders": 2.0628089555743463,
+  "s_star_below_1": [
+    "input_shift/darcy_smooth/N64",
+    "input_shift/helmholtz_smooth/N64",
+    "input_shift/poisson_smooth/N64"
+  ],
+  "in_dist_s_star_median": {
+    "poisson": 0.9887215495109558,
+    "helmholtz": 1.0005681365728378,
+    "darcy": 1.009794533252716
+  },
+  "observables": {
+    "diag_mean": {
+      "spearman_on_medians": -0.5078260869565216,
+      "spearman_per_seed": [
+        -0.5078260869565216,
+        -0.537391304347826,
+        -0.5347826086956522,
+        -0.5043478260869565,
+        -0.4878260869565217,
+        -0.5104347826086956,
+        -0.5208695652173913,
+        -0.5139130434782608
+      ],
+      "spearman_median_over_seeds": -0.5121739130434781,
+      "observable_median_per_shard": {
+        "graded_rough/darcy_dam0p1/N64": 19972.55078125,
+        "graded_rough/darcy_dam0p2/N64": 19902.51171875,
+        "graded_rough/darcy_dam0p3/N64": 19868.53515625,
+        "graded_rough/darcy_dam0p5/N64": 19797.525390625,
+        "graded_rough/darcy_dam0p7/N64": 19710.359375,
+        "graded_rough/darcy_dam1/N64": 19630.8046875,
+        "graded_rough/poisson_dam0p1/N64": 13311.0888671875,
+        "graded_rough/poisson_dam0p2/N64": 13289.8662109375,
+        "graded_rough/poisson_dam0p3/N64": 13257.734375,
+        "graded_rough/poisson_dam0p5/N64": 13218.994140625,
+        "graded_rough/poisson_dam0p7/N64": 13211.81640625,
+        "graded_rough/poisson_dam1/N64": 13149.763671875,
+        "input_shift/darcy_amp2/N64": 39875.90234375,
+        "input_shift/darcy_rough/N64": 19749.443359375,
+        "input_shift/darcy_smooth/N64": 20404.724609375,
+        "input_shift/darcy_tau/N64": 19666.88671875,
+        "input_shift/helmholtz_amp2/N64": 26647.125,
+        "input_shift/helmholtz_rough/N64": 13154.513671875,
+        "input_shift/helmholtz_smooth/N64": 13571.669921875,
+        "input_shift/helmholtz_tau/N64": 13175.021484375,
+        "input_shift/poisson_amp2/N64": 26590.53125,
+        "input_shift/poisson_rough/N64": 13145.48828125,
+        "input_shift/poisson_smooth/N64": 13518.166015625,
+        "input_shift/poisson_tau/N64": 13157.8388671875
+      }
+    },
+    "input_amp": {
+      "spearman_on_medians": 0.19652173913043475,
+      "spearman_per_seed": [
+        0.2078260869565217,
+        0.14260869565217388,
+        0.16086956521739126,
+        0.21304347826086956,
+        0.2217391304347826,
+        0.19043478260869565,
+        0.1826086956521739,
+        0.18608695652173912
+      ],
+      "spearman_median_over_seeds": 0.18826086956521737,
+      "observable_median_per_shard": {
+        "graded_rough/darcy_dam0p1/N64": 4.3781538009643555,
+        "graded_rough/darcy_dam0p2/N64": 4.4966888427734375,
+        "graded_rough/darcy_dam0p3/N64": 4.624142646789551,
+        "graded_rough/darcy_dam0p5/N64": 4.878950595855713,
+        "graded_rough/darcy_dam0p7/N64": 5.1988139152526855,
+        "graded_rough/darcy_dam1/N64": 5.509504318237305,
+        "graded_rough/poisson_dam0p1/N64": 2.72957181930542,
+        "graded_rough/poisson_dam0p2/N64": 2.783139228820801,
+        "graded_rough/poisson_dam0p3/N64": 2.8199172019958496,
+        "graded_rough/poisson_dam0p5/N64": 2.9414923191070557,
+        "graded_rough/poisson_dam0p7/N64": 3.092200756072998,
+        "graded_rough/poisson_dam1/N64": 3.3359618186950684,
+        "input_shift/darcy_amp2/N64": 8.471338272094727,
+        "input_shift/darcy_rough/N64": 4.864797115325928,
+        "input_shift/darcy_smooth/N64": 3.376110792160034,
+        "input_shift/darcy_tau/N64": 4.974331378936768,
+        "input_shift/helmholtz_amp2/N64": 5.410479545593262,
+        "input_shift/helmholtz_rough/N64": 3.3377583026885986,
+        "input_shift/helmholtz_smooth/N64": 2.333045244216919,
+        "input_shift/helmholtz_tau/N64": 3.0940775871276855,
+        "input_shift/poisson_amp2/N64": 5.364044189453125,
+        "input_shift/poisson_rough/N64": 3.362025737762451,
+        "input_shift/poisson_smooth/N64": 2.3376829624176025,
+        "input_shift/poisson_tau/N64": 3.1064953804016113
+      }
+    },
+    "input_rough": {
+      "spearman_on_medians": 0.42260869565217385,
+      "spearman_per_seed": [
+        0.4452173913043478,
+        0.3739130434782608,
+        0.3904347826086956,
+        0.4417391304347826,
+        0.45826086956521733,
+        0.42956521739130427,
+        0.41739130434782606,
+        0.40956521739130425
+      ],
+      "spearman_median_over_seeds": 0.4234782608695652,
+      "observable_median_per_shard": {
+        "graded_rough/darcy_dam0p1/N64": 0.1790587157011032,
+        "graded_rough/darcy_dam0p2/N64": 0.19606232643127441,
+        "graded_rough/darcy_dam0p3/N64": 0.22019614279270172,
+        "graded_rough/darcy_dam0p5/N64": 0.28143635392189026,
+        "graded_rough/darcy_dam0p7/N64": 0.3634287416934967,
+        "graded_rough/darcy_dam1/N64": 0.5242478251457214,
+        "graded_rough/poisson_dam0p1/N64": 0.05726413428783417,
+        "graded_rough/poisson_dam0p2/N64": 0.06201406195759773,
+        "graded_rough/poisson_dam0p3/N64": 0.06758497655391693,
+        "graded_rough/poisson_dam0p5/N64": 0.0826810970902443,
+        "graded_rough/poisson_dam0p7/N64": 0.11019144207239151,
+        "graded_rough/poisson_dam1/N64": 0.16579706966876984,
+        "input_shift/darcy_amp2/N64": 0.2711007297039032,
+        "input_shift/darcy_rough/N64": 0.27851220965385437,
+        "input_shift/darcy_smooth/N64": 0.10398029536008835,
+        "input_shift/darcy_tau/N64": 0.26497799158096313,
+        "input_shift/helmholtz_amp2/N64": 0.10774866491556168,
+        "input_shift/helmholtz_rough/N64": 0.16820745170116425,
+        "input_shift/helmholtz_smooth/N64": 0.03584961220622063,
+        "input_shift/helmholtz_tau/N64": 0.09591289609670639,
+        "input_shift/poisson_amp2/N64": 0.10674639791250229,
+        "input_shift/poisson_rough/N64": 0.1653815060853958,
+        "input_shift/poisson_smooth/N64": 0.0360608771443367,
+        "input_shift/poisson_tau/N64": 0.09550149738788605
+      }
+    },
+    "pred_fieldmax_med": {
+      "spearman_on_medians": -0.3069565217391304,
+      "spearman_per_seed": [
+        -0.29304347826086957,
+        -0.3173913043478261,
+        -0.32956521739130434,
+        -0.3060869565217391,
+        -0.2826086956521739,
+        -0.3069565217391304,
+        -0.30347826086956514,
+        -0.3208695652173913
+      ],
+      "spearman_median_over_seeds": -0.3065217391304348,
+      "observable_median_per_shard": {
+        "graded_rough/darcy_dam0p1/N64": 0.09458250552415848,
+        "graded_rough/darcy_dam0p2/N64": 0.0869821310043335,
+        "graded_rough/darcy_dam0p3/N64": 0.0869821161031723,
+        "graded_rough/darcy_dam0p5/N64": 0.07558154687285423,
+        "graded_rough/darcy_dam0p7/N64": 0.06755892559885979,
+        "graded_rough/darcy_dam1/N64": 0.053308216854929924,
+        "graded_rough/poisson_dam0p1/N64": 0.041104283183813095,
+        "graded_rough/poisson_dam0p2/N64": 0.03992142528295517,
+        "graded_rough/poisson_dam0p3/N64": 0.03873857483267784,
+        "graded_rough/poisson_dam0p5/N64": 0.03726000152528286,
+        "graded_rough/poisson_dam0p7/N64": 0.034302858635783195,
+        "graded_rough/poisson_dam1/N64": 0.03031071461737156,
+        "input_shift/darcy_amp2/N64": 0.14778516441583633,
+        "input_shift/darcy_rough/N64": 0.07431482896208763,
+        "input_shift/darcy_smooth/N64": 0.1114722266793251,
+        "input_shift/darcy_tau/N64": 0.06565883383154869,
+        "input_shift/helmholtz_amp2/N64": 0.035612236708402634,
+        "input_shift/helmholtz_rough/N64": 0.026558278128504753,
+        "input_shift/helmholtz_smooth/N64": 0.008098263293504715,
+        "input_shift/helmholtz_tau/N64": 0.030381062999367714,
+        "input_shift/poisson_amp2/N64": 0.0828000009059906,
+        "input_shift/poisson_rough/N64": 0.03075428493320942,
+        "input_shift/poisson_smooth/N64": 0.046722861006855965,
+        "input_shift/poisson_tau/N64": 0.029127858579158783
+      }
+    },
+    "relresid_ratio_med": {
+      "spearman_on_medians": 0.8208695652173912,
+      "spearman_per_seed": [
+        0.8286956521739129,
+        0.8443478260869565,
+        0.8173913043478259,
+        0.8286956521739129,
+        0.8434782608695651,
+        0.7965217391304347,
+        0.84,
+        0.8173913043478259
+      ],
+      "spearman_median_over_seeds": 0.8286956521739129,
+      "observable_median_per_shard": {
+        "graded_rough/darcy_dam0p1/N64": 1.1997211575508118,
+        "graded_rough/darcy_dam0p2/N64": 1.4348586201667786,
+        "graded_rough/darcy_dam0p3/N64": 1.8024832606315613,
+        "graded_rough/darcy_dam0p5/N64": 3.032790184020996,
+        "graded_rough/darcy_dam0p7/N64": 4.843698501586914,
+        "graded_rough/darcy_dam1/N64": 8.568994522094727,
+        "graded_rough/poisson_dam0p1/N64": 1.0334697365760803,
+        "graded_rough/poisson_dam0p2/N64": 1.0814850330352783,
+        "graded_rough/poisson_dam0p3/N64": 1.1603878140449524,
+        "graded_rough/poisson_dam0p5/N64": 1.4821063876152039,
+        "graded_rough/poisson_dam0p7/N64": 2.1907488107681274,
+        "graded_rough/poisson_dam1/N64": 4.111619710922241,
+        "input_shift/darcy_amp2/N64": 45.45967483520508,
+        "input_shift/darcy_rough/N64": 3.130390763282776,
+        "input_shift/darcy_smooth/N64": 0.4861748069524765,
+        "input_shift/darcy_tau/N64": 3.4687403440475464,
+        "input_shift/helmholtz_amp2/N64": 1.0067912936210632,
+        "input_shift/helmholtz_rough/N64": 2.218959093093872,
+        "input_shift/helmholtz_smooth/N64": 0.6723049581050873,
+        "input_shift/helmholtz_tau/N64": 1.6593994498252869,
+        "input_shift/poisson_amp2/N64": 1.0008291602134705,
+        "input_shift/poisson_rough/N64": 4.1106743812561035,
+        "input_shift/poisson_smooth/N64": 1.0561102628707886,
+        "input_shift/poisson_tau/N64": 1.1396973133087158
+      }
+    },
+    "relresid_ratio_p90": {
+      "spearman_on_medians": 0.7069565217391304,
+      "spearman_per_seed": [
+        0.7069565217391304,
+        0.7556521739130433,
+        0.7078260869565216,
+        0.7130434782608696,
+        0.7139130434782608,
+        0.6765217391304347,
+        0.7434782608695651,
+        0.7156521739130434
+      ],
+      "spearman_median_over_seeds": 0.7134782608695651,
+      "observable_median_per_shard": {
+        "graded_rough/darcy_dam0p1/N64": 2.291088819503784,
+        "graded_rough/darcy_dam0p2/N64": 2.7198516130447388,
+        "graded_rough/darcy_dam0p3/N64": 3.431310772895813,
+        "graded_rough/darcy_dam0p5/N64": 5.108602523803711,
+        "graded_rough/darcy_dam0p7/N64": 7.743473529815674,
+        "graded_rough/darcy_dam1/N64": 12.955615997314453,
+        "graded_rough/poisson_dam0p1/N64": 1.1330206394195557,
+        "graded_rough/poisson_dam0p2/N64": 1.1636286973953247,
+        "graded_rough/poisson_dam0p3/N64": 1.2527674436569214,
+        "graded_rough/poisson_dam0p5/N64": 1.6677680015563965,
+        "graded_rough/poisson_dam0p7/N64": 2.477776050567627,
+        "graded_rough/poisson_dam1/N64": 4.621415376663208,
+        "input_shift/darcy_amp2/N64": 219.71953582763672,
+        "input_shift/darcy_rough/N64": 5.6440887451171875,
+        "input_shift/darcy_smooth/N64": 0.8187505006790161,
+        "input_shift/darcy_tau/N64": 6.27774453163147,
+        "input_shift/helmholtz_amp2/N64": 1.2931051850318909,
+        "input_shift/helmholtz_rough/N64": 3.543057918548584,
+        "input_shift/helmholtz_smooth/N64": 0.7375744581222534,
+        "input_shift/helmholtz_tau/N64": 2.5469032526016235,
+        "input_shift/poisson_amp2/N64": 1.0959493517875671,
+        "input_shift/poisson_rough/N64": 4.56393837928772,
+        "input_shift/poisson_smooth/N64": 1.1375208497047424,
+        "input_shift/poisson_tau/N64": 1.2375927567481995
+      }
+    },
+    "sigma_cv": {
+      "spearman_on_medians": -0.021739130434782605,
+      "spearman_per_seed": [
+        -0.05913043478260869,
+        -0.040869565217391296,
+        -0.17739130434782607,
+        0.01652173913043478,
+        -0.002608695652173913,
+        0.00608695652173913,
+        -0.0008695652173913043,
+        -0.02
+      ],
+      "spearman_median_over_seeds": -0.011304347826086957,
+      "observable_median_per_shard": {
+        "graded_rough/darcy_dam0p1/N64": 0.22378674149513245,
+        "graded_rough/darcy_dam0p2/N64": 0.22327369451522827,
+        "graded_rough/darcy_dam0p3/N64": 0.22952764481306076,
+        "graded_rough/darcy_dam0p5/N64": 0.2299812287092209,
+        "graded_rough/darcy_dam0p7/N64": 0.23809945583343506,
+        "graded_rough/darcy_dam1/N64": 0.2392808198928833,
+        "graded_rough/poisson_dam0p1/N64": 0.27134041488170624,
+        "graded_rough/poisson_dam0p2/N64": 0.26208291947841644,
+        "graded_rough/poisson_dam0p3/N64": 0.25586844980716705,
+        "graded_rough/poisson_dam0p5/N64": 0.24214696139097214,
+        "graded_rough/poisson_dam0p7/N64": 0.21699264645576477,
+        "graded_rough/poisson_dam1/N64": 0.18782585114240646,
+        "input_shift/darcy_amp2/N64": 0.4171609431505203,
+        "input_shift/darcy_rough/N64": 0.2312694638967514,
+        "input_shift/darcy_smooth/N64": 0.20808793604373932,
+        "input_shift/darcy_tau/N64": 0.25393757224082947,
+        "input_shift/helmholtz_amp2/N64": 0.27094370126724243,
+        "input_shift/helmholtz_rough/N64": 0.3695891201496124,
+        "input_shift/helmholtz_smooth/N64": 0.1386457160115242,
+        "input_shift/helmholtz_tau/N64": 0.4149133861064911,
+        "input_shift/poisson_amp2/N64": 0.27616727352142334,
+        "input_shift/poisson_rough/N64": 0.1937008872628212,
+        "input_shift/poisson_smooth/N64": 0.3356086313724518,
+        "input_shift/poisson_tau/N64": 0.1952272206544876
+      }
+    },
+    "sigma_fieldmax_med": {
+      "spearman_on_medians": 0.02,
+      "spearman_per_seed": [
+        0.03565217391304347,
+        -0.02260869565217391,
+        -0.006956521739130434,
+        0.002608695652173913,
+        0.05913043478260869,
+        0.08,
+        0.03913043478260869,
+        0.021739130434782605
+      ],
+      "spearman_median_over_seeds": 0.02869565217391304,
+      "observable_median_per_shard": {
+        "graded_rough/darcy_dam0p1/N64": 0.0006307609146460891,
+        "graded_rough/darcy_dam0p2/N64": 0.0006306069844868034,
+        "graded_rough/darcy_dam0p3/N64": 0.0006506245990749449,
+        "graded_rough/darcy_dam0p5/N64": 0.0006927553622517735,
+        "graded_rough/darcy_dam0p7/N64": 0.0007488643459510058,
+        "graded_rough/darcy_dam1/N64": 0.0007608428713865578,
+        "graded_rough/poisson_dam0p1/N64": 0.0001057181907526683,
+        "graded_rough/poisson_dam0p2/N64": 0.00010088931230711751,
+        "graded_rough/poisson_dam0p3/N64": 0.00010088930503115989,
+        "graded_rough/poisson_dam0p5/N64": 9.778526509762742e-05,
+        "graded_rough/poisson_dam0p7/N64": 9.334152127848938e-05,
+        "graded_rough/poisson_dam1/N64": 9.186075840261765e-05,
+        "input_shift/darcy_amp2/N64": 0.0018699894426390529,
+        "input_shift/darcy_rough/N64": 0.000708988809492439,
+        "input_shift/darcy_smooth/N64": 0.0005028097366448492,
+        "input_shift/darcy_tau/N64": 0.0008356225735042244,
+        "input_shift/helmholtz_amp2/N64": 8.150610665325075e-05,
+        "input_shift/helmholtz_rough/N64": 9.329605018137954e-05,
+        "input_shift/helmholtz_smooth/N64": 2.2159756554174237e-05,
+        "input_shift/helmholtz_tau/N64": 0.00014492326590698212,
+        "input_shift/poisson_amp2/N64": 0.00021143636695342138,
+        "input_shift/poisson_rough/N64": 9.334152127848938e-05,
+        "input_shift/poisson_smooth/N64": 0.00012169571709819138,
+        "input_shift/poisson_tau/N64": 9.186075476463884e-05
+      }
+    },
+    "sigma_med": {
+      "spearman_on_medians": -0.00608695652173913,
+      "spearman_per_seed": [
+        0.17652173913043476,
+        0.1060869565217391,
+        -0.09391304347826085,
+        0.049565217391304345,
+        0.18347826086956517,
+        0.16695652173913042,
+        -0.013913043478260868,
+        -0.014782608695652172
+      ],
+      "spearman_median_over_seeds": 0.07782608695652173,
+      "observable_median_per_shard": {
+        "graded_rough/darcy_dam0p1/N64": 0.00025677873054519296,
+        "graded_rough/darcy_dam0p2/N64": 0.00025677873054519296,
+        "graded_rough/darcy_dam0p3/N64": 0.00025677873054519296,
+        "graded_rough/darcy_dam0p5/N64": 0.0002567787596490234,
+        "graded_rough/darcy_dam0p7/N64": 0.0002567787596490234,
+        "graded_rough/darcy_dam1/N64": 0.0002567787596490234,
+        "graded_rough/poisson_dam0p1/N64": 5.154808422958013e-05,
+        "graded_rough/poisson_dam0p2/N64": 5.154808422958013e-05,
+        "graded_rough/poisson_dam0p3/N64": 5.154808422958013e-05,
+        "graded_rough/poisson_dam0p5/N64": 5.073032480140682e-05,
+        "graded_rough/poisson_dam0p7/N64": 5.073032662039623e-05,
+        "graded_rough/poisson_dam1/N64": 5.073032662039623e-05,
+        "input_shift/darcy_amp2/N64": 0.0003737933002412319,
+        "input_shift/darcy_rough/N64": 0.00025677878875285387,
+        "input_shift/darcy_smooth/N64": 0.00024887848121579736,
+        "input_shift/darcy_tau/N64": 0.0002733395667746663,
+        "input_shift/helmholtz_amp2/N64": 3.4516071536927484e-05,
+        "input_shift/helmholtz_rough/N64": 2.8898244636366144e-05,
+        "input_shift/helmholtz_smooth/N64": 1.3230580407253001e-05,
+        "input_shift/helmholtz_tau/N64": 3.949921119783539e-05,
+        "input_shift/poisson_amp2/N64": 0.00010309616482118145,
+        "input_shift/poisson_rough/N64": 5.073032662039623e-05,
+        "input_shift/poisson_smooth/N64": 5.234067975834478e-05,
+        "input_shift/poisson_tau/N64": 4.993772927264217e-05
+      }
+    },
+    "sigma_ratio_to_cal": {
+      "spearman_on_medians": 0.07043478260869565,
+      "spearman_per_seed": [
+        0.17652173913043476,
+        0.1060869565217391,
+        -0.09391304347826085,
+        0.049565217391304345,
+        0.18347826086956517,
+        0.16695652173913042,
+        -0.013913043478260868,
+        -0.014782608695652172
+      ],
+      "spearman_median_over_seeds": 0.07782608695652173,
+      "observable_median_per_shard": {
+        "graded_rough/darcy_dam0p1/N64": 5.062877178192139,
+        "graded_rough/darcy_dam0p2/N64": 5.062877178192139,
+        "graded_rough/darcy_dam0p3/N64": 5.062877178192139,
+        "graded_rough/darcy_dam0p5/N64": 4.986210584640503,
+        "graded_rough/darcy_dam0p7/N64": 4.986210346221924,
+        "graded_rough/darcy_dam1/N64": 4.90710973739624,
+        "graded_rough/poisson_dam0p1/N64": 0.9999999701976776,
+        "graded_rough/poisson_dam0p2/N64": 0.9999999403953552,
+        "graded_rough/poisson_dam0p3/N64": 0.9999999403953552,
+        "graded_rough/poisson_dam0p5/N64": 0.9999999403953552,
+        "graded_rough/poisson_dam0p7/N64": 1.0,
+        "graded_rough/poisson_dam1/N64": 1.0,
+        "input_shift/darcy_amp2/N64": 7.031683444976807,
+        "input_shift/darcy_rough/N64": 5.062877416610718,
+        "input_shift/darcy_smooth/N64": 4.907109498977661,
+        "input_shift/darcy_tau/N64": 5.307793617248535,
+        "input_shift/helmholtz_amp2/N64": 0.6803833246231079,
+        "input_shift/helmholtz_rough/N64": 0.5697834193706512,
+        "input_shift/helmholtz_smooth/N64": 0.2608658969402313,
+        "input_shift/helmholtz_tau/N64": 0.7788014709949493,
+        "input_shift/poisson_amp2/N64": 1.9999998807907104,
+        "input_shift/poisson_rough/N64": 1.0,
+        "input_shift/poisson_smooth/N64": 1.0317434072494507,
+        "input_shift/poisson_tau/N64": 0.9999999403953552
+      }
+    }
+  },
+  "best_observable_by_rank_corr": "relresid_ratio_med",
+  "best_rank_corr": 0.8208695652173912,
+  "s_band_present": true,
+  "loso_best": {
+    "observable": "relresid_ratio_med",
+    "global_link_n_band_per_seed": [
+      0,
+      1,
+      0,
+      1,
+      2,
+      1,
+      1,
+      0
+    ],
+    "per_family_link_n_band_per_seed": [
+      3,
+      1,
+      2,
+      2,
+      3,
+      2,
+      2,
+      3
+    ],
+    "global_link_median": 1.0,
+    "per_family_link_median": 2.0
+  },
+  "source_glob": "stargeq_u*_het.json",
+  "equivariant": true
+}

@@ -435,6 +435,106 @@ def claims():
                     f"other than what H17 claims. Fix or withdraw the H17 "
                     f"result before publishing it.")
 
+    # ---- H25 / H26 / H27 / H28: the residual-as-scale line ----------------
+    # Every number the README and WEEKEND.md quote for these is pinned, because
+    # this is the newest block of hand-written prose in the repo and it carries
+    # the conclusion that the coverage clause is bounded rather than merely
+    # unmet.
+    import glob
+    import statistics as _st
+
+    rs = [json.loads(Path(f).read_text())
+          for f in sorted(glob.glob(str(ROOT / "runs/rscale_u*_het.json")))]
+    if rs:
+        def _err(r):
+            return _st.fmean(abs(sh[k]["coverage"] - 0.90)
+                             for sh in r["shards"].values() for k in ())
+        base = [_st.fmean(abs(sh["base"]["coverage"] - 0.90)
+                          for sh in r["shards"].values()) for r in rs]
+        res = [_st.fmean(abs(sh["resid"]["coverage"] - 0.90)
+                         for sh in r["shards"].values()) for r in rs]
+        for f in ("README.md", "WEEKEND.md"):
+            out.append((f, f"{_st.median(base):.4f} \u2192 "
+                           f"{_st.median(res):.4f}",
+                        "H25 mean shard |coverage-0.90|, base -> residual "
+                        "scale, median over seeds"))
+
+    g26 = _load_run("h26_gamma.json")
+    if g26:
+        for f in ("README.md", "WEEKEND.md"):
+            out.append((f, f"best single exponent "
+                           f"**{g26['global']['best_median_n_band']:g}/24**",
+                        "H26 best single-exponent in-band count"))
+            out.append((f, f"per-family oracle exponent "
+                           f"**{g26['family_inband']['median_n_band']:g}/24**",
+                        "H26 per-family oracle exponent ceiling"))
+            out.append((f, f"exponent leave-one-shard-out "
+                           f"**{g26['loso']['median_n_band']:g}/24**",
+                        "H26 leave-one-shard-out exponent"))
+            out.append((f, f"**{g26['in_dist_max_span_over_gamma']:.4f}**",
+                        "H26 max in-distribution coverage span over gamma"))
+            out.append((f, f"p = {g26['gamma1']['sign_flip_p']:.4f}",
+                        "H25 exact sign-flip p on the continuous metric"))
+        # A gate, not a render: an aggregate whose per-seed gates failed must
+        # never reach a document.
+        if not g26.get("gates_all_passed"):
+            raise SystemExit("H26 GATE VIOLATED: h26_gamma.json reports a "
+                             "seed whose gamma=0 arm does not reproduce the "
+                             "base arm, or whose gamma=1 arm does not "
+                             "reproduce H25. Nothing in H26 is interpretable "
+                             "until that is fixed.")
+
+    t27 = _load_run("h27_target.json")
+    if t27:
+        for f in ("README.md", "WEEKEND.md"):
+            out.append((f, f"**+{t27['best_rank_corr']:.3f}**",
+                        "H27 best observable's Spearman rho with log s*"))
+            out.append((f, f"isotonic link leave-one-shard-out "
+                           f"**{t27['loso_best']['per_family_link_median']:g}"
+                           f"/24**",
+                        "H27 free isotonic link, LOSO, per-family"))
+            out.append((f, f"**{10 ** t27['s_star_span_orders']:.0f}\u00d7**",
+                        "H27 span of s* over the 24 shards"))
+        # s* is an oracle target; a document may not call it a method result.
+        if t27.get("clause_eligible") is not False:
+            raise SystemExit("h27_target.json must carry clause_eligible: "
+                             "false -- s* is computed from the truth")
+
+    t29 = _load_run("h29_target_eq.json")
+    if t29:
+        for f in ("README.md", "WEEKEND.md"):
+            out.append((f, f"**+{t29['best_rank_corr']:.3f}**",
+                        "H29 best observable rho with log s*, equivariant"))
+            out.append((f, f"isotonic link leave-one-shard-out "
+                           f"**{t29['loso_best']['per_family_link_median']:g}"
+                           f"/24**",
+                        "H29 ceiling on the equivariant path"))
+        if not t29.get("equivariant"):
+            raise SystemExit("h29_target_eq.json is not an equivariant run; "
+                             "the README compares it against the plain path "
+                             "and the comparison would be vacuous")
+        # The controlled part of H29: the wrapper must move ONLY the shards
+        # where the symmetry exists. Asserted, not rendered.
+        for shard, lim in (("input_shift/darcy_amp2/N64", 1.01),):
+            a = (_load_run("h27_target.json") or {}).get("s_star_median", {})
+            b = t29.get("s_star_median", {})
+            if shard in a and shard in b and not (
+                    1 / lim <= b[shard] / a[shard] <= lim):
+                raise SystemExit(
+                    f"H29 CONTROL VIOLATED: {shard} has no scale-equivariance "
+                    f"(its amplitude enters the operator), so the wrapper must "
+                    f"leave it alone, but s* moved by "
+                    f"{b[shard] / a[shard]:.4f}x. The wrapper is doing "
+                    f"something other than restoring a symmetry that exists.")
+
+    t28 = _load_run("h28_twofeat.json")
+    if t28:
+        for f in ("README.md", "WEEKEND.md"):
+            out.append((f, f"two features leave-one-shard-out "
+                           f"**{t28['arms']['2feat']['per_family_link_median']:g}"
+                           f"/24**",
+                        "H28 two-feature LOSO in-band count"))
+
     return [c for c in out if c]
 
 

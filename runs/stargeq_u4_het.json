@@ -1,0 +1,979 @@
+{
+  "alpha": 0.1,
+  "score": "field_max",
+  "ckpt": "runs/u4/best.pt",
+  "seed": 4,
+  "sigma_source": "het",
+  "families": [
+    "poisson",
+    "helmholtz",
+    "darcy"
+  ],
+  "band": [
+    0.88,
+    0.92
+  ],
+  "target": 0.9,
+  "clause_eligible": false,
+  "equivariant": true,
+  "reference_scale": {
+    "poisson": 0.9998779296875,
+    "helmholtz": 0.9998779296875,
+    "darcy": 0.9998779296875
+  },
+  "note": "s* is the sigma scale making a shard's coverage exactly 0.90, found by bisection with the calibration quantile FROZEN. It is computed from the truth, so it is an ORACLE TARGET and no number here may be quoted as a method result. Its purpose is to bound the ceiling of every per-sample scalar modulation of sigma at once.",
+  "sigma_floor_median": 4.840130714001134e-05,
+  "floor_abs": 2.420065357000567e-06,
+  "relresid_median_cal": {
+    "poisson": 1.3565493822097778,
+    "helmholtz": 0.4446912407875061,
+    "darcy": 7.898964881896973
+  },
+  "q_cal": {
+    "darcy": 25.536331176757812,
+    "helmholtz": 3.9490976333618164,
+    "poisson": 4.188695430755615
+  },
+  "in_dist": {
+    "poisson": {
+      "base": {
+        "coverage": 0.9189453125,
+        "n": 1024,
+        "ci95": [
+          0.9006215162022974,
+          0.9341375729892704
+        ]
+      },
+      "s_star": 0.9797408878803254,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        0.9583416879177092,
+        1.0018768906593323
+      ],
+      "s_band_width_ratio": 1.045427641613104,
+      "observables": {
+        "relresid_ratio_med": 1.00269615650177,
+        "relresid_ratio_p90": 1.1102834939956665,
+        "sigma_med": 4.840130350203253e-05,
+        "sigma_fieldmax_med": 9.625750681152567e-05,
+        "sigma_ratio_to_cal": 0.9999999403953552,
+        "sigma_cv": 0.27219370007514954,
+        "input_amp": 2.6787946224212646,
+        "input_rough": 0.05404915288090706,
+        "diag_mean": 13327.9765625,
+        "pred_fieldmax_med": 0.04080857336521149
+      }
+    },
+    "helmholtz": {
+      "base": {
+        "coverage": 0.90234375,
+        "n": 1024,
+        "ci95": [
+          0.8826301584881096,
+          0.9190498991970324
+        ]
+      },
+      "s_star": 0.9984267055988313,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        0.9792257249355315,
+        1.0192075371742249
+      ],
+      "s_band_width_ratio": 1.040830026438823,
+      "observables": {
+        "relresid_ratio_med": 0.9909709095954895,
+        "relresid_ratio_p90": 1.2695914506912231,
+        "sigma_med": 1.6988400602713227e-05,
+        "sigma_fieldmax_med": 3.710608143592253e-05,
+        "sigma_ratio_to_cal": 0.35099053382873535,
+        "sigma_cv": 0.2456044703722,
+        "input_amp": 2.6785061359405518,
+        "input_rough": 0.0538950189948082,
+        "diag_mean": 13338.12890625,
+        "pred_fieldmax_med": 0.017303122207522392
+      }
+    },
+    "darcy": {
+      "base": {
+        "coverage": 0.8984375,
+        "n": 1024,
+        "ci95": [
+          0.8784214658035886,
+          0.9154752903506297
+        ]
+      },
+      "s_star": 1.006564199924469,
+      "cov_at_s_star": 0.8994140625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        0.9635023176670076,
+        1.0646725296974182
+      ],
+      "s_band_width_ratio": 1.1050025621893478,
+      "observables": {
+        "relresid_ratio_med": 0.9711560606956482,
+        "relresid_ratio_p90": 1.884061574935913,
+        "sigma_med": 0.0002488784957677126,
+        "sigma_fieldmax_med": 0.0005608563660643995,
+        "sigma_ratio_to_cal": 5.141978740692139,
+        "sigma_cv": 0.20358867943286896,
+        "input_amp": 4.25990104675293,
+        "input_rough": 0.1638696938753128,
+        "diag_mean": 19960.1484375,
+        "pred_fieldmax_med": 0.09289353340864182
+      }
+    }
+  },
+  "shards": {
+    "input_shift/poisson_rough/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "base": {
+        "coverage": 0.0,
+        "n": 512,
+        "ci95": [
+          0.0,
+          0.007446975726351883
+        ]
+      },
+      "rel_l2_mean": 0.0221741683781147,
+      "s_star": 5.044451951980591,
+      "cov_at_s_star": 0.8984375,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        4.9830968379974365,
+        5.153496980667114
+      ],
+      "s_band_width_ratio": 1.03419563139338,
+      "observables": {
+        "relresid_ratio_med": 4.034332752227783,
+        "relresid_ratio_p90": 4.43670129776001,
+        "sigma_med": 4.840130714001134e-05,
+        "sigma_fieldmax_med": 9.04255430214107e-05,
+        "sigma_ratio_to_cal": 1.0,
+        "sigma_cv": 0.19364692270755768,
+        "input_amp": 3.362025737762451,
+        "input_rough": 0.1653815060853958,
+        "diag_mean": 13145.48828125,
+        "pred_fieldmax_med": 0.030606430023908615
+      }
+    },
+    "input_shift/poisson_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "base": {
+        "coverage": 0.986328125,
+        "n": 512,
+        "ci95": [
+          0.9720509995073344,
+          0.9933619030088311
+        ]
+      },
+      "rel_l2_mean": 0.002398385666310787,
+      "s_star": 0.8626295626163484,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        0.849415808916092,
+        0.883758395910263
+      ],
+      "s_band_width_ratio": 1.0404308309707517,
+      "observables": {
+        "relresid_ratio_med": 1.0803147554397583,
+        "relresid_ratio_p90": 1.169068694114685,
+        "sigma_med": 4.993772745365277e-05,
+        "sigma_fieldmax_med": 0.00010907403338933364,
+        "sigma_ratio_to_cal": 1.0317434072494507,
+        "sigma_cv": 0.32361090183258057,
+        "input_amp": 2.3376829624176025,
+        "input_rough": 0.0360608771443367,
+        "diag_mean": 13518.166015625,
+        "pred_fieldmax_med": 0.046722859144210815
+      }
+    },
+    "input_shift/poisson_tau/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "base": {
+        "coverage": 0.00390625,
+        "n": 512,
+        "ci95": [
+          0.0010718890801070594,
+          0.014129407148382699
+        ]
+      },
+      "rel_l2_mean": 0.007546551059931517,
+      "s_star": 1.9289670586586,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        1.8931778073310854,
+        1.9660825133323667
+      ],
+      "s_band_width_ratio": 1.0385091699886653,
+      "observables": {
+        "relresid_ratio_med": 1.0971870422363281,
+        "relresid_ratio_p90": 1.2151696681976318,
+        "sigma_med": 4.840130350203253e-05,
+        "sigma_fieldmax_med": 8.764344966039062e-05,
+        "sigma_ratio_to_cal": 0.9999999403953552,
+        "sigma_cv": 0.18967346847057343,
+        "input_amp": 3.1064953804016113,
+        "input_rough": 0.09550149738788605,
+        "diag_mean": 13157.8388671875,
+        "pred_fieldmax_med": 0.029127858579158783
+      }
+    },
+    "input_shift/poisson_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "base": {
+        "coverage": 0.90234375,
+        "n": 512,
+        "ci95": [
+          0.8735560090564793,
+          0.9251390026637218
+        ]
+      },
+      "rel_l2_mean": 0.00293143093585968,
+      "s_star": 0.9995380342006682,
+      "cov_at_s_star": 0.8984375,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        0.9822144806385041,
+        1.0203059315681458
+      ],
+      "s_band_width_ratio": 1.0387811946173708,
+      "observables": {
+        "relresid_ratio_med": 1.0066683292388916,
+        "relresid_ratio_p90": 1.110364556312561,
+        "sigma_med": 9.680259972810745e-05,
+        "sigma_fieldmax_med": 0.00019251501362305135,
+        "sigma_ratio_to_cal": 1.999999761581421,
+        "sigma_cv": 0.2737710475921631,
+        "input_amp": 5.364044189453125,
+        "input_rough": 0.10674639791250229,
+        "diag_mean": 26590.53125,
+        "pred_fieldmax_med": 0.0828000009059906
+      }
+    },
+    "input_shift/helmholtz_rough/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "base": {
+        "coverage": 0.001953125,
+        "n": 512,
+        "ci95": [
+          0.0003448577614300714,
+          0.010979278215990748
+        ]
+      },
+      "rel_l2_mean": 0.007563696708530188,
+      "s_star": 2.246946692466736,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        2.2236586809158325,
+        2.3143035173416138
+      ],
+      "s_band_width_ratio": 1.0407638263928385,
+      "observables": {
+        "relresid_ratio_med": 2.038100481033325,
+        "relresid_ratio_p90": 2.861508369445801,
+        "sigma_med": 2.8898244636366144e-05,
+        "sigma_fieldmax_med": 9.18384175747633e-05,
+        "sigma_ratio_to_cal": 0.5970550775527954,
+        "sigma_cv": 0.3247433304786682,
+        "input_amp": 3.3377583026885986,
+        "input_rough": 0.16820745170116425,
+        "diag_mean": 13154.513671875,
+        "pred_fieldmax_med": 0.02635708451271057
+      }
+    },
+    "input_shift/helmholtz_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "base": {
+        "coverage": 0.984375,
+        "n": 512,
+        "ci95": [
+          0.969473967242287,
+          0.9920617750228096
+        ]
+      },
+      "rel_l2_mean": 0.004755995236337185,
+      "s_star": 0.8962257206439973,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        0.8821111619472503,
+        0.9134232699871062
+      ],
+      "s_band_width_ratio": 1.0354967824811725,
+      "observables": {
+        "relresid_ratio_med": 0.6526700854301453,
+        "relresid_ratio_p90": 0.7235780358314514,
+        "sigma_med": 1.3230579497758299e-05,
+        "sigma_fieldmax_med": 2.1142404875718057e-05,
+        "sigma_ratio_to_cal": 0.2733516991138458,
+        "sigma_cv": 0.12523400783538818,
+        "input_amp": 2.333045244216919,
+        "input_rough": 0.03584961220622063,
+        "diag_mean": 13571.669921875,
+        "pred_fieldmax_med": 0.008098263293504715
+      }
+    },
+    "input_shift/helmholtz_tau/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "base": {
+        "coverage": 0.037109375,
+        "n": 512,
+        "ci95": [
+          0.023883775516174363,
+          0.05722924498048734
+        ]
+      },
+      "rel_l2_mean": 0.00919506885111332,
+      "s_star": 1.7796657681465151,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        1.7323864102363589,
+        1.8355378508567808
+      ],
+      "s_band_width_ratio": 1.0595429749453809,
+      "observables": {
+        "relresid_ratio_med": 1.6464406251907349,
+        "relresid_ratio_p90": 2.6839675903320312,
+        "sigma_med": 3.8283953472273424e-05,
+        "sigma_fieldmax_med": 0.0001562224206281826,
+        "sigma_ratio_to_cal": 0.7909694314002991,
+        "sigma_cv": 0.3990250527858734,
+        "input_amp": 3.0940775871276855,
+        "input_rough": 0.09591289609670639,
+        "diag_mean": 13175.021484375,
+        "pred_fieldmax_med": 0.030381062999367714
+      }
+    },
+    "input_shift/helmholtz_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "base": {
+        "coverage": 0.837890625,
+        "n": 512,
+        "ci95": [
+          0.8034705415810895,
+          0.8672781818538368
+        ]
+      },
+      "rel_l2_mean": 0.0033277184702455997,
+      "s_star": 1.0540894865989685,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        1.0368085503578186,
+        1.0774526000022888
+      ],
+      "s_band_width_ratio": 1.0392011134846866,
+      "observables": {
+        "relresid_ratio_med": 1.0081110000610352,
+        "relresid_ratio_p90": 1.2875730991363525,
+        "sigma_med": 3.3976801205426455e-05,
+        "sigma_fieldmax_med": 7.656789239263162e-05,
+        "sigma_ratio_to_cal": 0.7019810676574707,
+        "sigma_cv": 0.24843308329582214,
+        "input_amp": 5.410479545593262,
+        "input_rough": 0.10774866491556168,
+        "diag_mean": 26647.125,
+        "pred_fieldmax_med": 0.035612232983112335
+      }
+    },
+    "input_shift/darcy_rough/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "base": {
+        "coverage": 0.5390625,
+        "n": 512,
+        "ci95": [
+          0.4957545667020581,
+          0.5817886383193206
+        ]
+      },
+      "rel_l2_mean": 0.07762030512094498,
+      "s_star": 1.4511986374855044,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        1.386293351650238,
+        1.5369117856025698
+      ],
+      "s_band_width_ratio": 1.1086483129801035,
+      "observables": {
+        "relresid_ratio_med": 3.1873779296875,
+        "relresid_ratio_p90": 5.8259596824646,
+        "sigma_med": 0.00025677878875285387,
+        "sigma_fieldmax_med": 0.000676521856803447,
+        "sigma_ratio_to_cal": 5.305203914642334,
+        "sigma_cv": 0.22492769360542297,
+        "input_amp": 4.864797115325928,
+        "input_rough": 0.27851220965385437,
+        "diag_mean": 19749.443359375,
+        "pred_fieldmax_med": 0.07558155059814453
+      }
+    },
+    "input_shift/darcy_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "base": {
+        "coverage": 0.998046875,
+        "n": 512,
+        "ci95": [
+          0.9890207217840092,
+          0.99965514223857
+        ]
+      },
+      "rel_l2_mean": 0.02944658137857914,
+      "s_star": 0.561185210943222,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        0.542106956243515,
+        0.5899006426334381
+      ],
+      "s_band_width_ratio": 1.0881628354690474,
+      "observables": {
+        "relresid_ratio_med": 0.434656023979187,
+        "relresid_ratio_p90": 0.7236727476119995,
+        "sigma_med": 0.00024887846666388214,
+        "sigma_fieldmax_med": 0.0004949539434164762,
+        "sigma_ratio_to_cal": 5.1419782638549805,
+        "sigma_cv": 0.19748543202877045,
+        "input_amp": 3.376110792160034,
+        "input_rough": 0.10398029536008835,
+        "diag_mean": 20404.724609375,
+        "pred_fieldmax_med": 0.1114722266793251
+      }
+    },
+    "input_shift/darcy_tau/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "base": {
+        "coverage": 0.259765625,
+        "n": 512,
+        "ci95": [
+          0.22367113195958566,
+          0.29943815715893496
+        ]
+      },
+      "rel_l2_mean": 0.10462649166584015,
+      "s_star": 1.8808165192604067,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        1.7969421744346616,
+        1.995453178882599
+      ],
+      "s_band_width_ratio": 1.110471559559445,
+      "observables": {
+        "relresid_ratio_med": 3.704580068588257,
+        "relresid_ratio_p90": 6.402649402618408,
+        "sigma_med": 0.00028201626264490187,
+        "sigma_fieldmax_med": 0.0007909343694336712,
+        "sigma_ratio_to_cal": 5.826624870300293,
+        "sigma_cv": 0.25386732816696167,
+        "input_amp": 4.974331378936768,
+        "input_rough": 0.26497799158096313,
+        "diag_mean": 19666.88671875,
+        "pred_fieldmax_med": 0.06713669002056122
+      }
+    },
+    "input_shift/darcy_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "base": {
+        "coverage": 0.0,
+        "n": 512,
+        "ci95": [
+          0.0,
+          0.007446975726351883
+        ]
+      },
+      "rel_l2_mean": 0.7537258267402649,
+      "s_star": 66.78983688354492,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        62.90666007995605,
+        73.92775344848633
+      ],
+      "s_band_width_ratio": 1.1751975602348332,
+      "observables": {
+        "relresid_ratio_med": 45.2333869934082,
+        "relresid_ratio_p90": 224.68344116210938,
+        "sigma_med": 0.00038547051372006536,
+        "sigma_fieldmax_med": 0.0017823977395892143,
+        "sigma_ratio_to_cal": 7.964051723480225,
+        "sigma_cv": 0.41298896074295044,
+        "input_amp": 8.471338272094727,
+        "input_rough": 0.2711007297039032,
+        "diag_mean": 39875.90234375,
+        "pred_fieldmax_med": 0.15538553893566132
+      }
+    },
+    "graded_rough/poisson_dam0p1/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "base": {
+        "coverage": 0.826171875,
+        "n": 512,
+        "ci95": [
+          0.7909499792230057,
+          0.8565357827055069
+        ]
+      },
+      "rel_l2_mean": 0.003136495128273964,
+      "s_star": 1.0570992827415466,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        1.0383926033973694,
+        1.0812334418296814
+      ],
+      "s_band_width_ratio": 1.0412568794232038,
+      "observables": {
+        "relresid_ratio_med": 1.0350289344787598,
+        "relresid_ratio_p90": 1.1399067640304565,
+        "sigma_med": 4.840130350203253e-05,
+        "sigma_fieldmax_med": 9.931303065968677e-05,
+        "sigma_ratio_to_cal": 0.9999999403953552,
+        "sigma_cv": 0.2715122699737549,
+        "input_amp": 2.72957181930542,
+        "input_rough": 0.05726413428783417,
+        "diag_mean": 13311.0888671875,
+        "pred_fieldmax_med": 0.041104283183813095
+      }
+    },
+    "graded_rough/poisson_dam0p2/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "base": {
+        "coverage": 0.64453125,
+        "n": 512,
+        "ci95": [
+          0.6021349532467505,
+          0.684774905332351
+        ]
+      },
+      "rel_l2_mean": 0.0034141456708312035,
+      "s_star": 1.1706673502922058,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        1.1511170268058777,
+        1.2049782872200012
+      ],
+      "s_band_width_ratio": 1.046790429782433,
+      "observables": {
+        "relresid_ratio_med": 1.0814523696899414,
+        "relresid_ratio_p90": 1.1714085340499878,
+        "sigma_med": 4.840130350203253e-05,
+        "sigma_fieldmax_med": 9.329598105978221e-05,
+        "sigma_ratio_to_cal": 0.9999999403953552,
+        "sigma_cv": 0.2576920688152313,
+        "input_amp": 2.783139228820801,
+        "input_rough": 0.06201406195759773,
+        "diag_mean": 13289.8662109375,
+        "pred_fieldmax_med": 0.03992142900824547
+      }
+    },
+    "graded_rough/poisson_dam0p3/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "base": {
+        "coverage": 0.30859375,
+        "n": 512,
+        "ci95": [
+          0.2701324874949442,
+          0.34990580790029996
+        ]
+      },
+      "rel_l2_mean": 0.0038442586082965136,
+      "s_star": 1.346836507320404,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        1.3201776146888733,
+        1.3844098448753357
+      ],
+      "s_band_width_ratio": 1.0486542336968803,
+      "observables": {
+        "relresid_ratio_med": 1.1617270708084106,
+        "relresid_ratio_p90": 1.260080337524414,
+        "sigma_med": 4.8401299864053726e-05,
+        "sigma_fieldmax_med": 9.329596650786698e-05,
+        "sigma_ratio_to_cal": 0.9999998807907104,
+        "sigma_cv": 0.25262758135795593,
+        "input_amp": 2.8199172019958496,
+        "input_rough": 0.06758497655391693,
+        "diag_mean": 13257.734375,
+        "pred_fieldmax_med": 0.03873857483267784
+      }
+    },
+    "graded_rough/poisson_dam0p5/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "base": {
+        "coverage": 0.0,
+        "n": 512,
+        "ci95": [
+          0.0,
+          0.007446975726351883
+        ]
+      },
+      "rel_l2_mean": 0.005424786359071732,
+      "s_star": 1.8766421675682066,
+      "cov_at_s_star": 0.8984375,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        1.8399526476860044,
+        1.9128757119178774
+      ],
+      "s_band_width_ratio": 1.0396331200825109,
+      "observables": {
+        "relresid_ratio_med": 1.4844707250595093,
+        "relresid_ratio_p90": 1.6537773609161377,
+        "sigma_med": 4.8401299864053726e-05,
+        "sigma_fieldmax_med": 9.329595923190936e-05,
+        "sigma_ratio_to_cal": 0.9999998807907104,
+        "sigma_cv": 0.23979757726192474,
+        "input_amp": 2.9414923191070557,
+        "input_rough": 0.0826810970902443,
+        "diag_mean": 13218.994140625,
+        "pred_fieldmax_med": 0.03726000338792801
+      }
+    },
+    "graded_rough/poisson_dam0p7/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "base": {
+        "coverage": 0.0,
+        "n": 512,
+        "ci95": [
+          0.0,
+          0.007446975726351883
+        ]
+      },
+      "rel_l2_mean": 0.008989332243800163,
+      "s_star": 2.706920027732849,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        2.651450753211975,
+        2.7507394552230835
+      ],
+      "s_band_width_ratio": 1.03744693424565,
+      "observables": {
+        "relresid_ratio_med": 2.172774076461792,
+        "relresid_ratio_p90": 2.444591760635376,
+        "sigma_med": 4.840130714001134e-05,
+        "sigma_fieldmax_med": 9.042555029736832e-05,
+        "sigma_ratio_to_cal": 1.0,
+        "sigma_cv": 0.2170003205537796,
+        "input_amp": 3.092200756072998,
+        "input_rough": 0.11019144207239151,
+        "diag_mean": 13211.81640625,
+        "pred_fieldmax_med": 0.034302856773138046
+      }
+    },
+    "graded_rough/poisson_dam1/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "base": {
+        "coverage": 0.0,
+        "n": 512,
+        "ci95": [
+          0.0,
+          0.007446975726351883
+        ]
+      },
+      "rel_l2_mean": 0.02258811518549919,
+      "s_star": 5.096156358718872,
+      "cov_at_s_star": 0.8984375,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        5.04013991355896,
+        5.200991868972778
+      ],
+      "s_band_width_ratio": 1.0319141845608482,
+      "observables": {
+        "relresid_ratio_med": 4.0134148597717285,
+        "relresid_ratio_p90": 4.503146171569824,
+        "sigma_med": 4.840130714001134e-05,
+        "sigma_fieldmax_med": 9.04255430214107e-05,
+        "sigma_ratio_to_cal": 1.0,
+        "sigma_cv": 0.18767023086547852,
+        "input_amp": 3.3359618186950684,
+        "input_rough": 0.16579706966876984,
+        "diag_mean": 13149.763671875,
+        "pred_fieldmax_med": 0.030162857845425606
+      }
+    },
+    "graded_rough/darcy_dam0p1/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "base": {
+        "coverage": 0.8515625,
+        "n": 512,
+        "ci95": [
+          0.8181518841557258,
+          0.879736961036683
+        ]
+      },
+      "rel_l2_mean": 0.05373747646808624,
+      "s_star": 1.1193984150886536,
+      "cov_at_s_star": 0.8984375,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        1.064142644405365,
+        1.1792508959770203
+      ],
+      "s_band_width_ratio": 1.1081699452388518,
+      "observables": {
+        "relresid_ratio_med": 1.20647394657135,
+        "relresid_ratio_p90": 2.32722544670105,
+        "sigma_med": 0.00025677873054519296,
+        "sigma_fieldmax_med": 0.0005877723451703787,
+        "sigma_ratio_to_cal": 5.305202484130859,
+        "sigma_cv": 0.2137482762336731,
+        "input_amp": 4.3781538009643555,
+        "input_rough": 0.1790587157011032,
+        "diag_mean": 19972.55078125,
+        "pred_fieldmax_med": 0.09458250552415848
+      }
+    },
+    "graded_rough/darcy_dam0p2/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "base": {
+        "coverage": 0.84765625,
+        "n": 512,
+        "ci95": [
+          0.8139486336915699,
+          0.8761858909987011
+        ]
+      },
+      "rel_l2_mean": 0.0571819506585598,
+      "s_star": 1.1321138739585876,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        1.0751290917396545,
+        1.1902838349342346
+      ],
+      "s_band_width_ratio": 1.107107829263786,
+      "observables": {
+        "relresid_ratio_med": 1.4762790203094482,
+        "relresid_ratio_p90": 2.861701726913452,
+        "sigma_med": 0.00025677873054519296,
+        "sigma_fieldmax_med": 0.0005970284692011774,
+        "sigma_ratio_to_cal": 5.305202484130859,
+        "sigma_cv": 0.21232755482196808,
+        "input_amp": 4.4966888427734375,
+        "input_rough": 0.19606232643127441,
+        "diag_mean": 19902.51171875,
+        "pred_fieldmax_med": 0.08782661706209183
+      }
+    },
+    "graded_rough/darcy_dam0p3/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "base": {
+        "coverage": 0.7265625,
+        "n": 512,
+        "ci95": [
+          0.6863742152040018,
+          0.763376373919995
+        ]
+      },
+      "rel_l2_mean": 0.06496638059616089,
+      "s_star": 1.3137027621269226,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        1.2362846732139587,
+        1.3711363673210144
+      ],
+      "s_band_width_ratio": 1.1090781896992081,
+      "observables": {
+        "relresid_ratio_med": 1.8255473375320435,
+        "relresid_ratio_p90": 3.4635801315307617,
+        "sigma_med": 0.00025677873054519296,
+        "sigma_fieldmax_med": 0.0006256804335862398,
+        "sigma_ratio_to_cal": 5.305202484130859,
+        "sigma_cv": 0.21865631639957428,
+        "input_amp": 4.624142646789551,
+        "input_rough": 0.22019614279270172,
+        "diag_mean": 19868.53515625,
+        "pred_fieldmax_med": 0.0869821310043335
+      }
+    },
+    "graded_rough/darcy_dam0p5/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "base": {
+        "coverage": 0.572265625,
+        "n": 512,
+        "ci95": [
+          0.5290291853617014,
+          0.6144257439278492
+        ]
+      },
+      "rel_l2_mean": 0.07783947885036469,
+      "s_star": 1.4071900248527527,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        1.338508665561676,
+        1.4590023159980776
+      ],
+      "s_band_width_ratio": 1.090020822080998,
+      "observables": {
+        "relresid_ratio_med": 3.099182605743408,
+        "relresid_ratio_p90": 5.262712001800537,
+        "sigma_med": 0.0002567787596490234,
+        "sigma_fieldmax_med": 0.0006557074375450611,
+        "sigma_ratio_to_cal": 5.305202960968018,
+        "sigma_cv": 0.22127391397953033,
+        "input_amp": 4.878950595855713,
+        "input_rough": 0.28143635392189026,
+        "diag_mean": 19797.525390625,
+        "pred_fieldmax_med": 0.07642604410648346
+      }
+    },
+    "graded_rough/darcy_dam0p7/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "base": {
+        "coverage": 0.126953125,
+        "n": 512,
+        "ci95": [
+          0.10086753553833283,
+          0.15859485650750005
+        ]
+      },
+      "rel_l2_mean": 0.10617618262767792,
+      "s_star": 1.7266930937767027,
+      "cov_at_s_star": 0.8984375,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        1.6790006756782534,
+        1.7748815417289732
+      ],
+      "s_band_width_ratio": 1.0571059127251319,
+      "observables": {
+        "relresid_ratio_med": 5.003485202789307,
+        "relresid_ratio_p90": 7.749328136444092,
+        "sigma_med": 0.00025677878875285387,
+        "sigma_fieldmax_med": 0.000708988809492439,
+        "sigma_ratio_to_cal": 5.305203914642334,
+        "sigma_cv": 0.23002660274505615,
+        "input_amp": 5.1988139152526855,
+        "input_rough": 0.3634287416934967,
+        "diag_mean": 19710.359375,
+        "pred_fieldmax_med": 0.06840341538190842
+      }
+    },
+    "graded_rough/darcy_dam1/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "base": {
+        "coverage": 0.0,
+        "n": 512,
+        "ci95": [
+          0.0,
+          0.007446975726351883
+        ]
+      },
+      "rel_l2_mean": 0.1904846429824829,
+      "s_star": 2.5532063245773315,
+      "cov_at_s_star": 0.900390625,
+      "reason": null,
+      "cov_lo": 0.0,
+      "cov_hi": 1.0,
+      "s_band": [
+        2.4668930768966675,
+        2.6102665662765503
+      ],
+      "s_band_width_ratio": 1.0581190529588114,
+      "observables": {
+        "relresid_ratio_med": 8.717724800109863,
+        "relresid_ratio_p90": 12.264352798461914,
+        "sigma_med": 0.00025677878875285387,
+        "sigma_fieldmax_med": 0.000778671819716692,
+        "sigma_ratio_to_cal": 5.305203914642334,
+        "sigma_cv": 0.24010862410068512,
+        "input_amp": 5.509504318237305,
+        "input_rough": 0.5242478251457214,
+        "diag_mean": 19630.8046875,
+        "pred_fieldmax_med": 0.05404714494943619
+      }
+    }
+  },
+  "n_shards": 24,
+  "n_sstar_found": 24
+}

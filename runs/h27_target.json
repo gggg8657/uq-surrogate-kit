@@ -731,5 +731,7 @@
     ],
     "global_link_median": 0.0,
     "per_family_link_median": 2.0
-  }
+  },
+  "source_glob": "starget_u*_het.json",
+  "equivariant": false
 }
