@@ -3707,3 +3707,35 @@ information is not in z.
 **Verdict on H20: null.** Prediction 1 (≥ H15's median) is technically met at
 4 vs 4 and means nothing at p = 0.8438. Prediction 3 (not 29/32) holds. The
 route is closed and I am not spending another arm on the shape of h.
+
+### H22 needs a control arm, and my registration did not specify a strict enough one
+
+I registered that "the H15 baseline is re-reported on the same 24 shards,
+restricted in the aggregator from per-shard cells already on disk". That is a
+*restriction of the evaluation set* and it is not sufficient, because
+`--residual-features` moves two things at once: it adds two columns to z **and**
+forces the fit onto the three families that have a cheap operator apply. A gain
+against 5-family H15 could therefore be the features or could be the narrower
+fitting set, and the two are not separable from that comparison.
+
+So there are two controls and both are needed:
+
+* **(a) evaluation-restricted H15** — the deployed 5-family model scored on the
+  same 24 shards. Answers "does the residual arm beat what is shipped today, on
+  the shards where it can run at all".
+* **(b) fit-restricted control** (`--restrict-families poisson,helmholtz,darcy`,
+  no residual features) — same three families, same fitting set, two columns
+  fewer. **H22 minus this is exactly the two residual features.** This is the
+  arm that can attribute a gain, and it is the one my registration was missing.
+
+(b) is launched as `runs/scalerc_u*_het.json`, 8 seeds, queued behind the H22
+arm on the same device rather than beside it.
+
+**Screen at 7 of 8 seeds, reported as a screen and not a verdict.** Both
+residual features carry signal — median coefficients `log_resid` **−0.3722** and
+`log_consist` **−0.3466**, each in the top four on **7 of 7** seeds — so
+prediction 1's falsification condition ("both below 0.2 in magnitude") does not
+fire. But log input amplitude is still **+2.5629**, 6.9× the larger of the two,
+so even with an equation-violation signal available the fit is still mostly an
+amplitude model. In-band is 0,1,1,2,1,0,1. Whether that beats either control is
+not yet measurable and no comparison is claimed until both arms have 8 seeds.
