@@ -4634,3 +4634,55 @@ than any single number, is the most transferable thing here.
 **47/49 identical on 8 of 8 seeds**, minimum AUROC 0.8411–0.8409 across seeds.
 The equivariant arm — whether any of this rested on the *preprocessing* bug as
 well — is still running, 9 of 16 cells.
+
+## H24 result — constraining the sign recovers what the unconstrained fit lost, and still adds nothing
+
+`runs/h24_nn_u0..u7_het.json`, 8 seeds, 24 shards, three families. Identical to
+the H22 residual arm except that `log_resid` and `log_consist` are projected
+onto `[0, ∞)` after each optimizer step — the sign H23 measured marginally.
+
+| arm | in band /24, per seed | median | range |
+|---|---|---|---|
+| control — 3 families, **no** residual features | 4,3,3,3,0,5,3,0 | **3** | [0, 5] |
+| H22 — residual features, **unconstrained** | 0,1,1,2,1,0,1,3 | **1** | [0, 3] |
+| **H24 — residual features, sign-constrained** | **0,6,4,6,0,5,1,0** | **2.5** | **[0, 6]** |
+
+| comparison | diffs | exact sign-flip p |
+|---|---|---|
+| H24 vs H22 — the constraint alone | 0,+5,+3,+4,−1,+5,0,−3 | **0.2188** |
+| **H24 vs control** — residual+constraint vs no residual at all | −4,+3,+1,+3,0,0,−2,0 | **1.0000** |
+| H22 vs control — measured earlier | −4,−2,−2,−1,+1,−5,−2,+3 | 0.1797 |
+
+**Two readings, and the second is the one that matters.** The constraint moves
+the median from 1 to 2.5 and is *not* significant (p = 0.2188) — so "the
+constraint helps" is not established. But against the arm that has no residual
+features at all, H24 is **p = 1.0000, an exact null**: the diffs are
+−4,+3,+1,+3,0,0,−2,0 and they cancel. So the honest summary is that
+sign-constraining recovers roughly what the unconstrained fit had lost, and
+lands exactly where not having the features at all lands.
+
+**Every residual-arm comparison against its proper control is non-significant.**
+H22 vs control p = 0.1797, H24 vs control p = 1.0000, H24 vs H22 p = 0.2188.
+The only significant comparison this family of arms ever produced was against
+the 5-family H15 model (p = 0.0078), and that one confounded the feature set
+with the fitting set. **The residual features are a null in the width model,
+constrained or not.**
+
+**And the seed spread swamps all of it.** H24's per-seed range is [0, 6] on a
+median of 2.5; the control's is [0, 5] on 3. Three seeds drawn from H24 could
+have produced 6, 6, 5 or 0, 0, 0. Nothing here is a verdict at three seeds and
+barely anything is one at eight.
+
+### The finding this leaves, which is sharper than the null
+
+H23 measured that the residual carries real marginal signal: ρ(`log_resid`,
+log S) = **+0.241** on 8 of 8 seeds, and the decomposition says why — it tracks
+the **error** at +0.374 against σ̃'s +0.107, so it sees error that the
+heteroscedastic head does not. H24 shows that signal, entered as a feature of a
+linear log-width model with the right sign, converts into **no** improvement in
+calibration.
+
+So the gap is not "the residual is uninformative". It is that **a marginal rank
+correlation of 0.241 does not buy a conditional quantile accurate to ±4.47%**,
+which is what H16 measured the clause to require. Those are different
+quantities, and this repo has now measured both.
