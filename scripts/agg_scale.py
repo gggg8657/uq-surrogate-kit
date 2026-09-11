@@ -129,6 +129,52 @@ def agg_h15(runs):
     return out
 
 
+def width_accuracy(arms, tol):
+    """How far each arm's emitted width is from the width the band requires.
+
+    H16 states the clause without any uncertainty method in it: the widths
+    giving coverage in [0.88, 0.92] span [Q0.88(S), Q0.92(S)], so there is a
+    required relative tolerance on the width. Every arm records, per shard,
+    `underprediction_factor__uses_truth` = Q0.90(S) / median(q*h) -- the factor
+    by which the emitted width misses the width that would have given exactly
+    0.90. This puts every method on that one axis.
+
+    Two caveats travel with the table and are not optional:
+
+    * the arms do not all evaluate the same shards -- the residual arm runs on
+      the 24 with a cheap operator apply -- so the `within_tol` counts are
+      comparable to each arm's own shard count and not across arms;
+    * `tol` is a median over shards while in-band is decided per shard, so
+      `within_tol` is expected to track the in-band count and not to equal it.
+      That it tracks at all is the check that H16's framing is predictive
+      rather than merely descriptive, and the two columns are printed together
+      so a reader can see the correspondence break if it ever does.
+    """
+    out = {"required_tol_rel": tol, "note": width_accuracy.__doc__.strip(),
+           "by_arm": {}}
+    for name, runs in arms.items():
+        if not runs:
+            continue
+        shards = sorted(runs[0]["leave_one_mechanism_out"]["shards"])
+        errs = {}
+        for n in shards:
+            f = st.median([r["leave_one_mechanism_out"]["shards"][n]
+                           ["underprediction_factor__uses_truth"]
+                           for r in runs])
+            errs[n] = abs(f - 1.0)
+        med = st.median(errs.values())
+        out["by_arm"][name] = {
+            "n_shards": len(shards),
+            "median_abs_width_error": med,
+            "x_required_tolerance": med / tol if tol else None,
+            "within_tol": sum(1 for e in errs.values() if e <= tol),
+            "in_band_median": st.median(
+                [r["leave_one_mechanism_out"]["in_band"] for r in runs]),
+            "per_shard_abs_width_error": errs,
+        }
+    return out
+
+
 def in_dist_rel_l2(pat="runs/conf_u*_het.json"):
     """Per-family in-distribution rel-L2 for the same checkpoints.
 
@@ -419,9 +465,16 @@ def main():
                   f"{v['diff_per_seed']}, p={v['exact_sign_flip_p']:.4f}")
     h22 = _load(args.h22_glob)
     if h22:
-        res["h22"] = agg_h15(h22)
+        # Control (a) of the two H22 registered: the DEPLOYED 5-family arm
+        # scored on the same shards the residual arm could run on. It answers
+        # "does the residual arm beat what is shipped today, where it can run",
+        # and it deliberately does NOT attribute the difference -- the fitting
+        # set moves with the features. Control (b), which does attribute it, is
+        # the fit-restricted arm and lives under `h22` below. Both were
+        # registered; they are different questions and they get different keys.
+        res["h22_vs_deployed"] = agg_h15(h22)
         names = sorted(h22[0]["leave_one_mechanism_out"]["shards"])
-        a = res["h22"]["lomo"]["in_band_per_seed"]
+        a = res["h22_vs_deployed"]["lomo"]["in_band_per_seed"]
         cmp = {}
 
         def _restricted(runs_, label):
@@ -462,7 +515,7 @@ def main():
         for r in h22:
             for c in r["folds"]["all"]["coef_top"]:
                 coef.setdefault(c["feature"], []).append(c["coef"])
-        res["h22"]["vs"] = {
+        res["h22_vs_deployed"]["vs"] = {
             "h22_per_seed": a,
             "n_shards_evaluated": len(names),
             "families": h22[0].get("families"),
@@ -484,16 +537,16 @@ def main():
                      "fixed and removes only the two columns, so it is the "
                      "one that attributes a gain."),
         }
-        print(f"[H22] LOMO {a} over {len(names)} shards "
-              f"({res['h22']['vs']['families']}); ungated on the same shards "
+        print(f"[H22-vs-deployed] LOMO {a} over {len(names)} shards "
+              f"({res['h22_vs_deployed']['vs']['families']}); ungated same shards "
               f"{ung24}")
         for k, v in cmp.items():
-            print(f"[H22] vs {k} {v['other_per_seed']}: diff "
+            print(f"[H22-vs-deployed] vs {k} {v['other_per_seed']}: diff "
                   f"{v['diff_per_seed']}, p={v['exact_sign_flip_p']:.4f}")
-        rc = res["h22"]["vs"]["residual_coef_median"]
+        rc = res["h22_vs_deployed"]["vs"]["residual_coef_median"]
         if rc:
-            print(f"[H22] residual coefs {({k: round(v, 4) for k, v in rc.items()})}"
-                  f" vs largest {res['h22']['vs']['largest_coef']}")
+            print(f"[H22-vs-deployed] residual coefs {({k: round(v, 4) for k, v in rc.items()})}"
+                  f" vs largest {res['h22_vs_deployed']['vs']['largest_coef']}")
     res22, ctl22 = _load(args.h22_res_glob), _load(args.h22_ctl_glob)
     if res22 and ctl22 and len(res22) == len(ctl22):
         R, C = agg_h15(res22), agg_h15(ctl22)
@@ -556,6 +609,25 @@ def main():
                          f"{e['required_range_eq']:.1f}x, "
                          f"p={e['vs_base']['exact_sign_flip_p']:.4f}")
             print(line)
+    # every arm on H16's single axis: how far the emitted width is from the
+    # width the band requires
+    if res.get("wtol"):
+        tol = res["wtol"]["by_score"]["field_max"]["tol_rel_median_over_shards"]
+        arms = {"h15": h15, "h18": _load(args.h18_glob),
+                "h19": _load(args.h19_glob), "h20": _load(args.h20_glob),
+                "h22": _load(args.h22_glob),
+                "h22_control": _load(args.h22ctl_glob)}
+        res["width_accuracy"] = width_accuracy(
+            {k: v for k, v in arms.items() if v}, tol)
+        wa = res["width_accuracy"]
+        print(f"[WIDTH] required tolerance {wa['required_tol_rel']*100:.2f}%")
+        for k, v in wa["by_arm"].items():
+            print(f"[WIDTH] {k:12s} median |width error| "
+                  f"{v['median_abs_width_error']*100:6.1f}%  "
+                  f"= {v['x_required_tolerance']:5.1f}x required   "
+                  f"within tol {v['within_tol']:2d}/{v['n_shards']}   "
+                  f"in band {v['in_band_median']:.1f}")
+
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(res, indent=2))
     print(f"wrote {args.out}")

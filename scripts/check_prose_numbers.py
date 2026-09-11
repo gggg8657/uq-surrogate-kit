@@ -74,6 +74,55 @@ def claims():
             out.append(("WEEKEND.md", f"+{_st.median(co):.3f}",
                         "H15 amplitude coefficient (a_spec9), median over seeds"))
 
+    # H20 (per-family width model) and H22 (residual width features) are the
+    # newest hand-written claims in WEEKEND.md's "What did not work" section.
+    # H22's per-family split is the load-bearing one: it is the claim that the
+    # whole loss is Darcy, and a reader would act on it.
+    if scj and scj.get("h20", {}).get("vs", {}).get("comparisons"):
+        c = scj["h20"]["vs"]["comparisons"].get("h15")
+        if c:
+            out.append(("WEEKEND.md", f"p = {c['exact_sign_flip_p']:.4f}",
+                        "H20 vs H15 paired exact sign-flip p (a null)"))
+    # `runs/scale.json` gains arms as they finish and its shape has changed
+    # more than once mid-weekend. A checker that raises on an unfamiliar layout
+    # blocks every commit for a reason unrelated to correctness, so an absent
+    # key means "not pinned yet", never a crash.
+    # `runs/scale.json` gains arms as they finish and its shape has changed
+    # more than once mid-weekend. A checker that raises on an unfamiliar layout
+    # blocks every commit for a reason unrelated to correctness, so an absent
+    # key means "not pinned yet", never a crash.
+    h22 = (scj or {}).get("h22", {})
+    vsc = h22.get("vs_control", {})
+    if vsc.get("exact_sign_flip_p") is not None:
+        # THE load-bearing number: the residual arm against its own control,
+        # which is what replaced the confounded p = 0.0078 against the
+        # 5-family arm. WEEKEND.md leads with it, so it is pinned.
+        out.append(("WEEKEND.md", f"p = {vsc['exact_sign_flip_p']:.4f}",
+                    "H22 residual features vs their own control"))
+    ps = h22.get("per_shard")
+    if ps:
+        lo, hi = 0.88, 0.92
+        dar = [c for c in ps.values() if c["parent"] == "darcy"]
+        # H15's Darcy in-band count comes from the 5-family arm's own cells
+        S15 = (scj or {}).get("h15", {}).get("lomo", {}).get("shards", {})
+        d15 = sum(1 for n, c in S15.items()
+                  if c["parent"] == "darcy" and n in ps
+                  and lo <= c["scaled_median"] <= hi)
+        d22 = sum(1 for c in dar if lo <= c["res"] <= hi)
+        if dar:
+            out.append(("WEEKEND.md",
+                        f"{d15}/{len(dar)} in band → **{d22}/{len(dar)}**",
+                        "H22: the whole movement is Darcy"))
+        # the width ratios of exactly the shards the prose says were pushed
+        # OVER the band -- not all of Darcy, which also contains shards that
+        # narrow. Pinning the wrong set is how a true sentence acquires a
+        # number that does not belong to it; the first version did that.
+        S22 = (scj or {}).get("h22", {})
+        wr = [S15[n]["width_ratio_median"] for n, c in ps.items()
+              if c["parent"] == "darcy" and c["res"] > hi and n in S15]
+        del wr  # width ratios live in the H15 cells, not the H22 per_shard
+                # block; not pinned rather than pinned from the wrong arm.
+
     # Section 5 of paper_draft.md is the newest hand-written prose in the repo,
     # so its load-bearing numbers are pinned against the runs that produced
     # them. Each of these is a claim a reader would act on.

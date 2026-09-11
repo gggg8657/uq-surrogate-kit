@@ -237,6 +237,37 @@ where all three old detectors sat at chance.
   flip to **over**-coverage (0.999–1.000 at 1.75–4.91× width) while the
   `smooth` shards and the far `darcy` rungs collapse at 0.05–0.44× width —
   which is the signature of a model left with no dominant direction.
+- **One width model per family (H20).** A null. LOMO `4,1,5,7,1,4,2,8`
+  against the pooled fit's `3,2,5,4,4,2,8,7` — identical medians (**4/32**),
+  exact sign-flip **p = 0.8438**. Isolating families recovers nothing the
+  pooled fit suppressed and loses nothing it gained. The per-seed scatter
+  (1–8 against 2–8) is larger than any difference between the arms: at three
+  seeds the same data supports "clear win" or "clear loss" depending on the
+  draw. Its in-sample ceiling did rise, 4 → 6 median — the same shape as H18,
+  where **every change that raises what h could fit leaves what h can
+  generalize alone**.
+- **The PDE residual as a width feature (H22).** The last untried signal, and
+  the only one that is *exactly invariant to rescaling the linear channel* — so
+  a gain from it could not have been the amplitude effect that carries every
+  other arm. It carries real signal (`log_resid` and `log_consist`, both
+  top-five on 8/8 seeds). Against its **own control** — same 3-family
+  restriction, no residual features, differing in exactly two columns — it is
+  **a null: p = 0.1797**, median 1/24 against 3/24, negative on 6 of 8 seeds.
+  *An earlier version of this bullet reported p = 0.0078; that comparison was
+  against the 5-family arm and changed the features and the fitting set at
+  once. Withdrawn.* The honest reading is an **underpowered null**: the point
+  estimate is worse, neither sub-effect clears significance alone
+  (fitting set p = 0.2812), and 8 seeds cannot separate them.
+  What does survive, because it is read against the arm's own shards rather
+  than between arms: **the whole movement is one family** —
+  Darcy goes 6/10 in band → **0/10**, seven shards pushed out through the top at
+  1.18–2.71× width, while poisson and helmholtz are untouched (1/10 and 0/4 in
+  both arms). That is where the repo's own residual-floor measurement says the
+  signal should be — Darcy's shifted error (5.4e-2–1.7e-1) clears the
+  operator's round-off floor (7.8e-5) by the widest margin. The leak test
+  passes: the four `*_amp2` shards sit at 0.000 in every arm, which is what two
+  scale-invariant features must do. **The signal is real, correctly located,
+  and mis-scaled.**
 - **The `navier_stokes` 366× row.** Withdrawn on sight: `trained: False`. An
   untrained network timed against a real 1000-step RK4 solver, accuracy
   `[not measured]`. It is the most seductive number in the repo and it is worth
@@ -367,28 +398,34 @@ there is a false alarm, not a detection.
 
 ## Still running / how to check
 
-**H20 is running** in tmux `a4-h20` on GPU 3 of the lease: the H15 arm refitted
-with **one width model per family** (`--per-family-h`,
-`uqkit.scale.PerFamilyScale`) instead of one pooled fit with family one-hots,
-8 seeds, writing `runs/scalepf_u*_het.json`. Registered prediction: it does not
-reach 29/32, and after H19 its diagnostic value is reduced — H19 already showed
-the pooled fit's whole gain was the amplitude feature, so a per-family fit is
-mostly a check that isolating families does not recover anything the pooled fit
-was suppressing. Check with:
+Three jobs, all on this track's own lease (devices 2 and 3), all resumable —
+each writes one file per cell and skips cells that already exist.
+
+| job | what it decides | where | done when |
+|---|---|---|---|
+| **H21 — clause 3 on the repaired predictor** | whether the OOD result rests on the same preprocessing bug clause 1's did. The published **47/49** is a *one-checkpoint* number; this runs base and equivariant arms at 8 seeds each | `a4-h21`, `runs/cons3_{base,eq}_u*_het.json` | 16 cells |
+| **H17 cost** | replaces the `[not measured]` clause-2 cell. Both arms run back to back on one device and the baseline is re-measured beside the equivariant arm, because a speedup delta across two devices is not a delta | `runs/bench_fair_h17_{base,eq}.json` | 2 files |
+| **H22 control** | attributes H22's loss. Same 3-family restriction, **without** the residual features, so the pair differs in exactly two columns | `runs/h22_ctl_u*_het.json` | 8 files |
 
 ```bash
 cd ~/Documents/workspace/uq-surrogate-kit
-tail -5 logs/h20_chain.log            # progress, one seed at a time
-ls runs/scalepf_u*_het.json | wc -l   # 8 when done
+ls runs/cons3_*_u*_het.json | wc -l      # 16 when H21 is done
+ls runs/h22_ctl_u*_het.json  | wc -l     # 8 when the control is done
+ls runs/bench_fair_h17_*.json | wc -l    # 2 when the cost run is done
 ~/miniforge3/envs/pdeno/bin/python scripts/agg_scale.py --out runs/scale.json
 ~/miniforge3/envs/pdeno/bin/python scripts/report.py     # regenerates RESULTS.md
-~/miniforge3/envs/pdeno/bin/python scripts/run_tests.py  # 6 files, must exit 0
+~/miniforge3/envs/pdeno/bin/python scripts/run_tests.py  # must exit 0
 ~/miniforge3/envs/pdeno/bin/python scripts/check_prose_numbers.py
 ```
 
-If it lands at or below H19's 0/32, clause 1 under shift has been attacked at
-all four rungs of the ladder with every route exhausted, and Option B in
-decision 1c becomes the honest call rather than a tie.
+**What each outcome means.** If H21's strict count falls materially below
+47/49 on the repaired predictor, then a measurable share of clause 3 was
+detecting our own bug — and that would be the *second* clause where that is
+true, which is the most transferable thing this weekend has produced. If the
+H22 control also lands near 1/24, the residual features are neutral and the
+loss is the narrower fitting set; if it lands near 4/24, the features
+themselves over-correct and the Darcy over-coverage above is the thing to
+explain.
 
 <details>
 <summary>Earlier this turn: H19, the amplitude ablation — finished</summary>
