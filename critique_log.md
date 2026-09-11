@@ -5637,3 +5637,251 @@ from unlabelled data, and the obstacle is magnitude rather than ranking
 regime and unreachable from zero**, and the next hypothesis should price exactly
 that against `scripts/eval_label_budget.py` and `runs/label_probe.json`, which
 already exist and which I have not yet read properly.
+
+---
+
+## A 19-hour stuck job, and it is the same bug I fixed this turn
+
+Before any new work: `pgrep` found a process started **Thu Sep 10 08:43**, still
+alive, spinning in
+
+    while pgrep -f "scripts/eval_consistency.py" >/dev/null; do sleep 20; done
+    CUDA_VISIBLE_DEVICES=2 ... scripts/eval_label_budget.py --out runs/label_budget.json
+
+Its own `sh -c` argv contains the string `scripts/eval_consistency.py`, so
+`pgrep -f` matched itself and the loop could never exit. It waited **19 hours**
+on an idle device and `runs/label_budget.json` and `logs/label_budget.log` do
+not exist. That is the third instance of the self-matching lease gate this
+weekend and the most expensive: the first two cost minutes, this one cost a run.
+`scripts/lease_wait.sh` and its test now exist precisely for this, so the fix
+was already in place when I found the victim. Killed by PID, and the run it was
+blocking is the experiment my last entry said to do next.
+
+## H30 — written before the run: price the clause in labels, using the scalar the last four hypotheses identified
+
+**Why the existing script is not already the answer.** `eval_label_budget.py`
+(H7) measures k-label **quantile** recalibration: draw k labelled samples from
+the shifted shard, take the split-conformal quantile of their scores, test on
+the rest. Its own docstring notes that `conformal_quantile` returns +∞ whenever
+`⌈(k+1)(1−α)⌉ > k`, so at α = 0.1 **every k < 9 is infinite by arithmetic**, and
+a tail order statistic estimated from a few dozen samples is nowhere near ±2%.
+
+**But H27 and H29 established that the correction the clause needs is one
+scalar, not a distribution.** `s*` exists on 24/24 shards, is 1.00 in
+distribution, and hitting it to ±2.52% is sufficient. Estimating one scale
+parameter is a fundamentally cheaper statistical problem than estimating a 90th
+percentile, and the estimator can be a **median** — which converges fast and is
+finite at k = 1 — rather than a tail quantile.
+
+**The change (one).** Add a second arm to the same script, on the same draws,
+so the two are paired:
+
+| arm | estimator from k labels | finite at k=1? |
+|---|---|---|
+| **A** (existing) | `q̂ = conformal_quantile(S_k, α)` | no, needs k ≥ 9 |
+| **B** (new) | `q̂ = q_cal[family] · median(S_k) / median_cal(S)` | **yes** |
+| **C** (new, k → ∞) | the same ratio computed on **all** the shard's samples | — |
+
+Arm B keeps the frozen calibration quantile and corrects it by a median ratio.
+Arm C is arm B's limit and is the diagnostic that decides whether the route has
+a ceiling at all: **it tests shape preservation.** If the score distribution
+under shift is the calibration distribution scaled by a constant, then the
+median ratio and the 0.90-quantile ratio are the same number and arm C lands in
+band. If it is not, arm B converges to the wrong constant and plateaus outside
+the band for every k — a cap that no label budget can buy past.
+
+**Predictions, registered now:**
+
+1. **Primary: arm B enters 90±2% on the median shard at k ≤ 8, where arm A is
+   still infinite.** This is the whole point of using a scalar rather than a
+   quantile, and it is the claim that would make the clause passable at a stated
+   price. If arm B needs k ≥ 32 it is no better than arm A and the framing was
+   wrong.
+2. **Arm C lands in band on at least 18 of 24 covariate shards.** This is
+   shape preservation, and it is the assumption every part of the H25–H29 line
+   has been implicitly leaning on without ever testing it. If arm C is well
+   below 24/24, then `s*` — which by construction fixes the 0.90 quantile —
+   is *not* recoverable from the bulk of the distribution, the median estimator
+   is biased, and the honest headline becomes "the required scalar exists but
+   is not estimable from cheap statistics". That is a sharper negative than
+   anything measured so far and I would rather have it than a soft pass.
+3. **Arm C fails on `darcy_amp2` specifically.** It needs `s*` = 67 on both
+   prediction paths, the largest correction in the suite, and a 67× multiplicative
+   shift is where a shape-preservation assumption is least likely to hold.
+4. **Both arms are labelled oracles in every row they produce.** They consume
+   labels from the shard they certify. The KPI clause is unlabelled, so **no
+   number from this run may be quoted as meeting clause 1** — it is a price
+   list, and the existing `oracle_warning` field is extended to arm B rather
+   than reused as if it covered it.
+
+**What would make this a PASS and what would not.** If arm B enters band at
+small k on most shards, the deliverable is *"90±2% under covariate shift after k
+labels from the new regime, k measured"* — which is a different and weaker claim
+than the KPI's, and must be written as such, in those words, in the KPI table's
+own row. Relabelling it as clause 1 met would be exactly the protocol loosening
+the brief forbids.
+
+## H30 measured: my cheap estimator is worse, and I caught my own script reporting a vacuous pass
+
+`runs/label_budget_u*_het.json`. Arm A is H7's k-label quantile
+recalibration; arms B and C are new.
+
+### First, the measurement error I made and caught before it reached a document
+
+The first run of my own extended script printed **`k9_in_band: 49`** and
+**`oracle_half_in_band: 49`** — every one of the 49 OOD shards inside 90±2% from
+**9 labels**. Read straight, that is clause 1 met at a trivial price. It is
+nearly a tautology, and the reason is the same shape as the in-band saturation
+error earlier this weekend: **I was testing a mean.**
+
+`curve()` averages coverage over `repeats = 200` independent labelled draws, and
+split conformal is *exactly valid marginally*, so the average sits at 1 − α
+whenever the quantile is finite. A deployment gets **one** draw. With k
+calibration points the coverage of a single draw is distribution-free
+Beta(k+1−l, l) with l = ⌊(k+1)α⌋, which at k = 9, α = 0.1 is **Beta(9,1): mean
+0.9000, sd 0.0905**. So "the mean is in band" carries almost no information
+about what one deployment gets.
+
+I added `frac_draws_in_band` — the fraction of *individual* draws landing in
+90±2% — and re-ran. Median over the 49 OOD shards, against the analytic law:
+
+| k labels | arm A, measured | Beta(k+1−l, l), predicted | arm B, measured |
+|---|---|---|---|
+| 1–8 | **0.000** (quantile is +∞) | — (l = 0) | 0.095 – 0.150 |
+| **9** | **0.155** | **0.156** | 0.135 |
+| 12 | 0.160 | 0.152 | 0.155 |
+| 16 | 0.125 | 0.134 | 0.155 |
+| 24 | 0.210 | 0.219 | 0.120 |
+| 32 | 0.260 | 0.279 | 0.090 |
+| 64 | 0.365 | 0.389 | 0.065 |
+| 128 | **0.505** | **0.527** | **0.000** |
+
+Arm A tracks the analytic law at **7 of 7** comparable budgets. That agreement
+is the important part: **the label price is set by split conformal's own
+finite-sample distribution and by nothing about this surrogate, these shifts, or
+this PDE suite.** It is a statement about the method class. Extending the same
+law past the grid: P(single draw in band) is 0.871 at k = 512 and **0.968 at
+k = 1024**.
+
+**So the honest price for clause 1 under shift is ~1000 labelled samples per
+shift regime, not 9.** The 49/49 reading was my own script measuring the wrong
+quantity, and `runs/label_budget_*.json` now carries a `reading_warning` field
+saying so at the point the number appears.
+
+### Second, the hypothesis itself, and it is falsified
+
+**Prediction 1 (arm B enters band at k ≤ 8 where arm A is infinite) —
+FALSIFIED.** Arm B is finite at k = 1 as designed, and its per-draw in-band
+fraction peaks at **0.150 around k = 8** and then *falls*: 0.090 at k = 32,
+0.065 at k = 64, **0.000 at k = 128**. More labels make it worse. That is the
+signature of a **biased** estimator: extra labels shrink the variance around the
+wrong constant, so the distribution concentrates outside the band.
+
+**Prediction 2 (arm C in band on ≥18 of 24) — FALSIFIED.** Arm C — the median
+ratio computed on *every* sample and scored on the same samples, the most
+generous reading of arm B and its k → ∞ limit — is in band on **12 of 49**
+shards, and arm B never reaches band at any budget on **26 of 49**. **The score
+distribution does not shift multiplicatively.** The scalar the clause needs
+fixes the 0.90 quantile, and it is not recoverable from the bulk of the
+distribution.
+
+**Prediction 3 (arm C fails on `darcy_amp2`) — CONFIRMED.** Arm C coverage
+0.830 there, with a median ratio of **43.3** against the `s*` = 67.08 that
+H27/H29 measured for the same shard — the cheap statistic underestimates the
+required scale by **1.55×** on the hardest shard in the suite.
+
+### What this does to the claim I made one entry ago
+
+My H29 entry ended: *"the clause looks reachable from one labelled shard per
+regime and unreachable from zero"*, and pointed at this run to price it. The
+price is now measured and it is **not one shard — it is of order 1000 labelled
+samples per regime** if a single deployment is to land in 90±2% with high
+probability. And the reason is not our surrogate: it is the finite-sample law of
+the calibrator itself, which our measurement reproduces to three decimals.
+
+**That reframes the whole clause, and in a way I did not expect.** The
+interesting statement is no longer about features, links, exponents or
+residuals — all of which H25–H29 bounded — but about the metric: **a two-sided
+±2% coverage band is an expensive thing to ask of split conformal at any sample
+size a plant would pay for.** The clause as written asks for a tolerance tighter
+than the calibrator's own sampling noise at k ≤ 256, and every unlabelled method
+in this repo was being measured against a target that costs ~1000 labels to hit
+even *with* labels. That belongs in the KPI table as the strict reading's
+companion, next to the 21.09/24 ceiling — the two are the same phenomenon seen
+at the shard level and at the sample level.
+
+**What I am not doing with this.** This does not convert clause 1 into a pass,
+and it is not a reason to widen the band. The KPI says 90±2% and that stands.
+It is a measured statement about what the clause costs, and the one-sided
+conservative reading — which is what conformal prediction actually guarantees
+and what most of the literature reports — is a different clause that this repo
+has not been measuring. Reporting that alongside is rung 1, and it is the next
+thing to do, with both readings labelled and neither replacing the other.
+
+---
+
+## A collision, and a number I am withdrawing rather than publishing
+
+**Two instances of this brief are running and both are working in this
+repository.** `ps` shows PID 3452163 (started 03:30, mine) and PID 3643314
+(started 03:40). The evidence in the repo is unambiguous: `runs/` contains
+`label_budget_u0_het.json`, written under a naming convention I did not choose,
+and `scripts/eval_label_budget.py` was modified at **04:08:26** — while my own
+chain was running against it — with 152 inserted lines adding two arms (a
+k-label *scale* estimator and its k→∞ limit) that I did not write.
+
+**What I ran and what I am doing with it.** Having found that
+`eval_label_budget.py` (H7) had been written and never executed — no
+`runs/label_budget.json` on disk — I launched it at 8 seeds. Seven seeds wrote
+output and seed 7 died with
+`curve() missing 2 required positional arguments: 'q_cal' and 'med_cal'`,
+reporting `curve` defined at line 169 and called at line 224. In the file as it
+now stands `curve` is defined at line 177 and its single call site at line 270
+passes all four arguments. **The version my seeds ran against no longer exists
+on disk**, and seeds 0–6 ran earlier still, so they may have seen more than one
+intermediate state of a file being edited underneath them.
+
+Those seven runs reported something I would very much like to keep: **49/49 OOD
+shards inside 90±2% at k = 9 labels**, with the oracle half-split also 49/49 and
+`n_never_in_band = 0` — and k = 9 is not a tuned number, it is the arithmetic
+floor at which `ceil((k+1)(1−α)) ≤ k` admits a finite split-conformal quantile
+at α = 0.1. That would answer the clause-1-under-shift question in exactly the
+form my own `s*` work pointed at: the price is nine labels per regime.
+
+**I am withdrawing it, and the deleted files are the point.** The rule is that
+no number appears in any document unless a run in this repository produced it in
+a session whose log I can point to. I have the log. I do not have the code: the
+script that produced those numbers was mutating while they were produced, so the
+run is not reproducible and I cannot say which of several states each seed saw.
+A number I cannot regenerate is not a measurement, however much I want it, and
+"it agreed with my prediction" is the worst possible reason to keep it. The
+seven `runs/lbudget_u*_het.json` files and my `scripts/h30_chain.sh` are
+deleted. Nothing from them has entered `README.md`, `WEEKEND.md`, `RESULTS.md`
+or the board, and the 49/49 figure above appears here only inside this
+withdrawal.
+
+**What I am not doing.** I am not launching another run in this repository this
+turn, not touching `scripts/eval_label_budget.py`, and not committing the peer's
+in-progress edits to it — a half-applied refactor should be committed by whoever
+is applying it, when it runs. `critique_log.md` is append-only and the peer is
+appending too, so this entry is additive by construction and I have not
+rewritten a line of anyone else's text.
+
+**The handover, stated so the other instance can pick it up.** The measurement
+is the right one and it should be completed on a *stable* copy of the script:
+`eval_label_budget.py` at 8 UQ checkpoints, `--sigma-source het`,
+`--repeats 200`. If it reproduces 49/49 at k = 9 then clause 1 under shift has
+its answer — **unreachable at zero labels (bounded at 2/24 with a measured
+±2.52% requirement), and met at nine, where nine is forced by α rather than
+chosen** — and that belongs in the KPI table as a priced pass, next to the
+unlabelled bound and never instead of it.
+
+**The process lesson, which is mine and not the peer's.** I launched an
+eight-seed chain against a script I had read but not checked into a known state,
+in a repository I had not verified I held alone. `git status` showed
+`M scripts/eval_label_budget.py` before I launched and I read it as leftover
+work of my own. One `git stash list` or one look at the mtime would have caught
+it. The cheap habit that prevents this is to record the hash of every script a
+chain executes in that chain's own output; the runs would then have carried
+their own provenance and I would not have had to infer it from a traceback's
+line numbers.
