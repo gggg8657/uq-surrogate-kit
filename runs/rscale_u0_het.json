@@ -1,0 +1,632 @@
+{
+  "alpha": 0.1,
+  "score": "field_max",
+  "ckpt": "runs/u0/best.pt",
+  "seed": 0,
+  "sigma_source": "het",
+  "families": [
+    "poisson",
+    "helmholtz",
+    "darcy"
+  ],
+  "excluded_families": [
+    "diffusion",
+    "advdiff"
+  ],
+  "relresid_median_cal": {
+    "poisson": 1.355162501335144,
+    "helmholtz": 0.44049105048179626,
+    "darcy": 8.19637393951416
+  },
+  "sigma_floor_median": 4.691215872298926e-05,
+  "band": [
+    0.88,
+    0.92
+  ],
+  "fitted_parameters": 0,
+  "note": "sigma' = sigma * relresid/median_cal(relresid). Nothing is fitted: the only constant is a calibration median, frozen like the sigma floor. Cost is one operator apply per sample; clause 2 for this arm is [not measured].",
+  "in_dist": {
+    "poisson": {
+      "base": {
+        "coverage": 0.9072265625,
+        "n": 1024,
+        "ci95": [
+          0.8879034487767373,
+          0.9235057358220594
+        ]
+      },
+      "resid": {
+        "coverage": 0.8955078125,
+        "n": 1024,
+        "ci95": [
+          0.8752704493597286,
+          0.9127888306462969
+        ]
+      },
+      "modulation_median": 0.9943575859069824
+    },
+    "helmholtz": {
+      "base": {
+        "coverage": 0.89453125,
+        "n": 1024,
+        "ci95": [
+          0.87422112410361,
+          0.9118923305196847
+        ]
+      },
+      "resid": {
+        "coverage": 0.8896484375,
+        "n": 1024,
+        "ci95": [
+          0.868981828278518,
+          0.9074024994311221
+        ]
+      },
+      "modulation_median": 0.9843077063560486
+    },
+    "darcy": {
+      "base": {
+        "coverage": 0.8896484375,
+        "n": 1024,
+        "ci95": [
+          0.868981828278518,
+          0.9074024994311221
+        ]
+      },
+      "resid": {
+        "coverage": 0.9013671875,
+        "n": 1024,
+        "ci95": [
+          0.8815771788583161,
+          0.9181570534440949
+        ]
+      },
+      "modulation_median": 0.974962592124939
+    }
+  },
+  "shards": {
+    "input_shift/poisson_rough/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "rel_l2_mean": 0.02032320573925972,
+      "modulation_median": 3.8406217098236084,
+      "base": {
+        "coverage": 0.0,
+        "n": 512,
+        "ci95": [
+          0.0,
+          0.007446975726351883
+        ]
+      },
+      "resid": {
+        "coverage": 0.546875,
+        "n": 512,
+        "ci95": [
+          0.5035666073460568,
+          0.5894852386795976
+        ]
+      }
+    },
+    "input_shift/poisson_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "rel_l2_mean": 0.002434781054034829,
+      "modulation_median": 1.0954302549362183,
+      "base": {
+        "coverage": 0.998046875,
+        "n": 512,
+        "ci95": [
+          0.9890207217840092,
+          0.99965514223857
+        ]
+      },
+      "resid": {
+        "coverage": 0.998046875,
+        "n": 512,
+        "ci95": [
+          0.9890207217840092,
+          0.99965514223857
+        ]
+      }
+    },
+    "input_shift/poisson_tau/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "rel_l2_mean": 0.00732814148068428,
+      "modulation_median": 1.0981086492538452,
+      "base": {
+        "coverage": 0.00390625,
+        "n": 512,
+        "ci95": [
+          0.0010718890801070594,
+          0.014129407148382699
+        ]
+      },
+      "resid": {
+        "coverage": 0.0625,
+        "n": 512,
+        "ci95": [
+          0.044616596489967714,
+          0.08689950727059018
+        ]
+      }
+    },
+    "input_shift/poisson_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "poisson",
+      "rel_l2_mean": 0.41139334440231323,
+      "modulation_median": 0.6652402281761169,
+      "base": {
+        "coverage": 0.0,
+        "n": 512,
+        "ci95": [
+          0.0,
+          0.007446975726351883
+        ]
+      },
+      "resid": {
+        "coverage": 0.0,
+        "n": 512,
+        "ci95": [
+          0.0,
+          0.007446975726351883
+        ]
+      }
+    },
+    "input_shift/helmholtz_rough/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "rel_l2_mean": 0.011793332174420357,
+      "modulation_median": 2.6646387577056885,
+      "base": {
+        "coverage": 0.0,
+        "n": 512,
+        "ci95": [
+          0.0,
+          0.007446975726351883
+        ]
+      },
+      "resid": {
+        "coverage": 0.697265625,
+        "n": 512,
+        "ci95": [
+          0.6561215071895055,
+          0.7354716781684574
+        ]
+      }
+    },
+    "input_shift/helmholtz_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "rel_l2_mean": 0.004242779687047005,
+      "modulation_median": 0.6597058773040771,
+      "base": {
+        "coverage": 0.998046875,
+        "n": 512,
+        "ci95": [
+          0.9890207217840092,
+          0.99965514223857
+        ]
+      },
+      "resid": {
+        "coverage": 0.572265625,
+        "n": 512,
+        "ci95": [
+          0.5290291853617014,
+          0.6144257439278492
+        ]
+      }
+    },
+    "input_shift/helmholtz_tau/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "rel_l2_mean": 0.010036353021860123,
+      "modulation_median": 1.7417283058166504,
+      "base": {
+        "coverage": 0.064453125,
+        "n": 512,
+        "ci95": [
+          0.04625916646386816,
+          0.08913409754775867
+        ]
+      },
+      "resid": {
+        "coverage": 0.8671875,
+        "n": 512,
+        "ci95": [
+          0.8350392877707383,
+          0.8938668394302219
+        ]
+      }
+    },
+    "input_shift/helmholtz_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "helmholtz",
+      "rel_l2_mean": 0.3213052451610565,
+      "modulation_median": 0.8675815463066101,
+      "base": {
+        "coverage": 0.0,
+        "n": 512,
+        "ci95": [
+          0.0,
+          0.007446975726351883
+        ]
+      },
+      "resid": {
+        "coverage": 0.0,
+        "n": 512,
+        "ci95": [
+          0.0,
+          0.007446975726351883
+        ]
+      }
+    },
+    "input_shift/darcy_rough/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "rel_l2_mean": 0.074154794216156,
+      "modulation_median": 2.8827567100524902,
+      "base": {
+        "coverage": 0.5546875,
+        "n": 512,
+        "ci95": [
+          0.5113892427058533,
+          0.5971712443240769
+        ]
+      },
+      "resid": {
+        "coverage": 1.0,
+        "n": 512,
+        "ci95": [
+          0.9925530242736481,
+          0.9999999999999999
+        ]
+      }
+    },
+    "input_shift/darcy_smooth/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "rel_l2_mean": 0.028492111712694168,
+      "modulation_median": 0.5201335549354553,
+      "base": {
+        "coverage": 0.99609375,
+        "n": 512,
+        "ci95": [
+          0.9858705928516173,
+          0.998928110919893
+        ]
+      },
+      "resid": {
+        "coverage": 0.796875,
+        "n": 512,
+        "ci95": [
+          0.7598748962420414,
+          0.8294534619204372
+        ]
+      }
+    },
+    "input_shift/darcy_tau/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "rel_l2_mean": 0.10362640023231506,
+      "modulation_median": 3.3018953800201416,
+      "base": {
+        "coverage": 0.24609375,
+        "n": 512,
+        "ci95": [
+          0.21076597685004955,
+          0.2852031905109885
+        ]
+      },
+      "resid": {
+        "coverage": 0.99609375,
+        "n": 512,
+        "ci95": [
+          0.9858705928516173,
+          0.998928110919893
+        ]
+      }
+    },
+    "input_shift/darcy_amp2/N64": {
+      "kind": "input_shift",
+      "parent": "darcy",
+      "rel_l2_mean": 0.7626458406448364,
+      "modulation_median": 45.68592071533203,
+      "base": {
+        "coverage": 0.0,
+        "n": 512,
+        "ci95": [
+          0.0,
+          0.007446975726351883
+        ]
+      },
+      "resid": {
+        "coverage": 0.69140625,
+        "n": 512,
+        "ci95": [
+          0.6500941920997001,
+          0.7298675125050558
+        ]
+      }
+    },
+    "graded_rough/poisson_dam0p1/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "rel_l2_mean": 0.0030985756311565638,
+      "modulation_median": 1.0155986547470093,
+      "base": {
+        "coverage": 0.822265625,
+        "n": 512,
+        "ci95": [
+          0.7867885863565962,
+          0.8529428550697786
+        ]
+      },
+      "resid": {
+        "coverage": 0.85546875,
+        "n": 512,
+        "ci95": [
+          0.8223623276577313,
+          0.8832808380368155
+        ]
+      }
+    },
+    "graded_rough/poisson_dam0p2/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "rel_l2_mean": 0.003354559186846018,
+      "modulation_median": 1.0499697923660278,
+      "base": {
+        "coverage": 0.67578125,
+        "n": 512,
+        "ci95": [
+          0.6340574484682517,
+          0.7148869741279527
+        ]
+      },
+      "resid": {
+        "coverage": 0.849609375,
+        "n": 512,
+        "ci95": [
+          0.816049374118353,
+          0.8779623108229868
+        ]
+      }
+    },
+    "graded_rough/poisson_dam0p3/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "rel_l2_mean": 0.0036834347993135452,
+      "modulation_median": 1.1172499656677246,
+      "base": {
+        "coverage": 0.419921875,
+        "n": 512,
+        "ci95": [
+          0.3779230769203322,
+          0.4631133527858413
+        ]
+      },
+      "resid": {
+        "coverage": 0.765625,
+        "n": 512,
+        "ci95": [
+          0.7270378376377377,
+          0.8002559565076378
+        ]
+      }
+    },
+    "graded_rough/poisson_dam0p5/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "rel_l2_mean": 0.005029565654695034,
+      "modulation_median": 1.3920186758041382,
+      "base": {
+        "coverage": 0.015625,
+        "n": 512,
+        "ci95": [
+          0.00793822497719036,
+          0.03052603275771303
+        ]
+      },
+      "resid": {
+        "coverage": 0.673828125,
+        "n": 512,
+        "ci95": [
+          0.632056474515873,
+          0.7130107878292624
+        ]
+      }
+    },
+    "graded_rough/poisson_dam0p7/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "rel_l2_mean": 0.00806889496743679,
+      "modulation_median": 2.029390811920166,
+      "base": {
+        "coverage": 0.0,
+        "n": 512,
+        "ci95": [
+          0.0,
+          0.007446975726351883
+        ]
+      },
+      "resid": {
+        "coverage": 0.572265625,
+        "n": 512,
+        "ci95": [
+          0.5290291853617014,
+          0.6144257439278492
+        ]
+      }
+    },
+    "graded_rough/poisson_dam1/N64": {
+      "kind": "graded_rough",
+      "parent": "poisson",
+      "rel_l2_mean": 0.020700305700302124,
+      "modulation_median": 3.8461873531341553,
+      "base": {
+        "coverage": 0.0,
+        "n": 512,
+        "ci95": [
+          0.0,
+          0.007446975726351883
+        ]
+      },
+      "resid": {
+        "coverage": 0.59765625,
+        "n": 512,
+        "ci95": [
+          0.5546058102706348,
+          0.639252202282812
+        ]
+      }
+    },
+    "graded_rough/darcy_dam0p1/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "rel_l2_mean": 0.053414441645145416,
+      "modulation_median": 1.1865473985671997,
+      "base": {
+        "coverage": 0.859375,
+        "n": 512,
+        "ci95": [
+          0.82658020298501,
+          0.8868172832116745
+        ]
+      },
+      "resid": {
+        "coverage": 0.951171875,
+        "n": 512,
+        "ci95": [
+          0.9289134485381056,
+          0.966710569458819
+        ]
+      }
+    },
+    "graded_rough/darcy_dam0p2/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "rel_l2_mean": 0.05739628151059151,
+      "modulation_median": 1.4255176782608032,
+      "base": {
+        "coverage": 0.818359375,
+        "n": 512,
+        "ci95": [
+          0.782632996328977,
+          0.8493441245952599
+        ]
+      },
+      "resid": {
+        "coverage": 0.962890625,
+        "n": 512,
+        "ci95": [
+          0.9427707550195127,
+          0.9761162244838256
+        ]
+      }
+    },
+    "graded_rough/darcy_dam0p3/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "rel_l2_mean": 0.06381085515022278,
+      "modulation_median": 1.68514883518219,
+      "base": {
+        "coverage": 0.75390625,
+        "n": 512,
+        "ci95": [
+          0.7147968094890115,
+          0.7892340231499505
+        ]
+      },
+      "resid": {
+        "coverage": 0.982421875,
+        "n": 512,
+        "ci95": [
+          0.9669335150616095,
+          0.9907250669524182
+        ]
+      }
+    },
+    "graded_rough/darcy_dam0p5/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "rel_l2_mean": 0.07364928722381592,
+      "modulation_median": 2.8156912326812744,
+      "base": {
+        "coverage": 0.568359375,
+        "n": 512,
+        "ci95": [
+          0.5251045053487352,
+          0.6105961034386777
+        ]
+      },
+      "resid": {
+        "coverage": 1.0,
+        "n": 512,
+        "ci95": [
+          0.9925530242736481,
+          0.9999999999999999
+        ]
+      }
+    },
+    "graded_rough/darcy_dam0p7/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "rel_l2_mean": 0.09664100408554077,
+      "modulation_median": 4.599697113037109,
+      "base": {
+        "coverage": 0.189453125,
+        "n": 512,
+        "ci95": [
+          0.15787017584793386,
+          0.22566134423210502
+        ]
+      },
+      "resid": {
+        "coverage": 1.0,
+        "n": 512,
+        "ci95": [
+          0.9925530242736481,
+          0.9999999999999999
+        ]
+      }
+    },
+    "graded_rough/darcy_dam1/N64": {
+      "kind": "graded_rough",
+      "parent": "darcy",
+      "rel_l2_mean": 0.16280746459960938,
+      "modulation_median": 8.336316108703613,
+      "base": {
+        "coverage": 0.0,
+        "n": 512,
+        "ci95": [
+          0.0,
+          0.007446975726351883
+        ]
+      },
+      "resid": {
+        "coverage": 1.0,
+        "n": 512,
+        "ci95": [
+          0.9925530242736481,
+          0.9999999999999999
+        ]
+      }
+    }
+  },
+  "q_base": {
+    "darcy": 22.099939346313477,
+    "helmholtz": 4.016772747039795,
+    "poisson": 4.286904811859131
+  },
+  "q_resid": {
+    "darcy": 26.174678802490234,
+    "helmholtz": 4.119614124298096,
+    "poisson": 4.680386543273926
+  },
+  "n_shards": 24,
+  "in_band": {
+    "base": 0,
+    "resid": 0
+  }
+}

@@ -1,0 +1,528 @@
+{
+  "ckpt": "runs/u5/best.pt",
+  "seed": 5,
+  "sigma_source": "het",
+  "dev_n": 256,
+  "features": [
+    "log_consist",
+    "log_resid",
+    "a_spec9(control)"
+  ],
+  "note": "distances only -- no quantile is calibrated and no coverage is computed here, so nothing in this file can flatter a clause. a_spec9 is the within-run control.",
+  "families": [
+    "darcy",
+    "helmholtz",
+    "poisson"
+  ],
+  "by_shard": {
+    "input_shift/poisson_rough/N64": {
+      "parent": "poisson",
+      "kind": "input_shift",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "input_shift/poisson_smooth/N64": {
+      "parent": "poisson",
+      "kind": "input_shift",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "input_shift/poisson_tau/N64": {
+      "parent": "poisson",
+      "kind": "input_shift",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "input_shift/poisson_amp2/N64": {
+      "parent": "poisson",
+      "kind": "input_shift",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.00390625,
+        "max_z_beyond": 0.059307122098990514,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "input_shift/helmholtz_rough/N64": {
+      "parent": "helmholtz",
+      "kind": "input_shift",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "input_shift/helmholtz_smooth/N64": {
+      "parent": "helmholtz",
+      "kind": "input_shift",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.001953125,
+        "max_z_beyond": 1.7305940664856257e-07,
+        "median_z_beyond": 0.0
+      }
+    },
+    "input_shift/helmholtz_tau/N64": {
+      "parent": "helmholtz",
+      "kind": "input_shift",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "input_shift/helmholtz_amp2/N64": {
+      "parent": "helmholtz",
+      "kind": "input_shift",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "input_shift/darcy_rough/N64": {
+      "parent": "darcy",
+      "kind": "input_shift",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "input_shift/darcy_smooth/N64": {
+      "parent": "darcy",
+      "kind": "input_shift",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.001953125,
+        "max_z_beyond": 0.001193000036289947,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "input_shift/darcy_tau/N64": {
+      "parent": "darcy",
+      "kind": "input_shift",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "input_shift/darcy_amp2/N64": {
+      "parent": "darcy",
+      "kind": "input_shift",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "graded_rough/poisson_dam0p1/N64": {
+      "parent": "poisson",
+      "kind": "graded_rough",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "graded_rough/poisson_dam0p2/N64": {
+      "parent": "poisson",
+      "kind": "graded_rough",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "graded_rough/poisson_dam0p3/N64": {
+      "parent": "poisson",
+      "kind": "graded_rough",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "graded_rough/poisson_dam0p5/N64": {
+      "parent": "poisson",
+      "kind": "graded_rough",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "graded_rough/poisson_dam0p7/N64": {
+      "parent": "poisson",
+      "kind": "graded_rough",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "graded_rough/poisson_dam1/N64": {
+      "parent": "poisson",
+      "kind": "graded_rough",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "graded_rough/darcy_dam0p1/N64": {
+      "parent": "darcy",
+      "kind": "graded_rough",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "graded_rough/darcy_dam0p2/N64": {
+      "parent": "darcy",
+      "kind": "graded_rough",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "graded_rough/darcy_dam0p3/N64": {
+      "parent": "darcy",
+      "kind": "graded_rough",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "graded_rough/darcy_dam0p5/N64": {
+      "parent": "darcy",
+      "kind": "graded_rough",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "graded_rough/darcy_dam0p7/N64": {
+      "parent": "darcy",
+      "kind": "graded_rough",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    },
+    "graded_rough/darcy_dam1/N64": {
+      "parent": "darcy",
+      "kind": "graded_rough",
+      "log_consist": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "log_resid": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      },
+      "a_spec9(control)": {
+        "frac_outside": 0.0,
+        "max_z_beyond": 0.0,
+        "median_z_beyond": 0.0
+      }
+    }
+  },
+  "by_family": {
+    "poisson": {
+      "log_consist": {
+        "max_z_beyond": 0.0,
+        "mean_frac_outside": 0.0,
+        "n_shards": 10
+      },
+      "log_resid": {
+        "max_z_beyond": 0.059307122098990514,
+        "mean_frac_outside": 0.000390625,
+        "n_shards": 10
+      },
+      "a_spec9(control)": {
+        "max_z_beyond": 0.0,
+        "mean_frac_outside": 0.0,
+        "n_shards": 10
+      }
+    },
+    "helmholtz": {
+      "log_consist": {
+        "max_z_beyond": 0.0,
+        "mean_frac_outside": 0.0,
+        "n_shards": 4
+      },
+      "log_resid": {
+        "max_z_beyond": 0.0,
+        "mean_frac_outside": 0.0,
+        "n_shards": 4
+      },
+      "a_spec9(control)": {
+        "max_z_beyond": 1.7305940664856257e-07,
+        "mean_frac_outside": 0.00048828125,
+        "n_shards": 4
+      }
+    },
+    "darcy": {
+      "log_consist": {
+        "max_z_beyond": 0.0,
+        "mean_frac_outside": 0.0,
+        "n_shards": 10
+      },
+      "log_resid": {
+        "max_z_beyond": 0.001193000036289947,
+        "mean_frac_outside": 0.0001953125,
+        "n_shards": 10
+      },
+      "a_spec9(control)": {
+        "max_z_beyond": 0.0,
+        "mean_frac_outside": 0.0,
+        "n_shards": 10
+      }
+    }
+  }
+}

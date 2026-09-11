@@ -150,6 +150,33 @@ def claims():
                         f"shards at zero cost",
                         "the free baseline the residual must beat under (B)"))
 
+    # paper_draft.md section 4b and WEEKEND.md both state the clause-3
+    # seed result by hand. Its three load-bearing claims are pinned: that the
+    # strict count is IDENTICAL across seeds (the stability claim), and the
+    # two facts that make the published conditional cut unsafe.
+    c3 = _load_run("clause3.json")
+    b3 = (c3 or {}).get("base")
+    if b3:
+        stc = b3["strict"]
+        if stc.get("identical_on_every_seed"):
+            out.append(("paper_draft.md",
+                        f"**{stc['n_ge_0p9_per_seed'][0]} of "
+                        f"{stc['n_total_shards']}**",
+                        "clause 3 strict, identical on every seed"))
+            lo, hi = stc["min_auroc_range"]
+            out.append(("paper_draft.md", f"{lo:.4f}\u2013{hi:.4f}",
+                        "clause 3 strict: min-AUROC range over seeds"))
+        for th, c in b3["conditional"].items():
+            if c["clean_on_every_seed"]:
+                continue
+            dlo, dhi = c["denominator_range"]
+            out.append(("paper_draft.md", f"**{dlo}\u2013{dhi}**",
+                        f"conditional denominator range at the >{th} cut"))
+            out.append(("paper_draft.md",
+                        f"admitted on {c['seeds_with_a_failure_inside']} of "
+                        f"{b3['n_seeds']}",
+                        f"seeds with a sub-0.9 shard inside the >{th} cut"))
+
     # Section 5 of paper_draft.md is the newest hand-written prose in the repo,
     # so its load-bearing numbers are pinned against the runs that produced
     # them. Each of these is a claim a reader would act on.

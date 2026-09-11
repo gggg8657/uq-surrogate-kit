@@ -1,0 +1,609 @@
+{
+  "n_seeds": 8,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "gammas": [
+    0.0,
+    0.125,
+    0.25,
+    0.375,
+    0.5,
+    0.625,
+    0.75,
+    0.875,
+    1.0,
+    1.25,
+    1.5,
+    1.75,
+    2.0,
+    2.5,
+    3.0
+  ],
+  "band": [
+    0.88,
+    0.92
+  ],
+  "n_shards": 24,
+  "families": [
+    "darcy",
+    "helmholtz",
+    "poisson"
+  ],
+  "gates_all_passed": true,
+  "gate_detail": {
+    "0": {
+      "gamma0_equals_base": true,
+      "gamma0_max_abs_diff": 0.0,
+      "gamma1_equals_h25": true,
+      "gamma1_max_abs_diff": 0.0,
+      "h25_ref": "runs/rscale_u0_het.json",
+      "ok": true
+    },
+    "1": {
+      "gamma0_equals_base": true,
+      "gamma0_max_abs_diff": 0.0,
+      "gamma1_equals_h25": true,
+      "gamma1_max_abs_diff": 0.0,
+      "h25_ref": "runs/rscale_u1_het.json",
+      "ok": true
+    },
+    "2": {
+      "gamma0_equals_base": true,
+      "gamma0_max_abs_diff": 0.0,
+      "gamma1_equals_h25": true,
+      "gamma1_max_abs_diff": 0.0,
+      "h25_ref": "runs/rscale_u2_het.json",
+      "ok": true
+    },
+    "3": {
+      "gamma0_equals_base": true,
+      "gamma0_max_abs_diff": 0.0,
+      "gamma1_equals_h25": true,
+      "gamma1_max_abs_diff": 0.0,
+      "h25_ref": "runs/rscale_u3_het.json",
+      "ok": true
+    },
+    "4": {
+      "gamma0_equals_base": true,
+      "gamma0_max_abs_diff": 0.0,
+      "gamma1_equals_h25": true,
+      "gamma1_max_abs_diff": 0.0,
+      "h25_ref": "runs/rscale_u4_het.json",
+      "ok": true
+    },
+    "5": {
+      "gamma0_equals_base": true,
+      "gamma0_max_abs_diff": 0.0,
+      "gamma1_equals_h25": true,
+      "gamma1_max_abs_diff": 0.0,
+      "h25_ref": "runs/rscale_u5_het.json",
+      "ok": true
+    },
+    "6": {
+      "gamma0_equals_base": true,
+      "gamma0_max_abs_diff": 0.0,
+      "gamma1_equals_h25": true,
+      "gamma1_max_abs_diff": 0.0,
+      "h25_ref": "runs/rscale_u6_het.json",
+      "ok": true
+    },
+    "7": {
+      "gamma0_equals_base": true,
+      "gamma0_max_abs_diff": 0.0,
+      "gamma1_equals_h25": true,
+      "gamma1_max_abs_diff": 0.0,
+      "h25_ref": "runs/rscale_u7_het.json",
+      "ok": true
+    }
+  },
+  "protocol": {
+    "gamma1": "selected by nothing -- the shipped arm, clause-eligible",
+    "global": "one gamma, all families, selected on the shards it scores -- A CEILING, not a clause claim",
+    "family": "one gamma per family, selected on the shards it scores -- A CEILING, not a clause claim",
+    "loso": "one gamma per family, selected on the OTHER shards of that family -- honest, priced in labelled shifted shards"
+  },
+  "in_dist_vs_gamma": {
+    "poisson": {
+      "median_per_gamma": {
+        "g0": 0.90673828125,
+        "g0.125": 0.90771484375,
+        "g0.25": 0.90283203125,
+        "g0.375": 0.9052734375,
+        "g0.5": 0.904296875,
+        "g0.625": 0.90380859375,
+        "g0.75": 0.90576171875,
+        "g0.875": 0.90478515625,
+        "g1": 0.90234375,
+        "g1.25": 0.89990234375,
+        "g1.5": 0.8984375,
+        "g1.75": 0.8994140625,
+        "g2": 0.8984375,
+        "g2.5": 0.8974609375,
+        "g3": 0.8955078125
+      },
+      "range_over_gammas_of_median": [
+        0.8955078125,
+        0.90771484375
+      ],
+      "all_gammas_in_band_on_all_seeds": true
+    },
+    "helmholtz": {
+      "median_per_gamma": {
+        "g0": 0.8994140625,
+        "g0.125": 0.89892578125,
+        "g0.25": 0.8984375,
+        "g0.375": 0.8994140625,
+        "g0.5": 0.9013671875,
+        "g0.625": 0.8994140625,
+        "g0.75": 0.8984375,
+        "g0.875": 0.900390625,
+        "g1": 0.8974609375,
+        "g1.25": 0.89697265625,
+        "g1.5": 0.89599609375,
+        "g1.75": 0.89501953125,
+        "g2": 0.89111328125,
+        "g2.5": 0.88916015625,
+        "g3": 0.89013671875
+      },
+      "range_over_gammas_of_median": [
+        0.88916015625,
+        0.9013671875
+      ],
+      "all_gammas_in_band_on_all_seeds": false
+    },
+    "darcy": {
+      "median_per_gamma": {
+        "g0": 0.89599609375,
+        "g0.125": 0.89990234375,
+        "g0.25": 0.89453125,
+        "g0.375": 0.89208984375,
+        "g0.5": 0.89404296875,
+        "g0.625": 0.89501953125,
+        "g0.75": 0.89453125,
+        "g0.875": 0.89599609375,
+        "g1": 0.89892578125,
+        "g1.25": 0.900390625,
+        "g1.5": 0.90185546875,
+        "g1.75": 0.90576171875,
+        "g2": 0.904296875,
+        "g2.5": 0.90869140625,
+        "g3": 0.90625
+      },
+      "range_over_gammas_of_median": [
+        0.89208984375,
+        0.90869140625
+      ],
+      "all_gammas_in_band_on_all_seeds": true
+    }
+  },
+  "in_dist_max_span_over_gamma": 0.0166015625,
+  "global": {
+    "n_band_per_gamma": {
+      "g0": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "g0.125": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "g0.25": [
+        2,
+        3,
+        1,
+        2,
+        3,
+        0,
+        1,
+        1
+      ],
+      "g0.375": [
+        3,
+        3,
+        5,
+        4,
+        3,
+        3,
+        1,
+        3
+      ],
+      "g0.5": [
+        3,
+        5,
+        3,
+        2,
+        2,
+        2,
+        4,
+        4
+      ],
+      "g0.625": [
+        0,
+        1,
+        2,
+        2,
+        2,
+        3,
+        3,
+        2
+      ],
+      "g0.75": [
+        1,
+        0,
+        1,
+        2,
+        1,
+        1,
+        0,
+        0
+      ],
+      "g0.875": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "g1": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0
+      ],
+      "g1.25": [
+        3,
+        4,
+        4,
+        1,
+        4,
+        2,
+        2,
+        1
+      ],
+      "g1.5": [
+        2,
+        1,
+        1,
+        1,
+        3,
+        2,
+        2,
+        2
+      ],
+      "g1.75": [
+        0,
+        1,
+        1,
+        3,
+        1,
+        2,
+        3,
+        2
+      ],
+      "g2": [
+        1,
+        0,
+        1,
+        1,
+        1,
+        2,
+        3,
+        3
+      ],
+      "g2.5": [
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "g3": [
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    "median_n_band_per_gamma": {
+      "g0": 0.0,
+      "g0.125": 0.0,
+      "g0.25": 1.5,
+      "g0.375": 3.0,
+      "g0.5": 3.0,
+      "g0.625": 2.0,
+      "g0.75": 1.0,
+      "g0.875": 0.0,
+      "g1": 0.0,
+      "g1.25": 2.5,
+      "g1.5": 2.0,
+      "g1.75": 1.5,
+      "g2": 1.0,
+      "g2.5": 1.0,
+      "g3": 1.0
+    },
+    "best_gamma_by_median": "g0.375",
+    "best_median_n_band": 3.0,
+    "best_n_band_any_gamma_any_seed": 5
+  },
+  "family": {
+    "per_family": {
+      "darcy": {
+        "n_shards": 10,
+        "median_abs_cov_err_per_gamma": {
+          "g0": 0.41951171875000004,
+          "g0.125": 0.31648437500000004,
+          "g0.25": 0.19656250000000003,
+          "g0.375": 0.12181640625000001,
+          "g0.5": 0.1240234375,
+          "g0.625": 0.12722656249999997,
+          "g0.75": 0.12601562499999996,
+          "g0.875": 0.11771484374999999,
+          "g1": 0.10921874999999999,
+          "g1.25": 0.09857421874999998,
+          "g1.5": 0.10597656249999998,
+          "g1.75": 0.11623046874999998,
+          "g2": 0.12208984374999998,
+          "g2.5": 0.1282421875,
+          "g3": 0.13185546874999998
+        },
+        "oracle_gamma": 1.25,
+        "oracle_median_abs_cov_err": 0.09857421874999998,
+        "gamma1_median_abs_cov_err": 0.10921874999999999,
+        "oracle_gamma_per_seed": [
+          1.25,
+          1.25,
+          1.25,
+          1.25,
+          1.25,
+          1.25,
+          1.25,
+          1.25
+        ]
+      },
+      "helmholtz": {
+        "n_shards": 4,
+        "median_abs_cov_err_per_gamma": {
+          "g0": 0.691943359375,
+          "g0.125": 0.685107421875,
+          "g0.25": 0.669970703125,
+          "g0.375": 0.646923828125,
+          "g0.5": 0.612353515625,
+          "g0.625": 0.55966796875,
+          "g0.75": 0.503271484375,
+          "g0.875": 0.4625,
+          "g1": 0.432958984375,
+          "g1.25": 0.416162109375,
+          "g1.5": 0.44658203125,
+          "g1.75": 0.4525390625,
+          "g2": 0.4697265625,
+          "g2.5": 0.484375,
+          "g3": 0.488037109375
+        },
+        "oracle_gamma": 1.25,
+        "oracle_median_abs_cov_err": 0.416162109375,
+        "gamma1_median_abs_cov_err": 0.432958984375,
+        "oracle_gamma_per_seed": [
+          1.25,
+          1.25,
+          1.25,
+          1.75,
+          1.25,
+          1.0,
+          1.75,
+          2.0
+        ]
+      },
+      "poisson": {
+        "n_shards": 10,
+        "median_abs_cov_err_per_gamma": {
+          "g0": 0.6478320312500001,
+          "g0.125": 0.63650390625,
+          "g0.25": 0.62888671875,
+          "g0.375": 0.61697265625,
+          "g0.5": 0.6012500000000001,
+          "g0.625": 0.58240234375,
+          "g0.75": 0.5570117187500001,
+          "g0.875": 0.50837890625,
+          "g1": 0.35320312500000006,
+          "g1.25": 0.21871093749999998,
+          "g1.5": 0.215078125,
+          "g1.75": 0.21138671874999998,
+          "g2": 0.199765625,
+          "g2.5": 0.181640625,
+          "g3": 0.1680078125
+        },
+        "oracle_gamma": 3.0,
+        "oracle_median_abs_cov_err": 0.1680078125,
+        "gamma1_median_abs_cov_err": 0.35320312500000006,
+        "oracle_gamma_per_seed": [
+          3.0,
+          1.75,
+          2.5,
+          3.0,
+          3.0,
+          3.0,
+          3.0,
+          3.0
+        ]
+      }
+    },
+    "n_band_per_seed": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      1,
+      2,
+      2
+    ],
+    "median_n_band": 2.0,
+    "selection_objective": "mean |coverage-0.90| over that family's shards -- NOT the clause's metric, which is the in-band COUNT. Reported because it is the natural continuous objective, but `family_inband` below is the ceiling that answers the clause."
+  },
+  "family_inband": {
+    "selection_objective": "in-band count on that family's own shards -- AN ORACLE CEILING for the clause metric",
+    "n_band_per_seed": [
+      6,
+      9,
+      8,
+      7,
+      7,
+      6,
+      7,
+      7
+    ],
+    "median_n_band": 7.0,
+    "best_n_band_any_seed": 9,
+    "oracle_gamma_per_seed": {
+      "darcy": [
+        0.375,
+        0.5,
+        0.375,
+        0.375,
+        0.375,
+        0.375,
+        0.5,
+        0.5
+      ],
+      "helmholtz": [
+        1.25,
+        1.25,
+        0.375,
+        1.75,
+        0.25,
+        1.25,
+        1.75,
+        0.25
+      ],
+      "poisson": [
+        1.25,
+        1.25,
+        1.25,
+        1.75,
+        1.25,
+        1.5,
+        1.25,
+        1.75
+      ]
+    }
+  },
+  "loso": {
+    "n_band_per_seed": [
+      1,
+      0,
+      0,
+      2,
+      2,
+      1,
+      1,
+      1
+    ],
+    "median_n_band": 1.0,
+    "gamma_chosen_per_shard_median": {
+      "graded_rough/darcy_dam0p1/N64": 1.25,
+      "graded_rough/darcy_dam0p2/N64": 1.25,
+      "graded_rough/darcy_dam0p3/N64": 1.25,
+      "graded_rough/darcy_dam0p5/N64": 1.25,
+      "graded_rough/darcy_dam0p7/N64": 1.25,
+      "graded_rough/darcy_dam1/N64": 1.25,
+      "graded_rough/poisson_dam0p1/N64": 3.0,
+      "graded_rough/poisson_dam0p2/N64": 3.0,
+      "graded_rough/poisson_dam0p3/N64": 3.0,
+      "graded_rough/poisson_dam0p5/N64": 3.0,
+      "graded_rough/poisson_dam0p7/N64": 3.0,
+      "graded_rough/poisson_dam1/N64": 3.0,
+      "input_shift/darcy_amp2/N64": 0.375,
+      "input_shift/darcy_rough/N64": 1.25,
+      "input_shift/darcy_smooth/N64": 1.25,
+      "input_shift/darcy_tau/N64": 1.25,
+      "input_shift/helmholtz_amp2/N64": 1.25,
+      "input_shift/helmholtz_rough/N64": 0.875,
+      "input_shift/helmholtz_smooth/N64": 1.375,
+      "input_shift/helmholtz_tau/N64": 1.125,
+      "input_shift/poisson_amp2/N64": 3.0,
+      "input_shift/poisson_rough/N64": 3.0,
+      "input_shift/poisson_smooth/N64": 3.0,
+      "input_shift/poisson_tau/N64": 1.25
+    },
+    "vs_gamma1_delta_n_band": [
+      1,
+      0,
+      0,
+      2,
+      1,
+      0,
+      0,
+      1
+    ],
+    "vs_gamma1_sign_flip_p": 0.0625
+  },
+  "gamma1": {
+    "median_abs_cov_err": 0.25425618489583335,
+    "base_median_abs_cov_err": 0.560986328125,
+    "improvement_per_seed": [
+      0.3107584635416667,
+      0.3539713541666667,
+      0.35047200520833344,
+      0.24899088541666675,
+      0.3185709635416667,
+      0.281298828125,
+      0.26347656250000007,
+      0.22311197916666664
+    ],
+    "sign_flip_p": 0.00390625,
+    "n_band_per_seed": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      0
+    ],
+    "base_n_band_per_seed": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  }
+}

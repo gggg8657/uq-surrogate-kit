@@ -318,6 +318,49 @@ And where the surrogate is *not* degraded — all ten resolution shards, where
 to alarm. Distribution-shift detection and error detection are different
 questions; a detector can be perfect at one and worse than useless at the other.
 
+### 4b. A threshold of ours that could not fail on the run that set it
+
+Clause 3 is reported two ways: **strict**, every shard, and **conditional**,
+restricted to shifts that actually degrade the surrogate. The strict reading is
+`combo` at **47 of 49** — and it is worth saying that this reproduces *exactly*:
+on 8 independently trained checkpoints it is 47/49 every time, the same two
+misses each time, with the minimum AUROC ranging only 0.8378–0.8422. Almost
+nothing else in this paper is that stable. It is also a **failure** against a
+clause that asks for ≥0.9 on every shard.
+
+The conditional reading is where we went wrong, and the error is not
+statistical. We defined the population as shards degrading past a threshold,
+and we set that threshold at the largest degradation among the shards that had
+*already failed*. A criterion chosen that way cannot fail on the run that chose
+it: every failure is below the cut by construction. On the checkpoint that set
+it, the conditional reading is a clean 33/33. On 8 checkpoints:
+
+| threshold | (n ≥0.9, n in population) per seed | denominator | clean on all 8? |
+|---|---|---|---|
+| **> 1.06×**, the cut we set | (33,33) (33,34) (33,35) (33,33) (34,36) (33,34) (34,36) (33,35) | **33–36** | **no** — a sub-0.9 shard is admitted on 6 of 8 |
+| **> 1.10×**, chosen without reference to failures | (33,33) on all 8 | 33 | yes |
+
+The mechanism is that the two failing shards *straddle* the cut. Their
+degradation is itself a random variable across checkpoints — 1.0489–1.0770 and
+1.0581–1.0841 — so which side of 1.06× they land on is a property of the draw,
+and the denominator moves with them. A third shard, `resolution_128/darcy`,
+crosses on 2 of 8 seeds without failing.
+
+We had written that this criterion "needs no fitted threshold" because "the
+ordering does the work". The ordering does do the work; the *cut* was still
+placed after seeing the answer, and one checkpoint could not reveal that because
+one checkpoint is where the cut came from. Reported at ≥1.10×, a value with no
+relationship to which shards failed, the conditional reading is stable on every
+seed and the claim survives — but it survives as a claim about shifts that
+degrade the surrogate by at least 10%, not as the tighter one we published.
+
+This is the smallest self-inflicted wall in the paper and the easiest to miss:
+no code was wrong, no number was mistyped, and the protocol was stated in the
+open. It is here because auditing only the clauses that *fail* would have left
+it standing, which is the mirror image of the lesson from the speedup, where
+auditing only the side whose improvement hurt the claim hid a defect on our own
+side through three rounds.
+
 ## 5. Coverage under shift: what three attacks and one bug taught us
 
 In distribution the interval clause is met (0.9026, 8/8 seeds, one forward
@@ -398,12 +441,59 @@ p = 0.8438) whose in-sample ceiling nonetheless rises from 4 to 6 — capacity
 that does not transfer. The learned width model's held-out result already
 equals its own in-sample ceiling (p = 0.5156).
 
+**(e) The one signal that could not have been the amplitude effect.** Every
+result above is, in the end, the input amplitude. So the sharpest remaining
+question is whether *any* deployment-observable quantity carries width
+information that amplitude does not — and there is exactly one candidate with
+that property by construction. Apply the governing operator to the surrogate's
+own output and score the residual `r = L·μ − f`. Both the dimensionless
+consistency score `‖r‖/(‖L·μ‖+‖f‖)` and `‖r‖/‖f‖` are **exactly invariant to
+rescaling the linear channel**, so a gain from them is algebraically incapable
+of being the amplitude correction. The cost is one operator apply and no solve.
+`PDE2DSimulator.residual` is `None` for the two time-stepped families, so this
+arm runs on the 24 shards with a cheap apply and its baselines are re-read on
+the same 24.
+
+*Marginally the signal is real, and physically signed.* With no fitting
+anywhere — univariate rank correlations over 24 shards, 8 seeds:
+
+| quantity, median over shards | median over seeds | sign | exact p |
+|---|---:|---|---:|
+| ρ(log residual, log conformity score) | **+0.241** | positive on 8/8 | 0.0078 |
+| ρ(log residual, log error `max‖μ−u‖`) | **+0.374** | positive on 8/8 | 0.0078 |
+| ρ(log residual, log σ̃) | **+0.107** | positive on 8/8 | 0.0078 |
+
+The decomposition is the interesting part: the residual tracks the **error**
+about three and a half times more strongly than it tracks σ̃, and the gap is
+positive on 8 of 8 seeds (p = 0.0078). **The residual sees error that the
+heteroscedastic head does not**, which is the precondition for it to be useful.
+
+*And the width model cannot use it.* Added to the feature set it gives a median
+of **1 of 24** shards in band against the same fit without it at **3 of 24** —
+worse in point estimate, p = 0.1797, an underpowered null rather than a
+demonstrated harm. In the multivariate fit its coefficient is **negative on 8 of
+8 seeds**, the opposite of its marginal sign: suppression against the amplitude
+and σ̃ columns it is collinear with. Constrain the coefficient to the sign its
+physics has, and the fit does not use it at all — the two residual features fall
+from the top twelve coefficients on **8 of 8** seeds to **0 of 8**, and the
+constrained arm becomes indistinguishable from having no residual features
+whatsoever (**p = 1.0000**).
+
+So the residual's *unique* contribution — the part not already carried by
+amplitude and σ̃ — is reachable by this model class **only as a suppressor**. It
+is not that a linear width model cannot see the signal; it is that the signal
+enters as a correction to other features' over-prediction, and forbidding that
+role removes it. We regard this as the cleanest negative result in the section,
+because unlike every other route the signal is demonstrably present and
+demonstrably not the bug we had already fixed.
+
 **What survives.** Every intervention that has ever moved this clause moved it
 by correcting the input amplitude, and that correction is available exactly and
 for free. Once it is applied the residual requirement is to predict width to
 ±4% over a **68.4×** range, and nothing here reaches it — not selection at any
 abstention rate, not an oracle on the error, not a learned width model even
-when fitted on the evaluation shards themselves. We report this as the wall,
+when fitted on the evaluation shards themselves, and not the one signal that
+is provably independent of the amplitude bug. We report this as the wall,
 stated in units that do not mention uncertainty quantification, rather than as
 a property of conformal prediction.
 

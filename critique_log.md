@@ -4885,3 +4885,348 @@ while the run has produced **zero** output (`runs/feat_coverage_*` does not
 exist, the chain is still printing "waiting: a timing benchmark holds the
 lease"), and the new primary prediction is the *unchanged text* of the control I
 registered in the original entry, promoted rather than invented.
+
+---
+
+## H23 measured: the amplitude term is interpolating, so "reach" is not the mechanism
+
+`runs/feat_coverage_u*_het.json`, 8/8 seeds. The amended **primary** prediction
+was that `a_spec9` (log input amplitude) — the coefficient carrying every width
+model at +2.69, 6.3× the next largest — is applied outside the range it was
+fitted on, on the `*_amp2` shards.
+
+**Falsified, in the direction the registration named as the cleaner one.**
+`a_spec9` has `max_z = 0.00` and `outside = 0.000` on **every family, every
+seed**. It is not merely mostly inside the development range; it is not outside
+it anywhere. The secondary prediction (Darcy's residual features reach further)
+is directionally true and practically empty: `log_consist` on darcy reaches
+`max_z` 0.21–0.71 against 0.00 elsewhere, with the outside-fraction at
+0.000–0.001.
+
+**What this rules out.** H15's learned width model does not fail under shift
+because a linear coefficient is extrapolating past its fitted support. The
+features it needs are *in range* and it still misses the band. So the width
+model's failure is a failure of the *functional form* on in-range inputs, not a
+reach problem — and "add more development shards to widen the support" is now a
+route with evidence against it, which is worth more than the reach story would
+have been.
+
+## H25 measured, and my registered prediction 4 is WRONG
+
+`runs/rscale_u*_het.json`, 8/8 seeds. Predictions, scored:
+
+1. **In distribution, undisturbed — CONFIRMED.** Per-family in-distribution
+   coverage 0.8867–0.9180 (base 0.8867–0.9180), modulation median 0.968–1.003.
+   The frozen calibration median does what it was supposed to do.
+3. **Leak test — HELD on the two linear families, FAILED on darcy, and the
+   failure is explainable.** `poisson_amp2` and `helmholtz_amp2` are *not*
+   repaired: base 0.0000 → resid 0.0000, modulation 0.666 and 0.937. But
+   `darcy_amp2` moves 0.0000 → 0.6299 at modulation **45.46**. The invariance
+   argument I registered was about rescaling the **linear channel** (the source
+   term), where `relresid = ||L(μ)−f||/||f||` is exactly invariant. Darcy's
+   amplitude shift scales the **coefficient field**, which enters `L` itself, so
+   the invariance never applied to it and I over-claimed the test's scope when I
+   registered it. The two shards where the argument does apply behave exactly as
+   predicted, which is the part that is evidence.
+2 & 4. **Prediction 2 not significant on the metric I registered, prediction 4
+   (falsification) plainly wrong, and the reason is my own metric.**
+
+| reading | base | H25 (residual scale) |
+|---|---|---|
+| shards in 90±2%, per seed | 0,0,0,0,0,0,0,0 | 0,0,0,0,1,1,1,0 → sign-flip p = 0.125, **not significant** |
+| mean shard \|coverage−0.90\|, median over 8 seeds | **0.5613** | **0.2673** |
+| same, per-seed deltas | — | +0.3108 +0.3540 +0.3505 +0.2490 +0.3186 +0.2813 +0.2635 +0.2231 |
+| exact paired sign-flip on those deltas | — | **p = 1/256 = 0.0039**, the floor at 8 seeds |
+
+I registered the in-band count as the test statistic and it is **saturating**:
+0.0000 → 0.6299 and 0.0000 → 0.0000 both score "not in band", so a change that
+halves the mean coverage error scores as an exact null. Had I stopped at the
+line I registered, I would have written the four-role negative — "the residual
+fails as a gate, as a feature, and as a scale" — into the paper. It is not a
+null. It is the largest single movement in coverage under shift that anything in
+this repo has produced, and I nearly recorded the opposite. **The binary
+in-band count stays as the clause verdict, because that is what the KPI asks,
+but it may not be used as the test statistic for whether an arm does anything.**
+
+**Why it still fails the clause, stated as a mechanism and not as a shortfall.**
+The modulation has the right sign everywhere and the wrong gain, and the gain
+error splits cleanly by family:
+
+| family | shards | base coverage (med) | H25 coverage (med) | over-covers >0.92 | under-covers <0.88 | modulation range |
+|---|---|---|---|---|---|---|
+| darcy | 10 | 0.570 | **0.987** | **64/80** | 16/80 | 0.43–57.44 |
+| poisson | 10 | 0.000 | 0.696 | 8/80 | **69/80** | 0.64–5.53 |
+| helmholtz | 4 | 0.003 | 0.522 | 0/32 | **32/32** | 0.64–3.25 |
+
+On the graded darcy dam ladder the base arm degrades monotonically
+(0.8535 → 0.0000 as the dam strengthens) and H25 **over**-corrects monotonically
+(0.9385 → 1.0000). On the poisson ladder it under-corrects at every rung
+(0.8721 → 0.4980). One knob is pulling in the right direction on all three
+families and overshooting on one, undershooting on two.
+
+## H26 — written before the run: does *any* monotone rescaling of the residual reach the band?
+
+**The hypothesis.** H25 fixes the exponent at 1:
+`σ' = σ · (relresid / median_cal(relresid))^γ` with γ = 1. The measured
+over/under split says darcy wants γ < 1 and poisson/helmholtz want γ > 1. So
+sweep γ and ask what the **best possible** member of this one-parameter family
+achieves. This is not a hyperparameter hunt for a passing number — it is a
+**ceiling measurement on a route**, and it is reported as one.
+
+**Why the ceiling is the right thing to measure.** γ is *not identifiable in
+distribution*. In distribution the modulation is ≈1 by construction (measured:
+0.968–1.003), so `(≈1)^γ ≈ 1` for every γ and in-distribution coverage is
+**flat** in γ. There is therefore no honest way to freeze γ from
+in-distribution data, and any γ ≠ 1 chosen on the shift shards is selected on
+the data it is scored on — the exact error the clause-3 conditional cut made.
+So three readings go in the table, each with its protocol named:
+
+| reading | what selects γ | what it is |
+|---|---|---|
+| **γ = 1** | nothing | the shipped, parameter-free arm. The only one that can be a clause claim. |
+| **oracle γ** | the shard it is scored on | a **ceiling**. Labelled as an oracle everywhere it appears. Cannot be a clause claim. |
+| **leave-one-shard-out γ** | the *other* shards of the same family | honest, and priced: it requires labelled shifted shards from that family. |
+
+**Two free correctness gates, and I will not read the sweep until both pass.**
+γ = 0 makes the modulation exactly 1, so every γ = 0 number must equal the base
+arm exactly; γ = 1 must reproduce `runs/rscale_*.json` exactly. If either
+disagrees, the sweep is wrong and nothing in it is interpretable.
+
+**Predictions, registered now:**
+
+1. **Primary: no single global γ puts more than 12 of 24 shards in band.** The
+   split is a difference in how each operator's conditioning responds to its
+   shift, not a miscalibrated constant, so one exponent cannot serve all three
+   families. If a single global γ clears 20/24, I am wrong about the mechanism
+   and the route is far more alive than I think.
+2. **Per-family oracle γ: darcy lands below 1 and poisson/helmholtz above 1**,
+   in that order. This is the direct prediction from the table above and it is
+   the cheapest way to be wrong.
+3. **Even the per-family oracle ceiling does not reach 22/24.** The modulation
+   is a single scalar per sample and the coverage failure is partly *within*
+   shard — an exponent can move a shard's mean coverage but cannot reorder
+   samples inside it. If the oracle ceiling *does* reach 22/24, then the clause
+   is reachable in principle by this family and the whole remaining problem is
+   the identifiability of γ, which is a much better problem to have and points
+   straight at the k = 1 labelled probe as the thing that buys it.
+4. **In-distribution coverage is flat in γ** (all families inside 88–92% for
+   every γ in the grid). This is the identifiability claim, and it is the one
+   that decides whether reading 2 can ever become reading 1. If in-distribution
+   coverage *does* vary with γ, then γ is identifiable in distribution and
+   prediction 4's failure is the best outcome available in this run.
+
+**Cost, and what is not claimed.** The sweep evaluates every γ on the same
+forward passes, so it adds no operator applies beyond H25's one-per-sample.
+Clause 2 for the whole residual-scale family remains `[not measured]` — no
+speedup number for it enters any document until `bench_fair.py` times the apply
+inside the captured graph.
+
+---
+
+## H26 measured: the one-knob route's ceiling is 7 of 24, and one of my two mechanism predictions was decided by the choice of objective
+
+`runs/rgam_u*_het.json` (8 seeds, 15 exponents), aggregated to
+`runs/h26_gamma.json`. **Both correctness gates passed on 8/8 seeds**: γ=0
+reproduces the unmodulated base arm with `max|Δ| = 0.00e+00`, and γ=1 reproduces
+`runs/rscale_*.json` exactly. So the sweep is the thing it claims to be.
+
+### Predictions, scored
+
+**1. No single global γ clears 12/24 — CONFIRMED, far harder than I predicted.**
+
+| γ | 0 | 0.25 | **0.375** | 0.5 | 0.75 | 1 | 1.25 | 1.5 | 2 | 3 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| median shards in band /24 | 0.0 | 1.5 | **3.0** | 3.0 | 1.0 | 0.0 | 2.5 | 2.0 | 1.0 | 1.0 |
+
+The best single exponent reaches **3.0/24** and no (γ, seed) cell in the whole
+sweep exceeds **5/24**. I guessed the route might get to 12; it gets to 3.
+
+**2. Darcy wants γ<1 and poisson/helmholtz γ>1 — CONFIRMED under one objective,
+FALSIFIED under the other, and that is the interesting part.**
+
+| selection objective | darcy | helmholtz | poisson |
+|---|---|---|---|
+| minimise mean \|coverage−0.90\| | **1.25** | 1.25 | 3.0 |
+| maximise in-band count | **0.375–0.5** | 0.25–1.75 | 1.25–1.75 |
+
+Under the continuous objective *all three* families want γ ≥ 1 — including
+darcy, which already over-covers at γ=1 (median 0.987). That looked like a
+contradiction and is not: raising γ spreads the per-sample modulation, the
+conformal quantile is **refit on calibration for every γ**, and the result is a
+re-*ranking* of samples, not a monotone lift of the mean. Coverage is not
+monotone in γ, which is why an intuition built from "over-covers, so shrink it"
+was wrong. Under the clause's own objective the prediction holds exactly.
+
+**A defect in my own aggregator, caught by the disagreement above.** My first
+version selected the per-family oracle γ by mean |coverage−0.90| and reported
+**2.0/24** as the route's ceiling — *below* the best single global γ, which is
+impossible for a genuine ceiling, since a per-family choice contains the global
+one. The objective was not the clause's metric: moving a shard 0.50 → 0.80
+improves the mean and does nothing for the count. Selecting per-family γ on the
+in-band count directly gives the real ceiling, **median 7.0/24, best seed
+9/24**. My error was 3.5× and in the *pessimistic* direction — it would have
+made the route look more dead than it is, which is exactly as much of an error
+as the flattering kind, and `scripts/agg_h26.py` now emits both with the
+objective named in the JSON.
+
+**3. Even the per-family oracle ceiling misses 22/24 — CONFIRMED.** 7.0/24 with
+γ chosen per family on the shards it is scored on. The registered contingency
+was that a high ceiling would mean the whole remaining problem is γ's
+identifiability. It is not: **the binding constraint is not that we cannot
+choose γ, it is that no γ exists.** That kills the route and it also kills the
+k=1-labelled-probe rescue for this route, because buying the label buys you the
+7/24 oracle and nothing more. The honest deployable reading agrees:
+leave-one-shard-out γ per family is **1.0/24** (p = 0.0625 vs γ=1, not
+significant).
+
+**4. In-distribution coverage is flat in γ — CONFIRMED, and the precise form is
+sharper than "flat".** Median in-distribution coverage moves at most **0.0166**
+across γ ∈ [0,3] on any family, so the in-distribution likelihood cannot select
+γ. But helmholtz leaves the 88–92% band at some γ on some seeds. So the exact
+statement is: **in-distribution data can *veto* an exponent but cannot *select*
+one.** That is the cleanest version of the identifiability claim available, and
+it is now moot for this route given prediction 3.
+
+### The verdict on the residual-as-scale family
+
+γ=1 remains the largest parameter-free movement in shift coverage in this repo
+(mean |coverage−0.90| 0.5610 → 0.2543, 8/8 seeds, sign-flip p = 0.0039) and the
+family's ceiling for the clause is 7/24 against a clause needing ~22/24. It is
+a real effect and a closed route. The residual has now been tried as a gate
+(dead), as a feature (exact null), and as a scale (real, significant, and
+capped at 7/24 by an oracle) — and the third result is the one worth
+publishing, because the first two were nulls and this one is a measured
+ceiling.
+
+## The adversary, asked the right question this time
+
+Per rung 4 I ran `codex` with *"how would you make this clause pass?"* rather
+than "what is wrong with this" (`logs/critic_codex_howto_clause1.log`). It
+ranked four routes — *independent shift calibration > operator-aware
+spatial/score model > conditioning proxies > exponent alone* — and made two
+specific technical points against our setup. Both are right; one moves a number
+and one does not, and I am recording which is which.
+
+### Point 1, on the metric, and it is correct: our strict clause cannot be passed by a perfect method
+
+> "22+/24 empirical shards is stricter than achieving true 90% coverage. With
+> 512 independent fields, coverage has standard deviation about 1.33 percentage
+> points. Even a method with exactly 90% true coverage puts only roughly 86% of
+> shards inside your band — about 20.7/24 on average."
+
+Computed exactly rather than taken on trust (`scipy.stats.binom`, n=512,
+p=0.90): P(empirical coverage ∈ [0.88, 0.92]) = **0.8787**, so a method with
+*exactly* 90% true coverage on every shard scores
+
+| | value |
+|---|---|
+| expected in-band count | **21.09 / 24** |
+| P(24 of 24) | **0.045** |
+| P(≥ 22 of 24) | 0.430 |
+| 95% interval | 18 – 24 of 24 |
+
+So "every shard inside 90±2%" is a test a perfectly calibrated method fails
+**95.5%** of the time, and our own informal 22/24 target was a coin flip for a
+perfect method. This is a real defect in how we have been reading the clause
+and it belongs in the KPI table: the strict reading has a ceiling of 21.09/24,
+not 24/24.
+
+**And it does not move this verdict, which I checked before writing it down.**
+The conventional reading — a shard passes if its 95% binomial CI contains 0.90,
+which separates sampling noise from miscalibration — gives:
+
+| arm | strict, median /24 | CI reading, median /24 |
+|---|---|---|
+| base | 0.0 | **0.0** |
+| γ = 1 | 0.0 | **0.0** |
+| γ = 0.375 (best global) | 3.0 | **4.0** |
+| γ = 0.5 | 3.0 | 4.0 |
+
+The base arm is 0/24 under *both* readings. Our shards do not fail by 2
+percentage points, they fail by 30 to 90 — coverage 0.000, 0.498, 1.000. So the
+critic is right about the metric's ceiling and the objection is worth one row in
+the KPI table and zero change to the conclusion. Both halves recorded.
+
+### Point 2, on the σ floor, and it is right in principle and negligible here
+
+> "the denominator is σρ^β + ε, so the score is not simply T/ρ^β. To test that
+> model cleanly, use v = ρ^β(σ + ε)"
+
+True: `_floor` is **additive** (`σ + 0.05·med_cal`, frozen on calibration), so
+H26 modulates σ and not the floor, and the modulation's leverage is diluted
+wherever the floor is a large share of the denominator. Rather than rebuild the
+parameterisation on the strength of the argument, I measured the share
+(`scripts/diag_floor_share.py`, `runs/floor_share.json`):
+
+| γ | median floor share over the 24 shards | max | shards above 10% |
+|---|---|---|---|
+| 0.375 | **0.0329** | 0.1735 | 1 |
+| 1 | **0.0200** | 0.2127 | 1 |
+| 3 | **0.0054** | 0.3807 | 2 |
+
+The floor takes 2% of the denominator on the median shard and under 1% on the
+darcy dam ladder. So the modulation has essentially full leverage exactly where
+the clause fails, and re-parameterising to `ρ^γ(σ + ε)` cannot be worth more
+than a shard or two. The single shard where it *would* bite is
+`input_shift/helmholtz_smooth` at 21% — and that is an **over**-covering shard
+(base 0.996), so an additive floor resisting a downward modulation is part of
+why it stays over-covered. One-line summary: right mechanism, measured
+magnitude, not the route to 22/24. I am not spending a run on it, and this
+paragraph is why.
+
+## H27 — written before the run: bound *every* scalar-modulation route at once
+
+**Why this and not codex's top-ranked route.** Its ranking puts "independent
+shift calibration" first, which needs labelled shifted data and is therefore a
+different clause. Its routes 2–4 are all *different scalar predictors* feeding
+the same construction H26 just measured a ceiling on — conditioning proxies
+`G(r)`, the Darcy diagonal `D_jj = N²(a_x+ + a_x- + a_y+ + a_y-)`, a pinball-fit
+`log T̂`. Trying them one at a time is four more runs to learn four more
+ceilings. One measurement bounds all of them, and if the bound is high they are
+all worth trying, so this is the cheaper order.
+
+**The construction.** Coverage on a shard is a monotone function of the scale
+applied to σ, so for every shard there exists a scale `s*` making its coverage
+exactly 0.90. Find `s*` per shard by bisection (the quantile `q` stays frozen
+at its calibration value — nothing is recalibrated on shifted data). Then
+`s*` is the **target** that any scalar modulation must reproduce, and the
+question becomes a plain regression diagnostic:
+
+* how well does `log s*` correlate, in rank, with each deployment-observable
+  per-shard scalar — `median(relresid/median_cal)`, σ statistics, input-field
+  amplitude and roughness, and the Darcy diagonal proxy codex named?
+* fitting the **best monotone link** from the single best observable to `log s*`
+  by **leave-one-shard-out**, how many shards land in band?
+
+That last number is the ceiling of the *entire* family "per-sample scalar
+modulation of σ from a deployment-observable quantity, with any link function",
+which contains H25, H26, and codex's routes 2 and 3 as special cases.
+
+**Predictions, registered now:**
+
+1. **`s*` spans more than two orders of magnitude across the 24 shards.** The
+   base coverages span 0.000–1.000, so the required scales cannot be close
+   together. Descriptive, and if it is false the whole framing is wrong.
+2. **Primary: the best single observable's rank correlation with `log s*` is
+   below 0.8, and the leave-one-shard-out link reaches at most 12/24** —
+   i.e. better than H26's 7/24 oracle, because a free link function is strictly
+   more expressive than an exponent, and still far short. If the LOSO link
+   clears 20/24, **I am wrong and the clause is reachable by a scalar route**,
+   codex's ranking was right, and the next three runs are its routes 2 and 3.
+3. **`relresid` is not the best observable; a σ statistic is.** H23 measured
+   ρ(log relresid, log error) = +0.374 against ρ(log relresid, log σ̃) = +0.107,
+   which says the residual adds information *about error* — but `s*` is the
+   ratio of required to *supplied* width, so it is about σ's error, and σ's own
+   statistics should dominate. This is the prediction I hold most loosely.
+4. **The `*_smooth` shards are the ones no link can fit**, because they need
+   `s* > 1` (they over-cover) while every other shard needs `s* < 1`, and a
+   monotone link in a positively-shift-correlated observable must put them on
+   the wrong side. If true, the *sign* of the required correction is not a
+   function of shift magnitude, which is a stronger and more transferable
+   statement than any count in this entry.
+
+**What cannot happen in this script.** No coverage is calibrated on shifted
+data and the conformal quantile is never refit — `s*` is a diagnostic target
+computed *from* the truth, so **no number in it is clause-eligible** and the
+JSON records `clause_eligible: false`. Its only output is a ceiling and a set
+of rank correlations.
