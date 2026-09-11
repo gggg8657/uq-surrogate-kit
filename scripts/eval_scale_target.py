@@ -26,10 +26,27 @@ That last count is the ceiling of the whole family
      quantity, with ANY link function",
 which contains H25, H26 and codex's routes as special cases.
 
-NOTHING HERE IS CLAUSE-ELIGIBLE. s* is computed FROM THE TRUTH; it is an
-oracle target, not a method. `clause_eligible: false` is written into the JSON
-so no aggregator can quote it as a result. The conformal quantile is never
-refit on shifted data.
+NOTHING IN THE `shards` BLOCK IS CLAUSE-ELIGIBLE. s* is computed FROM THE
+TRUTH; it is an oracle target, not a method. `clause_eligible: false` is
+written into the JSON so no aggregator can quote it as a result. The conformal
+quantile is never refit on shifted data.
+
+`--onesided` (H31) adds a block that IS clause-eligible, and the reason it is
+allowed to sit in the same file is that its constant comes from somewhere else:
+
+* it computes s* on the DEVELOPMENT shift suite (`uqkit.devshift`, seed block
+  40000+, values disjoint from every evaluation shard, `assert_disjoint()`
+  checked), which is data this repo generates and labels itself;
+* it takes percentiles of those dev s* values as a ladder of conservative
+  inflation constants c;
+* it then reports, for each evaluation shard and each in-distribution family,
+  the coverage AND the realized median interval width multiplier at each c.
+
+No evaluation shard contributes to the choice of c. The width column is not
+optional: a one-sided coverage reading with no width beside it is passable by
+returning an infinite interval, which is the trap H13 caught (`weighted` at
+100% coverage with 30/32 shards abstaining), so `onesided.c_ladder` carries the
+width multiplier in the same record as the coverage.
 """
 from __future__ import annotations
 
@@ -42,6 +59,7 @@ import numpy as np
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from uqkit import devshift as D  # noqa: E402
 from uqkit.conformal import GroupConformal, get_score  # noqa: E402
 from uqkit.equivar import predict_equivariant, reference_scale  # noqa: E402
 from uqkit.metrics import binom_ci, rel_l2  # noqa: E402
@@ -73,6 +91,20 @@ def main():
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--sigma-source", default="het",
                     choices=["het", "cqr", "const"])
+    ap.add_argument("--onesided", action="store_true",
+                    help="H31: compute s* on the development shift suite, "
+                         "turn its percentiles into a ladder of conservative "
+                         "inflation constants c, and report coverage AND "
+                         "median interval width multiplier at each c for "
+                         "every evaluation shard and every in-distribution "
+                         "family. The dev suite is disjoint from the "
+                         "evaluation shards by construction, so c is chosen "
+                         "without them.")
+    ap.add_argument("--dev-n", type=int, default=256,
+                    help="samples per development shard (--onesided only)")
+    ap.add_argument("--c-pct", default="50,75,90,100",
+                    help="percentiles of the dev s* distribution to use as "
+                         "conservative constants")
     ap.add_argument("--equivariant", action="store_true",
                     help="wrap the prediction in F_eq(a) = s*F(a/s), the H17 "
                          "test-time restoration of the scale equivariance the "
@@ -241,6 +273,80 @@ def main():
                                        .max(dim=1).values.median()),
         }
 
+    def width_ratio(d, c):
+        """Median interval width at scale `c` over the ungated interval.
+
+        The interval is q*(c*sigma + FLOOR) with q and FLOOR both frozen, so
+        the family quantile cancels and the ratio is the pixelwise median of
+        (c*sigma + FLOOR) / (sigma + FLOOR). It is NOT c: the additive floor
+        pulls it below c wherever sigma is small, which is exactly where a
+        surrogate's interval is already floor-dominated, so quoting c as the
+        width cost would overstate it.
+        """
+        sig = d["sigma"]
+        return float(((c * sig + FLOOR) / (sig + FLOOR)).median())
+
+    def onesided_row(d, groups):
+        """coverage + width multiplier at every c in the ladder."""
+        return {name: {**cov_entry(conf.covered(
+                    fn(d["mean"], d["sigma"] * c, d["truth"],
+                       med=MED).cpu().numpy(), groups)),
+                    "c": c, "width_mult_median": width_ratio(d, c)}
+                for name, c in C_LADDER.items()}
+
+    # ---- H31: the development suite, and the constants it chooses -----------
+    C_LADDER, DEV = {}, {}
+    if args.onesided:
+        D.assert_disjoint()
+        dev_specs = D.register()
+        print(f"dev suite: {len(dev_specs)} shards, seed block {D.SEED_BASE}+, "
+              f"disjointness checked", flush=True)
+
+        def gather_dev(task, parent, index, n):
+            a, u, _x = D.generate(task, n, N=64, device=args.device,
+                                  index=index)
+            blob = {"a": a.cpu(), "u": u.cpu(), "task": task, "N": 64,
+                    "split": "dev", "parent": parent}
+            if args.equivariant:
+                m, s, t, ain = predict_equivariant(predict_raw, blob, parent,
+                                                   REF[parent])
+            else:
+                m, s, t, ain = predict_raw(blob)
+            return {"mean": m, "sigma": s, "truth": t, "a": ain,
+                    "rr": relresid(ain, m, parent), "parent": parent,
+                    "task": task}
+
+        for i, (task, parent, mech, _over) in enumerate(dev_specs):
+            if parent not in in_tasks:
+                continue          # family without a cheap operator apply
+            d = gather_dev(task, parent, i, args.dev_n)
+            g = np.array([parent] * len(d["rr"]))
+            rec = {"mechanism": mech, "parent": parent,
+                   "base": cov_entry(conf.covered(
+                       fn(d["mean"], d["sigma"], d["truth"],
+                          med=MED).cpu().numpy(), g)),
+                   "rel_l2_mean": float(rel_l2(d["mean"], d["truth"]).mean()),
+                   **find_sstar(d)}
+            DEV[task] = rec
+            del d, g
+            torch.cuda.empty_cache()
+        got = sorted(r["s_star"] for r in DEV.values()
+                     if r["s_star"] is not None)
+        if not got:
+            raise SystemExit("no dev shard produced an s*; the ladder has no "
+                             "basis and this run would be meaningless")
+        pcts = [float(x) for x in args.c_pct.split(",") if x.strip()]
+        for pc in pcts:
+            C_LADDER[f"c_dev_p{pc:g}"] = float(np.percentile(got, pc))
+        # a fixed geometric ladder, reported beside the dev-chosen constants so
+        # the coverage-width frontier is readable independently of the suite
+        for c in (1.0, 2.0, 5.0, 10.0, 100.0):
+            C_LADDER[f"c_fixed_{c:g}"] = c
+        print("dev s* n=%d  min %.3f  med %.3f  max %.3f" %
+              (len(got), got[0], float(np.median(got)), got[-1]), flush=True)
+        print("c ladder: " + ", ".join(f"{k}={v:.4g}"
+                                       for k, v in C_LADDER.items()), flush=True)
+
     res = {"alpha": args.alpha, "score": args.score, "ckpt": args.ckpt,
            "seed": ck["args"].get("seed"), "sigma_source": args.sigma_source,
            "families": in_tasks, "band": list(BAND), "target": TARGET,
@@ -256,6 +362,25 @@ def main():
            "sigma_floor_median": MED, "floor_abs": FLOOR,
            "relresid_median_cal": RR_MED,
            "q_cal": {k: float(v) for k, v in conf.q.items()},
+           "onesided": {
+               "enabled": bool(args.onesided),
+               "dev_n_per_shard": args.dev_n,
+               "dev_seed_base": D.SEED_BASE,
+               "dev_disjoint_checked": bool(args.onesided),
+               "c_pct": args.c_pct,
+               "c_ladder": C_LADDER,
+               "dev_shards": DEV,
+               "clause_eligible": bool(args.onesided),
+               "note": ("H31. Every c in `c_ladder` prefixed `c_dev_` is a "
+                        "percentile of the DEVELOPMENT shards' own s*; no "
+                        "evaluation shard contributes to it, so the coverage "
+                        "recorded under `onesided` in each shard record IS a "
+                        "method result. `c_fixed_*` are a geometric ladder for "
+                        "reading the frontier and are NOT dev-chosen. Each "
+                        "cell carries `width_mult_median`, the realized "
+                        "median interval width over the ungated interval: a "
+                        "one-sided coverage number without it is passable by "
+                        "abstention.")},
            "in_dist": {}, "shards": {}}
 
     for t in in_tasks:
@@ -264,6 +389,9 @@ def main():
             fn(d["mean"], d["sigma"], d["truth"], med=MED).cpu().numpy(),
             np.array([t] * len(d["rr"])))), **find_sstar(d), **sband(d),
             "observables": observables(d)}
+        if args.onesided:
+            res["in_dist"][t]["onesided"] = onesided_row(
+                d, np.array([t] * len(d["rr"])))
         print(f"  in-dist {t:10s} base "
               f"{res['in_dist'][t]['base']['coverage']:.4f}  s* "
               f"{res['in_dist'][t]['s_star']}", flush=True)
@@ -285,6 +413,9 @@ def main():
                    "rel_l2_mean": float(rel_l2(d["mean"], d["truth"]).mean()),
                    **find_sstar(d), **sband(d),
                    "observables": observables(d)}
+            if args.onesided:
+                rec["onesided"] = onesided_row(
+                    d, np.array([parent] * len(d["rr"])))
             res["shards"][f"{kind}/{task}/N64"] = rec
             ss = rec["s_star"]
             print(f"  {kind}/{task:22s} base {base['coverage']:.4f}  s* "
