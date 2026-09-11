@@ -4364,3 +4364,27 @@ if it were quietly folded in. So if that run happens it is reported under both
 readings, as H15's was, and the leave-one-mechanism-out number remains the
 headline. Widening the development suite until the test looks better, without
 saying so, is the one move this brief forbids outright.
+
+### Provenance check on the H22 control, because I nearly quoted a number from an arm I had not verified
+
+The `p = 0.1797` attribution above compares `runs/scalerf_u*_het.json` against
+`runs/h22_ctl_u*_het.json`. I launched a control of my own under a different
+name (`scalerc`), it never ran, and the aggregator silently used the other one —
+so the number I published came from an arm I had not checked. The printed label
+"(both /24, 3 families)" made it worse: the aggregator takes both the shard
+count and the family list from the **residual** arm and asserts them of the
+control, and the control's JSON predates the provenance fields, recording
+`families: null`.
+
+Checked directly rather than inferred:
+
+* both arms evaluate **24** shards on every one of 8 seeds;
+* the two shard sets are **identical** — zero shards in either that are not in
+  the other;
+* families present in both: darcy, helmholtz, poisson;
+* the control carries **42** features against the residual arm's **44**.
+
+So the pair does differ in exactly the two residual columns and the attribution
+stands. But it stood on a coincidence of file naming until it was checked, and
+the aggregator will describe a control using the *other* arm's metadata for as
+long as that label is built the way it is.

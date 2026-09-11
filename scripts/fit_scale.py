@@ -122,6 +122,16 @@ def main():
                          "32 covariate shards. The baseline must be re-read on "
                          "the same 24; `scripts/agg_scale.py` does that from "
                          "per-shard cells already on disk.")
+    ap.add_argument("--nonneg-features", default="",
+                    help="H24: comma-separated features whose width "
+                         "coefficient is constrained to be >= 0 by projection "
+                         "after each step. Motivated by measurement, not "
+                         "taste: H23 found the residual predicts the "
+                         "conformity score with a POSITIVE marginal rank "
+                         "correlation on 8/8 seeds while H22's unconstrained "
+                         "fit gave it a negative partial coefficient on 8/8, "
+                         "which is the signature of suppression. Names are "
+                         "checked against the feature vector.")
     ap.add_argument("--per-family-h", action="store_true",
                     help="H19: fit a separate h per family instead of one "
                          "pooled h with family one-hots. H18 measured that "
@@ -443,10 +453,21 @@ def main():
                                 if leak else []))
         _tick(f"  fold {fold}: fitting h on {len(s)} rows x {z.shape[1]} "
               f"feats{' per family' if args.per_family_h else ''}")
+        nn_idx = []
+        if args.nonneg_features:
+            want = [t.strip() for t in args.nonneg_features.split(",")
+                    if t.strip()]
+            unknown = [t for t in want if t not in FEAT_NAMES]
+            if unknown:
+                raise SystemExit(f"--nonneg-features not in the feature "
+                                 f"vector: {unknown}; have {FEAT_NAMES}")
+            nn_idx = [FEAT_NAMES.index(t) for t in want]
         if args.per_family_h:
-            h = PerFamilyScale(alpha=args.alpha, seed=0).fit(z, s, fam)
+            h = PerFamilyScale(alpha=args.alpha, seed=0,
+                               nonneg=nn_idx).fit(z, s, fam)
         else:
-            h = QuantileScale(alpha=args.alpha, seed=0).fit(z, s)
+            h = QuantileScale(alpha=args.alpha, seed=0,
+                              nonneg=nn_idx).fit(z, s)
         _tick(f"  fold {fold}: h fitted")
         # q on the untouched calibration half, one quantile PER FAMILY -- the
         # calibrator the `group` baseline uses. Pooled is recorded beside it.
