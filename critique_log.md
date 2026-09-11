@@ -4388,3 +4388,72 @@ So the pair does differ in exactly the two residual columns and the attribution
 stands. But it stood on a coincidence of file naming until it was checked, and
 the aggregator will describe a control using the *other* arm's metadata for as
 long as that label is built the way it is.
+
+## H23 result — the residual's negative fitted coefficient was suppression, and the marginal sign is physical
+
+`runs/rcorr_u0..u7_het.json`, 8 seeds, 24 shards, **no fitting anywhere in this
+measurement** — univariate rank correlations only.
+
+| quantity, median over 24 shards | per seed | median |
+|---|---|---|
+| ρ(`log_resid`, log S) | 0.263, 0.290, 0.285, 0.214, 0.191, 0.242, 0.239, 0.213 | **+0.241** |
+| ρ(`log_resid`, log numerator max\|μ−u\|) | 0.446, 0.499, 0.499, 0.326, 0.373, 0.224, 0.376, 0.355 | **+0.374** |
+| ρ(`log_resid`, log denominator σ̃) | 0.052, 0.092, 0.123, 0.153, 0.176, 0.139, 0.054, 0.081 | **+0.107** |
+| ρ(`log_consist`, log S) | — | +0.237 |
+
+**Positive on 8 of 8 seeds, exact sign-flip p = 0.0078.** And the decomposition
+answers *why* directly rather than by inference: the residual tracks the
+**error** at +0.374 and σ̃ at only +0.107 — numerator above denominator on
+**8 of 8 seeds, paired p = 0.0078** — so the ratio rises with the residual.
+
+**So the question H22 raised is settled in the direction I refused to assume.**
+H22's multivariate fit gave `log_resid` a negative coefficient on every seed
+(−0.34 to −0.68), which taken at face value said a larger equation violation
+warrants a narrower interval. It does not: marginally the residual predicts a
+*larger* conformity score, on every seed, and it does so because it sees error
+that σ̃ does not. The negative partial coefficient is **suppression from
+collinearity** with the amplitude and σ features. Declining to read the sign off
+the fit was correct, and the diagnostic that separated the two readings cost one
+pass over cached scores.
+
+The physically interesting half is the gap itself: `log_resid` correlates with
+the error **3.5× more strongly than σ̃ does**. The heteroscedastic head is
+leaving error-relevant information on the table that one operator apply
+recovers.
+
+## H24 — written before the run: constrain the residual coefficient to the sign its physics has
+
+**Disclosure:** I have already run seed 0 of this arm and it gave **0/24**,
+which is what the unconstrained residual arm also gave at seed 0. That is a
+screen and it is recorded here so the prediction below cannot be read as if it
+were made blind. The verdict is the paired 8-seed test.
+
+**The change (one).** `--nonneg-features log_resid,log_consist`: the two
+residual coefficients are projected onto `[0, ∞)` after each optimizer step.
+Everything else identical to the H22 residual arm — same 24 shards, same three
+families, same dev suite, same folds, same per-family quantile, same
+checkpoints — so it pairs exactly with H22 and differs only in the constraint.
+
+Projection on a convex objective is the standard treatment and it is not a
+tuned knob: there is no constant to choose, and the constraint set is fixed by
+H23's measured sign rather than by anything I would like the number to do.
+
+**Predictions:**
+
+1. The constrained arm beats the unconstrained residual arm
+   (H22: 0,1,1,2,1,0,1,3) on the paired 8-seed sign-flip. **Falsified if
+   p > 0.05 or the point estimate is negative** — in which case the suppression
+   was doing useful work for the *fit* even though its sign is unphysical, and
+   the honest conclusion is that this feature set cannot use the residual
+   without also using it as a suppressor.
+2. It does **not** reach the band on the amplitude shards. Those four are
+   `+0.000` under any residual arm by the invariance argument H22 confirmed,
+   and a sign constraint cannot change algebra.
+3. It does not reach 29/24-equivalent, i.e. this is not the clause. H16 bounds
+   the prize at ±4.47% width accuracy over 28.6–68.4×, and constraining one
+   coefficient's sign does not buy precision.
+4. If it *does* beat H22 and still misses the band, the resulting statement is
+   the sharpest one available from this whole line: the residual is a real,
+   physically-signed, amplitude-blind width signal, used correctly, that still
+   cannot hit a ±2pp window — which is a fact about the requirement rather than
+   about the signal.
