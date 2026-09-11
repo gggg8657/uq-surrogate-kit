@@ -24,6 +24,15 @@ def load(name):
     return json.loads(p.read_text()) if p.exists() else None
 
 
+def _load_run(name):
+    """Load a run JSON by filename, or None. Pins must never crash the check."""
+    p = Path(__file__).resolve().parents[1] / "runs" / name
+    try:
+        return json.loads(p.read_text()) if p.exists() else None
+    except Exception:
+        return None
+
+
 def claims():
     """(file, rendered string, description) for every hand-written headline."""
     out = []
@@ -122,6 +131,24 @@ def claims():
               if c["parent"] == "darcy" and c["res"] > hi and n in S15]
         del wr  # width ratios live in the H15 cells, not the H22 per_shard
                 # block; not pinned rather than pinned from the wrong arm.
+
+    # paper_draft.md section 4 gained the deployment-(B) table. Its two
+    # DISQUALIFIERS are the load-bearing numbers -- they are what stop the
+    # 1.000 column from reading as a result -- so they are pinned, not the
+    # 1.000s themselves.
+    cu = _load_run("consistency_uq.json")
+    if cu:
+        fs3 = cu["shards"].get("param_oor/frac_s3/N64")
+        if fs3 and fs3.get("floor_c") is not None:
+            out.append(("paper_draft.md", f"{fs3['floor_c']:.4f}",
+                        "frac_s3 truth's own residual: the apply is round-off "
+                        "dominated, so its 1.000 is not detection"))
+        lk = cu.get("summary_operator_shift", {}).get("lookup")
+        if lk:
+            out.append(("paper_draft.md",
+                        f"scores 1.000 on all {lk['n_total']} operator-shift "
+                        f"shards at zero cost",
+                        "the free baseline the residual must beat under (B)"))
 
     # Section 5 of paper_draft.md is the newest hand-written prose in the repo,
     # so its load-bearing numbers are pinned against the runs that produced

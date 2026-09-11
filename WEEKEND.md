@@ -80,7 +80,7 @@ reasons it is too low.
 | speedup, repeated 8× (Darcy, ensemble) | **23.5×** [23.0, 23.7] | unchanged | ❌ |
 | speedup, iso-accuracy (Darcy) | **2.2×** | unchanged | ❌ |
 | OOD shift AUROC, all 49 shards, strict | 43/49 (`mahalanobis`) | **47/49** (`combo`) | ❌ |
-| **OOD, conditional on the shift degrading the model** | — | **33/33**, min 0.9964 | ✅ |
+| **OOD, conditional on the shift degrading the model** | — | **33/33**, min 0.9964 — **one checkpoint.** At 8 seeds the cut is not safe: denominator 33–36, a sub-0.9 shard admitted on **6 of 8** seeds | ❌ |
 | OOD error-detection AUROC (pooled) | **0.866** (`spread`) | unchanged | ❌ |
 
 ## What changed, and why it was a design error rather than a wall
@@ -382,19 +382,47 @@ held-out result (p = 0.5156), so it is not a data problem.
   valuable. What needs a human is only whether the KPI text gets re-scoped
   (Option B) or the gap stays visible in the table (Option A).
 
-**2. Does clause 3 mean "detect every shift" or "detect every shift that
-matters"?** Strict, all 49 shards: **47/49**. Conditional on the shift actually
-degrading the surrogate: **33/33**, minimum 0.9964. Both misses are `dam0p1`
-at degradation 1.06×, where the model is no worse than in distribution — firing
-there is a false alarm, not a detection.
-- *Option A —* accept the conditional reading; the clause is met, and the
-  criterion is the model's own measured error, not a threshold fitted after
-  seeing which shards failed.
-- *Option B —* hold the strict reading; the clause misses by two shards that
-  nobody would want an alarm on.
-- *Recommendation:* A, with the full degradation-vs-AUROC table published so a
-  reader can place the cut anywhere. Every AUROC below 0.9 occurs at degradation
-  ≤1.06×, so the ordering does the work and no threshold is load-bearing.
+**2. Clause 3: the conditional reading was a one-checkpoint result, and it does
+not survive 8 seeds.** *This decision replaces the one that stood here, which
+recommended accepting the conditional reading and asserted that "no threshold is
+load-bearing". My own 8-seed run falsifies that sentence.*
+
+Measured over 8 checkpoints (`runs/clause3.json`):
+
+| reading | per seed | stable? |
+|---|---|---|
+| **strict, all 49 shards** | **47/49 on every one of 8 seeds**, identical | ✅ stable, and it is a **fail** against ≥0.9-on-every-shard |
+| conditional at the published **>1.06×** cut | (33,33) (33,34) (33,35) (33,33) (34,36) (33,34) (34,36) (33,35) | ❌ denominator moves **33–36**; a shard scoring below 0.9 is admitted on **6 of 8** seeds |
+| conditional at **>1.10×** | 33/33 on all 8 | ✅ stable — but see below |
+
+The two failing shards sit at degradation **1.055×** and **1.058×**, i.e. they
+*straddle* the published cut. That is why the denominator moves: which side of
+1.06× a boundary shard lands on depends on the checkpoint. **The published
+33/33 was a property of seed 0, not of the detector.**
+
+- *Option A — report the strict reading as the verdict.* 47/49, stable on every
+  seed, and it does not meet the clause. The degradation-vs-AUROC table is
+  published in full so a reader can see that both misses are shifts which barely
+  degrade the surrogate.
+- *Option B — keep a conditional reading, at >1.10× where it is 33/33 on 8/8.*
+  **The objection is that we would be choosing 1.10 after watching 1.06 fail**,
+  which is threshold selection on the evaluation set — the move this project has
+  already caught itself making twice. It is defensible only if the threshold is
+  justified independently of this result, and I do not have such a
+  justification.
+- *Recommendation:* **A.** The strict row is the one that is stable, and it
+  fails. Option B's number is reported in `RESULTS.md` §3f beside its objection
+  rather than hidden, but it does not carry the verdict.
+
+**A note on what this pattern now is.** This is the **second** clause whose
+apparent pass rested on something other than the detector: clause 1's every
+gain traced to our own frozen-statistics preprocessing bug, and clause 3's
+conditional pass traces to a threshold placed just above the two shards that
+failed, on one checkpoint. Neither was fabricated and both were reported in good
+faith. The transferable lesson is the one the brief already states and this
+weekend keeps re-earning: **a number measured once is a draw from a
+distribution, and a threshold chosen after seeing which cases failed is not a
+criterion.**
 
 ## Still running / how to check
 

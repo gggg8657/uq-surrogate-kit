@@ -1660,9 +1660,57 @@ def _amp_range(score_rec):
             f"{min(e):.2f}\u2013{max(e):.2f}\u00d7")
 
 
+def _cond_seed_caveat(c3, thr):
+    """The seed-stability caveat on clause 3's conditional row, from the runs.
+
+    The published conditional reading is ONE checkpoint. `runs/clause3.json`
+    measures the same cut over 8 seeds, and every number in the sentence below
+    is read out of it rather than typed -- including the seed count, so that if
+    the cut ever becomes stable the caveat stops asserting that it is not.
+    """
+    base = (c3 or {}).get("base", {})
+    cond = base.get("conditional", {})
+    # `thr` is the max degradation among the failing shards (unrounded, e.g.
+    # 1.0581, displayed to 2dp); the aggregate keys its cuts by round numbers.
+    # Accept a cut that is the same to 2dp AND at least as STRICT as `thr`:
+    # a stricter cut admits a subset of this row's population, so instability
+    # measured there implies at least that much here. Accepting a LOOSER cut
+    # would attach a friendlier stability claim to a stricter row, which is the
+    # direction that flatters.
+    key = next((k for k in cond
+                if abs(float(k) - round(thr, 2)) < 1e-9
+                and float(k) >= thr - 1e-9), None)
+    if key is None:
+        return (" \u2014 **on ONE checkpoint**; its seed stability is "
+                + NM)
+    rec = cond[key]
+    n_seeds = base.get("n_seeds")
+    bad = rec.get("seeds_with_a_failure_inside")
+    lo, hi = rec.get("denominator_range", [None, None])
+    if rec.get("clean_on_every_seed"):
+        return (f" \u2014 and it holds on **{n_seeds}/{n_seeds}** seeds "
+                f"(\u00a73f), denominator stable at {lo}")
+    # the higher cut that IS stable, reported without being substituted for it
+    alt = sorted(float(k) for k, v in cond.items()
+                 if v.get("clean_on_every_seed"))
+    alt_txt = ""
+    if alt:
+        a = cond[next(k for k in cond if abs(float(k) - alt[0]) < 1e-9)]
+        al, _ = a.get("denominator_range", [None, None])
+        alt_txt = (f" A cut at >{alt[0]:.2f}\u00d7 is clean on "
+                   f"{n_seeds}/{n_seeds} seeds at {al}/{al}, but choosing it "
+                   f"after seeing this one fail is threshold selection, so it "
+                   f"is reported in \u00a73f and does not carry the verdict.")
+    return (f" \u2014 **on ONE checkpoint.** Over {n_seeds} seeds "
+            f"(\u00a73f) this cut is not safe: the failing shards straddle "
+            f"it, the denominator moves {lo}\u2013{hi}, and a shard scoring "
+            f"below 0.9 is admitted on **{bad} of {n_seeds}** seeds.{alt_txt} "
+            f"The strict row above is the stable one")
+
+
 def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
             csu=None, fa_src="bench_fair.json", h13=None, sv=None,
-            scj=None):
+            scj=None, c3=None):
     """The KPI, clause by clause, with the JSON each verdict came from."""
     out.insert(0, "")
     lines = ["## KPI verdict\n",
@@ -2055,13 +2103,8 @@ def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
                     f"surrogate (>{thr:.2f}\u00d7 its in-distribution error) | "
                     f"\u22650.9 | **{sum(1 for x in above if x >= 0.9)}/"
                     f"{len(above)}** shards \u22650.9, min {min(above):.4f} "
-                    f"\u2014 **on ONE checkpoint.** At 8 seeds (\u00a73f) this "
-                    f"cut is not safe: the two failing shards straddle it, so "
-                    f"the denominator moves 33\u201336 and a shard scoring "
-                    f"below 0.9 is admitted on **6 of 8 seeds**. The verdict "
-                    f"below is the strict row, which is stable at 47/49 on "
-                    f"every seed | `runs/consistency_uq.json` | "
-                    f"{MARK[False]} |")
+                    + _cond_seed_caveat(c3, thr)
+                    + f" | `runs/consistency_uq.json` | {MARK[False]} |")
     if m:
         ok = [r for r in m["rows"] if r["darcy_speedup"] >= 100]
         # This row used to read "M=1 has no spread, so no interval and no OOD
@@ -2138,7 +2181,8 @@ def main():
         "\n".join(head + verdict(c, b, o, body, i, m, load('consistency_M1.json'), u, fa, csu,
                     fa_src, load('h13_clip.json'),
                     load('selective.json'),
-                    load('scale.json')) + body) + "\n")
+                    load('scale.json'),
+                    load('clause3.json')) + body) + "\n")
     print(f"wrote {args.out}")
 
 

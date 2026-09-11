@@ -300,8 +300,7 @@ sixth-order apply is round-off dominated, so the exact solution violates its own
 equation almost as much as the surrogate does, and that row's 1.000 is an
 operator-identity signal rather than detection. Second, and worse for the
 residual, a **dict lookup on the requested operator** — `1 if the task is not one
-we trained on else 0` — scores 1.000 on all six operator-shift shards at zero
-cost. Under (B) the operator's identity is in the request, so the trivial
+we trained on else 0` — scores 1.000 on all 6 operator-shift shards at zero cost. Under (B) the operator's identity is in the request, so the trivial
 baseline is perfect and the residual earns nothing over it. The honest reading
 is that (B) is not a harder detection problem that the residual solves; it is a
 problem that stops being a detection problem at all.

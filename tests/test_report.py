@@ -124,6 +124,21 @@ _ALLOWED = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 16, 20, 24, 32, 40, 42,
             64.0}
 
 
+def _is_tolerance(v):
+    """True for a float-comparison epsilon, e.g. 1e-9.
+
+    Narrow on purpose. A copied measurement is essentially never an exact
+    power of ten, so requiring that -- rather than exempting "anything small"
+    -- keeps the rule's teeth: this repo does report measurements down to
+    2.1e-07 (an operator's round-off floor), and a literal like that must
+    still fail. The exemption covers `abs(a - b) < 1e-9` guards only.
+    """
+    if v <= 0 or v > 1e-6:
+        return False
+    import math
+    return abs(math.log10(v) - round(math.log10(v))) < 1e-12
+
+
 def test_no_suspicious_measured_looking_literals():
     """No float literal that looks like a *measurement* is typed into report.py.
 
@@ -142,6 +157,8 @@ def test_no_suspicious_measured_looking_literals():
                 continue
             if round(v, 1) == v and abs(v) < 10:
                 continue          # one-decimal small constants are formatting
+            if _is_tolerance(v):
+                continue
             bad.append((node.lineno, v))
     assert not bad, ("measurement-shaped float literals in report.py "
                      "(compute these from the run JSON instead): "
