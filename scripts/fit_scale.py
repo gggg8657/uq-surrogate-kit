@@ -378,6 +378,11 @@ def main():
            "equivariant": bool(args.equivariant),
            "per_family_h": bool(args.per_family_h),
            "residual_features": bool(args.residual_features),
+           # H24's defining parameter. It was omitted from the first eight
+           # runs, so those files could only be identified by their
+           # filename; a run JSON has to say what protocol produced it.
+           "nonneg_features": [f for f in args.nonneg_features.split(",")
+                               if f.strip()],
            # which families this arm ran on. With --residual-features the set
            # is FORCED by whether the simulator has a cheap operator apply, so
            # it is recorded per run: a 24-shard arm and a 32-shard arm are not
