@@ -5230,3 +5230,225 @@ data and the conformal quantile is never refit — `s*` is a diagnostic target
 computed *from* the truth, so **no number in it is clause-eligible** and the
 JSON records `clause_eligible: false`. Its only output is a ceiling and a set
 of rank correlations.
+
+---
+
+## H27 measured: the scalar-modulation family's deployable ceiling is 2 of 24, and the reason is an identity
+
+`runs/starget_u*_het.json` (8 seeds), aggregated to `runs/h27_target.json`.
+`s*` is the σ scale making a shard's coverage exactly 0.90 with the calibration
+quantile frozen; it is computed from the truth and every file carries
+`clause_eligible: false`.
+
+**Two sanity checks the construction had to pass, and did.** In-distribution
+`s*` is **0.9879 / 1.0004 / 1.0091** for poisson / helmholtz / darcy — the
+method needs no correction where it is calibrated, which is what it means for
+the target to be well posed. And after patching the script to also emit the
+in-band window, regenerating all 8 seeds reproduced every `s*`:
+`max|s*_before − s*_after| = 0.000e+00` over 24 shards × 8 seeds.
+
+### Predictions, scored
+
+**1. `s*` spans more than two orders of magnitude — CONFIRMED.** 0.5801 to
+83.26, a factor of **144×** = 2.16 orders.
+
+**2. Primary: best rank correlation below 0.8 and the LOSO link reaches at most
+12/24 — CONFIRMED on the correlation, and the count is far below what I
+allowed.**
+
+| deployment-observable scalar | Spearman ρ with log `s*` |
+|---|---|
+| `input_amp` | **+0.472** |
+| `relresid_ratio_med` | +0.441 |
+| `relresid_ratio_p90` | +0.383 |
+| `pred_fieldmax_med` | −0.316 |
+| `input_rough` | +0.305 |
+| `sigma_cv` | +0.277 |
+| `diag_mean` (codex's Darcy diagonal) | −0.143 |
+| `sigma_med`, `sigma_ratio_to_cal`, `sigma_fieldmax_med` | −0.128 … −0.050 |
+
+Ceiling with a free **isotonic** link — the most expressive monotone function
+there is, so this bounds every parametric link at once — fitted
+leave-one-shard-out:
+
+| link | on `input_amp` | on `relresid_ratio_med` |
+|---|---|---|
+| one global link | **1.0 / 24** | 0.0 / 24 |
+| per-family link | **2.0 / 24** | 2.0 / 24 |
+
+So the whole family — *per-sample scalar modulation of σ from a
+deployment-observable quantity, with any link function* — tops out at **2/24**.
+H25 and H26 are special cases of it and H26's LOSO reading was 1.0/24, so the
+free link buys one shard over a power link. It is not a shortfall in the link.
+
+**And the oracle-versus-LOSO gap is the entire result.** `s*` exists on
+**24/24** shards, so a *per-shard* oracle constant passes the clause trivially,
+while the best deployable rule from the best observable gets 2. Nothing here is
+about the expressiveness of the modulation; it is about generalisation across
+shift types, and two numbers quantify it: best rank correlation **0.472**, and
+the tolerance the prediction must hit —
+
+| in-band window on the σ scale, over 24 shards | median | min | max |
+|---|---|---|---|
+| width ratio `s_hi / s_lo` | **1.0503** | 1.0101 | 1.1579 |
+
+**±2.52% on the median shard.** That independently reproduces H16, which
+measured the requirement as ±4.47% conditional-quantile accuracy by a different
+route. A rank correlation of 0.472 is not within two orders of magnitude of
+delivering ±2.5% in magnitude.
+
+**3. `relresid` is not the best observable — CONFIRMED; my reason for it was
+wrong.** `input_amp` wins at +0.472. But I predicted a **σ statistic** would
+dominate, on the argument that `s*` is the ratio of required to supplied width.
+The σ statistics are the three *worst* predictors in the table (−0.128, −0.058,
+−0.050, i.e. uncorrelated). I flagged this as the prediction I held most
+loosely and it was the one that broke.
+
+**4. The `*_smooth` shards are the ones no monotone link can fit — CONFIRMED,
+and the sign structure is exactly as registered.** The three `*_smooth` shards
+are the *only* shards with `s*` < 1 (0.5801, 0.8241, 0.8309); all 21 others
+need `s*` > 1 (1.07 … 83.26). So the *sign* of the required correction is not a
+monotone function of shift magnitude. My one error was procedural: I predicted
+`s*` would not *exist* for them, and it does — scaling σ down does drive
+coverage to 0, because the additive floor is 2% of the denominator (H26's
+`runs/floor_share.json`), not enough to hold coverage up.
+
+### The mechanism, and it is an identity rather than a tuning failure
+
+The three `*_amp2` shards double the input amplitude — `input_amp` ratio
+**1.989 / 2.020 / 2.002**, indistinguishable — and need the largest corrections
+in the suite:
+
+| shard | `s*` needed | `relresid` ratio supplied | missed by |
+|---|---|---|---|
+| `darcy_amp2` | 67.08 | 45.46 | **1.48×** |
+| `helmholtz_amp2` | 55.10 | 0.9369 | **58.8×** |
+| `poisson_amp2` | 83.26 | 0.6659 | **125×** |
+
+Darcy is nearly right and the two others are wrong by two orders of magnitude,
+and the split is not empirical. For poisson and helmholtz the amplitude shift
+rescales the **source term**: `L` is linear and fixed, so if the surrogate were
+equivariant, `relresid = ‖L(cμ) − cf‖ / ‖cf‖` is **exactly invariant** in `c`.
+For darcy the same shift scales the **coefficient field**, which enters `L`
+itself, so `relresid` is not invariant and it tracks — 45.46 against 67.08.
+
+**A relative residual is blind, by construction, to precisely the shift that
+requires the largest correction, whenever that shift rescales the linear
+channel.** This is the same shape as the identity that killed the OOD detector
+family: a quantity that is invariant to a transformation cannot detect it, and
+no amount of link fitting repairs an invariance. It also retro-explains H25's
+leak test, which I registered as a *validity check* and which was in fact
+measuring the family's fundamental limit: the two shards that "correctly" went
+unrepaired are the two the method cannot ever repair.
+
+The complement is just as sharp. `input_amp` sees the amplitude shift (ratio
+2.0) and is **constant along the dam ladder**, which is where `relresid` works.
+Neither observable sees both axes, which is why the best single-scalar ρ is
+0.47: this is a two-dimensional shift being predicted by one-dimensional
+features.
+
+## H28 — written before the run: give the predictor both axes, using `s*` as a direct regression target
+
+**Why this is not H22 again.** H22/H24 fitted a multi-feature width model and
+got an exact null against its own control. But it regressed **conformity
+scores** through a standardized linear `h`. `s*` did not exist then. Regressing
+`log s*` directly on `(log relresid_ratio, log input_amp)` targets the quantity
+the clause actually needs, and the H27 table says these two features span the
+two shift axes the suite contains. It is post-processing of runs already on
+disk — no GPU, no new forward pass.
+
+**Predictions, registered now:**
+
+1. **Primary: the 2-feature LOSO fit lands above 2/24 and below 6/24.** Above,
+   because the features do span both axes and the rank structure must improve.
+   Below 6, because the binding constraint measured in H27 is *magnitude
+   accuracy of ±2.52%*, not ranking, and LOSO with 10 shards per family in two
+   dimensions has almost no support. If it clears **20/24**, I am wrong, the
+   clause is reachable by a two-feature scalar rule, and that becomes the
+   headline.
+2. **The rank correlation of the 2-feature fit exceeds 0.8** even though the
+   in-band count stays low. That combination — good ranking, failing count — is
+   the claim that the obstacle is calibration of magnitude and not feature
+   choice, and it is what distinguishes my explanation from the obvious
+   alternative that we simply picked bad features.
+3. **The residual error is largest on `helmholtz_amp2` and `poisson_amp2`.**
+   Adding `input_amp` should be exactly what repairs those two, since they are
+   the shards where `relresid` is invariant. If they are *still* the worst, then
+   the amplitude feature does not carry the magnitude either and the obstacle is
+   deeper than feature coverage.
+
+## H28 measured: adding the second axis made it WORSE, and the reason is that LOSO manufactures the extrapolation H23 ruled out
+
+`runs/h28_twofeat.json`, post-processing of the H27 runs, 8 seeds.
+
+| arm | global link, /24 | per-family link, /24 | rank corr of the LOSO prediction |
+|---|---|---|---|
+| `relresid` only | 1.0 | 0.5 | 0.233 |
+| `input_amp` only | 1.0 | **1.5** | **0.393** |
+| **both features** | 1.0 | **1.0** | **0.217** |
+
+**Prediction 1 (between 2 and 6 of 24) — FALSIFIED on the low side.** The
+two-feature rule gets 1.0/24, *below* H27's single-feature isotonic 2.0/24.
+**Prediction 2 (rank correlation above 0.8) — badly falsified**: 0.217, worse
+than either feature alone. I had said that "good ranking, failing count" would
+be what distinguishes "the obstacle is magnitude calibration" from "we picked
+bad features". That test came back on the side I did not want, so I cannot
+claim the first explanation on this evidence.
+
+**Prediction 3 — CONFIRMED, and its registered contingency is now the
+finding.** The worst shards are exactly the three amplitude shards:
+
+| shard | predicted scale off by |
+|---|---|
+| `poisson_amp2` | **40.0×** |
+| `helmholtz_amp2` | **18.0×** |
+| `darcy_amp2` | 15.1× |
+| `darcy_smooth` | 4.2× |
+
+I registered: *"If they are still the worst, then the amplitude feature does not
+carry the magnitude either and the obstacle is deeper than feature coverage."*
+They are still the worst. Adding a feature that sees the amplitude shift
+perfectly in *rank* (ratio 1.989 / 2.020 / 2.002) leaves the *magnitude* wrong
+by 15–40×.
+
+**Why adding information made the fit worse, which is the transferable part.**
+Under leave-one-shard-out, holding out `poisson_amp2` leaves peers whose
+`input_amp` is essentially constant — every dam, rough and tau shard sits at the
+base amplitude, and only `poisson_smooth` differs. So the amplitude coefficient
+is estimated from almost no variation and then applied 2× outside its support,
+and a three-parameter fit on ~9 points with one high-leverage direction
+extrapolates wildly. The extra feature adds a variance term and no usable
+signal.
+
+That is worth putting beside H23, which measured `max_z = 0.00, outside =
+0.000` and concluded extrapolation was not the mechanism for the *width model*.
+Both are right, and the reconciliation is the point: **extrapolation is a
+property of the split, not of the feature set.** H23's development suite
+contained the amplitude range it was later asked about; a leave-one-shard-out
+split over shift *regimes* deliberately removes it. So "is my model
+extrapolating?" has no answer independent of the protocol you will deploy it
+under, and the two protocols in this repo give opposite answers on the same
+features.
+
+### Where clause 1 under shift now stands, as a chain of measured numbers
+
+1. `s*` exists on **24/24** shards, and in distribution it is 0.988–1.009. So
+   the clause is **not impossible**: a per-shard constant passes it.
+2. The precision required is **±2.52%** (median in-band window 1.0503 wide),
+   independently reproducing H16's ±4.47% by another route.
+3. The best deployment-observable scalar correlates with `log s*` at ρ =
+   **0.472**, and with a free isotonic link, LOSO, reaches **2/24**.
+4. Two features spanning both shift axes reach **1/24**, because the second
+   axis has no LOSO support.
+5. One part of the gap is a hard identity, not a fitting problem: `relresid`
+   is exactly invariant to rescaling the linear channel, and that shift needs
+   the largest correction in the suite (`s*` = 55–83).
+
+Read together these say something more useful than "the clause fails". **The
+clause is reachable from one labelled shard per shift regime and unreachable
+from zero**, and (1) is what makes that a claim rather than a hope: the target
+exists and is a single number per regime. That is the route the addendum named
+for OOD — promote the k=1 labelled probe and price it honestly as one label —
+arriving independently at the coverage clause from the opposite direction. It is
+the next hypothesis, and `scripts/eval_label_budget.py` and `runs/label_probe.json`
+already exist, so the next turn reads those before writing anything new.

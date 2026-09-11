@@ -1,0 +1,205 @@
+{
+  "n_seeds": 8,
+  "n_shards": 24,
+  "features": [
+    "relresid_ratio_med",
+    "input_amp"
+  ],
+  "clause_eligible": false,
+  "note": "ceiling of a two-feature scalar rule. s* is an oracle target computed from the truth; these counts bound a family, they are not a method result.",
+  "arms": {
+    "2feat": {
+      "features": [
+        "relresid_ratio_med",
+        "input_amp"
+      ],
+      "global_link_n_band_per_seed": [
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "global_link_median": 1.0,
+      "per_family_link_n_band_per_seed": [
+        1,
+        1,
+        2,
+        0,
+        1,
+        2,
+        2,
+        1
+      ],
+      "per_family_link_median": 1.0,
+      "loso_pred_spearman_per_seed": [
+        0.21565217391304345,
+        0.21913043478260866,
+        0.2452173913043478,
+        0.21130434782608692,
+        0.2539130434782608,
+        0.1973913043478261,
+        0.23652173913043475,
+        0.17478260869565218
+      ],
+      "loso_pred_spearman_median": 0.21739130434782605,
+      "median_abs_log_error_per_shard": {
+        "graded_rough/darcy_dam0p1/N64": 1.3179982791633749,
+        "graded_rough/darcy_dam0p2/N64": 1.3395760956411176,
+        "graded_rough/darcy_dam0p3/N64": 1.2872969942143766,
+        "graded_rough/darcy_dam0p5/N64": 1.3223444609834276,
+        "graded_rough/darcy_dam0p7/N64": 1.2889049135083712,
+        "graded_rough/darcy_dam1/N64": 1.1180984138082568,
+        "graded_rough/poisson_dam0p1/N64": 0.08330820869503099,
+        "graded_rough/poisson_dam0p2/N64": 0.01564026426886582,
+        "graded_rough/poisson_dam0p3/N64": 0.11422731971960579,
+        "graded_rough/poisson_dam0p5/N64": 0.40546404760900806,
+        "graded_rough/poisson_dam0p7/N64": 0.7037520803582864,
+        "graded_rough/poisson_dam1/N64": 1.2569216948681023,
+        "input_shift/darcy_amp2/N64": 2.714393568865567,
+        "input_shift/darcy_rough/N64": 1.261335396624892,
+        "input_shift/darcy_smooth/N64": 1.436178031119225,
+        "input_shift/darcy_tau/N64": 1.0418444554688882,
+        "input_shift/helmholtz_amp2/N64": 2.8916268927853697,
+        "input_shift/helmholtz_rough/N64": 0.49984758914665944,
+        "input_shift/helmholtz_smooth/N64": 0.06222644098913058,
+        "input_shift/helmholtz_tau/N64": 0.24128791056003102,
+        "input_shift/poisson_amp2/N64": 3.689229018912319,
+        "input_shift/poisson_rough/N64": 1.215926874917804,
+        "input_shift/poisson_smooth/N64": 0.08774867912324705,
+        "input_shift/poisson_tau/N64": 0.24968452218336895
+      }
+    },
+    "relresid_only": {
+      "features": [
+        "relresid_ratio_med"
+      ],
+      "global_link_n_band_per_seed": [
+        1,
+        0,
+        1,
+        2,
+        2,
+        0,
+        1,
+        1
+      ],
+      "global_link_median": 1.0,
+      "per_family_link_n_band_per_seed": [
+        1,
+        0,
+        0,
+        1,
+        1,
+        2,
+        0,
+        0
+      ],
+      "per_family_link_median": 0.5,
+      "loso_pred_spearman_per_seed": [
+        0.1678260869565217,
+        0.31565217391304345,
+        0.3408695652173913,
+        0.17478260869565218,
+        0.2756521739130435,
+        0.12608695652173912,
+        0.27652173913043476,
+        0.18956521739130433
+      ],
+      "loso_pred_spearman_median": 0.2326086956521739,
+      "median_abs_log_error_per_shard": {
+        "graded_rough/darcy_dam0p1/N64": 0.6564960219967307,
+        "graded_rough/darcy_dam0p2/N64": 0.6961978426115516,
+        "graded_rough/darcy_dam0p3/N64": 0.6975844527958833,
+        "graded_rough/darcy_dam0p5/N64": 0.8738573960993201,
+        "graded_rough/darcy_dam0p7/N64": 0.9511552903923348,
+        "graded_rough/darcy_dam1/N64": 0.9651067780625688,
+        "graded_rough/poisson_dam0p1/N64": 0.6265022625885779,
+        "graded_rough/poisson_dam0p2/N64": 0.5159929473907312,
+        "graded_rough/poisson_dam0p3/N64": 0.4077277533150411,
+        "graded_rough/poisson_dam0p5/N64": 0.1419715604436827,
+        "graded_rough/poisson_dam0p7/N64": 0.06806775903663186,
+        "graded_rough/poisson_dam1/N64": 0.42124376274073605,
+        "input_shift/darcy_amp2/N64": 3.3922244564885684,
+        "input_shift/darcy_rough/N64": 0.8460696183409351,
+        "input_shift/darcy_smooth/N64": 0.9460700248761107,
+        "input_shift/darcy_tau/N64": 0.6393830223037895,
+        "input_shift/helmholtz_amp2/N64": 3.6856117705325344,
+        "input_shift/helmholtz_rough/N64": 0.06653522784439035,
+        "input_shift/helmholtz_smooth/N64": 0.7249568783429703,
+        "input_shift/helmholtz_tau/N64": 0.20995233113174253,
+        "input_shift/poisson_amp2/N64": 4.397219986563775,
+        "input_shift/poisson_rough/N64": 0.4224580281106801,
+        "input_shift/poisson_smooth/N64": 0.9091227820331729,
+        "input_shift/poisson_tau/N64": 0.012205793295382232
+      }
+    },
+    "input_amp_only": {
+      "features": [
+        "input_amp"
+      ],
+      "global_link_n_band_per_seed": [
+        0,
+        1,
+        2,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      "global_link_median": 1.0,
+      "per_family_link_n_band_per_seed": [
+        2,
+        3,
+        1,
+        2,
+        1,
+        1,
+        0,
+        2
+      ],
+      "per_family_link_median": 1.5,
+      "loso_pred_spearman_per_seed": [
+        0.4130434782608695,
+        0.348695652173913,
+        0.37478260869565216,
+        0.4156521739130434,
+        0.43478260869565216,
+        0.3956521739130434,
+        0.38956521739130434,
+        0.37739130434782603
+      ],
+      "loso_pred_spearman_median": 0.3926086956521739,
+      "median_abs_log_error_per_shard": {
+        "graded_rough/darcy_dam0p1/N64": 1.2415343057981056,
+        "graded_rough/darcy_dam0p2/N64": 1.2724623374150605,
+        "graded_rough/darcy_dam0p3/N64": 1.2383602697251057,
+        "graded_rough/darcy_dam0p5/N64": 1.3201928318657377,
+        "graded_rough/darcy_dam0p7/N64": 1.2886766938648007,
+        "graded_rough/darcy_dam1/N64": 1.1054679304569028,
+        "graded_rough/poisson_dam0p1/N64": 0.08491807532700614,
+        "graded_rough/poisson_dam0p2/N64": 0.01668113803519538,
+        "graded_rough/poisson_dam0p3/N64": 0.11235098063633578,
+        "graded_rough/poisson_dam0p5/N64": 0.3948936012526647,
+        "graded_rough/poisson_dam0p7/N64": 0.6665404248536033,
+        "graded_rough/poisson_dam1/N64": 1.1234535179664635,
+        "input_shift/darcy_amp2/N64": 1.86600369837793,
+        "input_shift/darcy_rough/N64": 1.2608429765009503,
+        "input_shift/darcy_smooth/N64": 1.2485482110705903,
+        "input_shift/darcy_tau/N64": 1.0444202570050458,
+        "input_shift/helmholtz_amp2/N64": 2.459330874210614,
+        "input_shift/helmholtz_rough/N64": 0.444736673631775,
+        "input_shift/helmholtz_smooth/N64": 0.0776775182127546,
+        "input_shift/helmholtz_tau/N64": 0.23912988982533456,
+        "input_shift/poisson_amp2/N64": 2.895431542267897,
+        "input_shift/poisson_rough/N64": 1.0836938160187195,
+        "input_shift/poisson_smooth/N64": 0.0658905982231239,
+        "input_shift/poisson_tau/N64": 0.2646733418308611
+      }
+    }
+  }
+}
