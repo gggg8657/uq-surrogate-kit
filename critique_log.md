@@ -3802,3 +3802,71 @@ signal that is exactly invariant to rescaling the linear channel, so it was the
 only candidate whose gain could not have been the amplitude effect. It did not
 produce a gain. That closes the last route this project had for clause 1 under
 covariate shift that was not already known to be an amplitude correction.
+
+## H22 result — the residual features carry signal, and the arm is significantly worse. Prediction 2 falsified
+
+`runs/scale.json → h22`, 8 seeds, `runs/scalerf_u0..u7_het.json`, 24 covariate
+shards (poisson, helmholtz, darcy — the families with a cheap operator apply).
+
+| arm | in band /24, per seed | median |
+|---|---|---|
+| ungated, same 24 shards | 0,1,0,0,0,0,0,0 | 0 |
+| **H15 (5-family fit) scored on the same 24** | 2,2,5,4,4,2,8,6 | **4** |
+| **H22 (3-family fit + two residual features)** | **0,1,1,2,1,0,1,3** | **1** |
+
+Paired diffs **−2,−1,−4,−2,−3,−2,−7,−3**, exact two-sided sign-flip
+**p = 0.0078**. **Prediction 2 said in-band would exceed the baseline on the
+same 24; it is significantly below it.** Registered, measured, falsified.
+
+**Prediction 1 held.** Both residual features carry signal: median coefficients
+`log_resid` **−0.4087** and `log_consist` **−0.3466**, each in the top four on
+8 of 8 seeds. The falsification condition ("both below 0.2 in magnitude") did
+not fire. But log input amplitude is still **+2.5669**, 6.3× the larger of the
+two, so even with an equation-violation signal in the feature set the fit
+remains mostly an amplitude model — the fourth independent confirmation of H19.
+
+**Prediction 3, the leak test, passes.** I registered that if the only shards to
+improve were the `*_amp2` ones, my invariance argument was wrong and I should
+look for the error first. The four `*_amp2` shards sit at **0.000 in both
+arms** — they did not move at all, which is what two exactly scale-invariant
+features should do. The argument holds.
+
+### Why it loses, which is not the direction I expected
+
+It does not lose by leaving intervals too narrow. It loses by **over**-covering:
+
+| shard | ungated | H15 | H22 | width ratio |
+|---|---|---|---|---|
+| `darcy_dam0p3` | 0.741 | **0.901** | 0.963 | 1.52× |
+| `darcy_dam0p5` | 0.590 | **0.907** | 0.982 | 1.98× |
+| `darcy_dam0p7` | 0.218 | **0.896** | 0.991 | 2.47× |
+| `darcy_dam1` | 0.000 | **0.943** | 0.966 | 2.71× |
+| `darcy_rough` | 0.566 | **0.903** | 0.982 | 1.95× |
+
+Every one of these moves *up* from H15 and straight through the top of the
+band. The residual features are telling h that these samples violate their
+equation, h widens accordingly, and it widens too much. The KPI band is
+two-sided, so this is a failure — and it is the same failure mode H15 had on the
+`smooth` shards with the sign reversed. A signal that is real, informative and
+mis-scaled is worth more than no signal, but it is not worth a clause.
+
+### What is not yet attributable, and the arm that will fix that
+
+`--residual-features` moves two things at once — it adds two columns **and**
+forces the fit onto three families. So the comparison above is against a
+5-family fit, and "H22 is worse" could be the columns or could be the narrower
+fitting set. **No attribution is claimed from this table.** The fit-restricted
+control (`runs/scalerc_u*_het.json`, same three families, same fitting set, two
+columns fewer) started when the H22 arm's eighth seed landed; H22 minus that
+control is exactly the two residual features, and only that difference can
+attribute anything.
+
+### Where this leaves the clause
+
+Nothing here changes the verdict. The residual is the one deployment-observable
+quantity that measures this sample's equation violation, it is exactly
+amplitude-invariant, it demonstrably carries width information — and adding it
+to the feature set makes the in-band count go **down**, because the width it
+implies is not the width the band wants. That is a fifth distinct method
+failing against the bound H16 states without reference to any of them: predict
+the interval width to a median 4.47% across a 28.6–68.4× range.
