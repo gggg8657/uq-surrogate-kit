@@ -5995,3 +5995,120 @@ What it is a reason for is reporting the **one-sided conservative** reading
 beside the two-sided one — that is what conformal prediction actually guarantees
 and what most published work reports — with both labelled and neither replacing
 the other. That is rung 1 and it is the next thing to do.
+
+## H31 — written before the run: the one-sided conservative reading, and the width it costs
+
+This is rung 1, and the last entry named it as the next thing to do. It is the
+only rung on clause 1 under shift that has never been reported, and I am
+writing down what I already know from existing runs *before* the new
+measurement so the new part is separable from the old.
+
+### The two readings, and why both belong in the table
+
+The KPI says `커버리지 90±2%`. I have been scoring that as a **two-sided band**:
+a shard passes iff its coverage lands in [0.88, 0.92]. That is the strict
+reading and it stays the clause verdict.
+
+What split conformal actually *guarantees* is one-sided:
+P(Y ∈ C(X)) ≥ 1 − α. Every conformal paper I would be compared against reports
+marginal coverage ≥ 1 − α **paired with an efficiency number** (mean or median
+interval width), because a one-sided reading with no width column is passable
+by returning ±∞ — which is exactly the trap H13 caught this repo in
+(`weighted` at 100% coverage with 30/32 shards abstaining). So the one-sided
+reading is only admissible with the width beside it, and that is how it goes in.
+
+* **R2 (strict, two-sided, the clause):** coverage ∈ [0.88, 0.92].
+* **R1 (one-sided conservative, the conventional reading):** coverage ≥ 0.90
+  **and** the interval is finite, reported with the median width multiplier
+  against the ungated interval.
+
+Neither replaces the other. R2 remains what `PASS`/`not PASS` is keyed to.
+
+### What the existing runs already say, before any new run
+
+From `runs/starget_u*_het.json` and `runs/stargeq_u*_het.json` (8 seeds each,
+24 covariate-shift shards, `clause_eligible: false` because s* uses the truth —
+used here only as the *evaluation function*, since coverage is monotone
+increasing in the σ scale, so "coverage ≥ 0.90 at scale c" is exactly "s* ≤ c"):
+
+| σ scale c | base path, R1 /24 (min/med/max over 8 seeds) | equivariant path |
+|---|---|---|
+| 1 (no inflation) | 3/3/3 | 3/3/4 |
+| 1.5 | 10/11/11 | 12/13/13 |
+| 2 | 13/14/16 | 15/16/18 |
+| 3 | 17/19/19 | 19/21/21 |
+| 5 | 19/19/19 | 21/21/21 |
+| 10 | 21/21/21 | **23/23/23** |
+| 100 | 24/24/24 | 24/24/24 |
+
+So **moving from R2 to R1 changes 0/24 to 3/24 and nothing more** — the
+failures under shift are *under*-coverage, not over-coverage, and re-reading
+the metric one-sided does not rescue the clause on its own. That is the honest
+rung-1 answer and it is a null.
+
+The interesting part is the next column. On the equivariant path a **single
+constant c = 10** takes R1 to **23/24 on all 8 seeds**, and the one holdout is
+`input_shift/darcy_amp2` at s* = 67.08 — the shard H29 already explained: its
+amplitude enters the Darcy coefficient, so no input-scale symmetry exists to
+restore, and it is the only one of the three `amp2` shards the equivariance
+wrapper does not fix (83.26 → 1.014 and 55.10 → 1.064 for poisson and
+helmholtz; 67.08 → 67.08 for darcy).
+
+### The hypothesis
+
+**A single conservative inflation constant, chosen on the development shift
+suite alone and applied with the calibration quantile frozen, meets the
+one-sided reading on the shifted shards; its whole content is the width it
+costs and the in-distribution sharpness it destroys.**
+
+The ladder above is not yet a result, because c was read off the eval shards'
+own s*. The method has to pick c without them. The dev suite
+(`uqkit/devshift.py`, seed block 40000+, values disjoint from every evaluation
+shard and checked by `assert_disjoint()`) is labelled data I generate, so
+computing a required scale on *it* is not oracle access to the test.
+
+Arms, all with q frozen at its calibration value, all zero-label at test time:
+
+* **A0** c = 1. The ungated control.
+* **A1(p)** c = the p-th percentile of the dev shards' own s*, p ∈ {50, 75, 90,
+  100}. One constant for every shard and every family.
+
+### Registered predictions
+
+1. **dev max s\* > 67.1 on the equivariant path.** The dev amp ladder reaches
+   3.4 where the eval shards use 2.0, and s* grows with amplitude, so the dev
+   suite should *bracket* the hardest eval shard rather than extrapolate to it.
+   If this is false, 24/24 is not honestly reachable from this dev suite and
+   the finding is about the suite, not the method.
+2. **A1(100) reaches R1 = 24/24 on ≥ 7 of 8 seeds, equivariant path.**
+3. **A1(90) reaches R1 ≥ 21/24 and < 24/24** — one constant at the 90th
+   percentile cannot cover a shard that needs 67× when the median needs 1.4×.
+4. **The same constant destroys the in-distribution result**: in-distribution
+   coverage ≥ 0.99 on all three families at c ≥ 10, against the 0.9026 that is
+   currently clause 1's in-distribution PASS. In-dist s* is 0.991–1.013, so
+   this is close to arithmetic; it is measured anyway because the *size* of the
+   in-distribution loss is what decides whether the gated version is worth
+   building.
+5. **Width cost at A1(100) ≥ 50×** median interval width against the ungated
+   interval.
+
+### What would distinguish this explanation from the obvious alternative
+
+The obvious alternative is that I am buying coverage with width, which is the
+H13 abstention trap wearing a third disguise. The distinguishing evidence is
+that **H13's intervals were infinite and these are finite and quoted**: every
+R1 cell travels with its realized median width multiplier, and a cell that
+reaches the band on a >3× wider interval is flagged exactly as
+`fit_scale.py`'s `width_flag` already does. An honest conservative method and
+an abstaining one differ by whether the width is a number.
+
+### Queued as H32, not run here, because it is a second change
+
+If prediction 4 holds, the deployable version gates the constant on a shift
+detector: c = 1 when the input probe says in-distribution, c = c_dev when it
+says shifted. `runs/conformal.json` already measures that probe separating
+calibration from shifted inputs at **AUC 1.000 on every one of 32 shards** —
+the same non-overlapping support that made weighted conformal abstain makes the
+*gate* trivial. That would give the in-distribution two-sided pass and the
+shifted one-sided pass from one method with zero labels. It is a separate
+hypothesis and it runs separately.
