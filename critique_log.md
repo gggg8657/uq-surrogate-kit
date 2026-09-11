@@ -6344,3 +6344,115 @@ the AUC is 0.983 (far above θ), so on this suite the gate is early rather than
 late — but `dam0p1` is the weakest rung that exists, so the crossing is
 unmeasured, and "unmeasured" is not "absent". H32b generates a finer ladder
 below it, in memory, and reports both curves.
+
+## H32, rung 3 — the replicated gate found a false alarm my single realization hid, and my threshold rule has no false-alarm control
+
+`runs/gate_reps.json`, `scripts/eval_gate_only.py`, 8 input replicates per
+cell, probe batch 256 on both sides, no checkpoint and no GPU.
+
+| cell | probe AUC over replicates | fired |
+|---|---|---|
+| in-dist `poisson` test split | 0.446–0.537 | **0/8** |
+| in-dist `helmholtz` test split | 0.422–**0.5995** | **1/8** |
+| in-dist `darcy` test split | 0.395–0.554 | **0/8** |
+| all 24 shifted shards | median 0.976–1.000, lowest single replicate **0.9555** | **8/8 each, 24/24 shards** |
+
+θ = 0.5723, the maximum of 24 in-distribution nulls (median 0.5157).
+
+**Pooled in-distribution false-alarm rate: 1/24 = 0.0417, not the 0/3 the
+model-seeded run reported.** The direction is the one I flagged in advance: a
+single realization could only have understated it. The cost of a false alarm is
+not small — it applies the 405× constant to an in-distribution batch, so ~4% of
+in-distribution deployments would receive a useless interval.
+
+### The defect is in my threshold rule, not in the gate
+
+θ = max over R null draws is an *extreme order statistic of 24 samples*. It has
+no false-alarm guarantee at all: it is the largest of 24 draws from a
+distribution whose 8 fresh draws per family then have a 1-in-24 chance of
+exceeding it, which is exactly what happened. Lowering or raising θ now, after
+seeing which cell fired, would be fitting the threshold to the outcome and is
+the one thing this brief forbids.
+
+What is allowed, and is the correct construction, is to **replace the rule**
+before measuring it again:
+
+**H32b, registered before the run.** θ is the **(1 − δ) quantile of the null
+AUC distribution, δ = 0.01, estimated from 200 nulls per family**, taken
+per-family — the same per-family treatment the conformal quantile already gets
+everywhere in this kit, and available at deployment because the configured task
+is known. Then the false-alarm rate is a *design parameter* rather than an
+accident of a sample maximum.
+
+Registered predictions:
+
+1. **The measured false-alarm rate comes in at or below 0.02** on held-out
+   in-distribution test batches, against δ = 0.01. It will not be exactly δ:
+   the null is estimated on `cal` and the test batch is a different split.
+2. **All 24 shards still fire on every replicate.** Their lowest single
+   replicate AUC is 0.9555 against a per-family θ that will land near 0.60, so
+   the margin is ~0.36 and δ would have to be absurdly small to lose a shard.
+3. **Therefore the miss rate stays 0 while the false-alarm rate drops by ~4×**,
+   and the gate's error rates become quotable as a design point rather than as
+   an observation.
+
+If prediction 2 fails — if tightening θ to control false alarms starts missing
+weak shifts — then the gate has a real operating-point trade and the honest
+deliverable is the ROC of (false alarm, missed shift) with the coverage cost of
+each error beside it. That would be a better result than a pass, and it is why
+both error rates are measured in the same run.
+
+## H32b measured: the quantile rule halves the false-alarm rate, keeps every shard, and my registered threshold was finer than my measurement's resolution
+
+`runs/gate_reps_d01.json`, 16 input replicates per cell, 200 nulls per family,
+per-family θ at δ = 0.01.
+
+| family | θ (99th pct of 200 nulls) | null median | in-dist false alarms | max in-dist AUC |
+|---|---|---|---|---|
+| poisson | 0.5702 | 0.4838 | 0/16 | 0.5370 |
+| helmholtz | 0.5939 | 0.5098 | **1/16** | 0.5995 |
+| darcy | 0.6288 | 0.5215 | 0/16 | 0.5540 |
+
+**Pooled false-alarm rate 0.0208 (1 of 48 replicate-family cells), against
+0.0417 (1 of 24) under the sample-maximum rule. All 24 shards still fire on
+every one of 16 replicates; the lowest single-replicate shard AUC is 0.9423
+(`graded_rough/poisson_dam0p1`) against a θ of 0.5702 for that family.**
+
+### Prediction 1 is falsified, and the reason is my registration, not the method
+
+I registered "the measured false-alarm rate comes in **at or below 0.02**". It
+came in at **0.0208**. With 3 families × 16 replicates = 48 cells, the smallest
+non-zero rate measurable is 1/48 = 0.0208, so I registered a threshold *below
+the resolution of my own measurement* — the prediction could only be satisfied
+by exactly zero false alarms, which is not what δ = 0.01 promises. Under
+δ = 0.01 the expected count is 0.48 cells and P(≥1 of 48) = **0.3827**, so one
+false alarm is the ordinary outcome and the measurement is consistent with the
+design point. **The prediction was mis-stated; the result is not a surprise.**
+The lesson is the same one the seed-count rule encodes: a registered threshold
+has to be coarser than the grid the measurement can land on.
+
+### Prediction 3 is half-confirmed and the comparison is not paired
+
+I predicted the rate would drop ~4×; it dropped 2× (0.0417 → 0.0208). And the
+two runs use different replicate counts (8 and 16), so the denominators differ
+and the two rates are **not a paired comparison** — both are one-cell
+observations with intervals that overlap heavily. What is solid is the
+*mechanism*: the sample maximum of R draws is exceeded by a fresh draw with
+probability ≈ 1/(R+1) ≈ 0.04 at R = 24, and the measured 0.0417 sits on that
+number. The quantile rule replaces an accident with a stated δ, which is the
+point, and it does not cost a single shard.
+
+### What the gate's operating point now is, stated as the design point
+
+* **False alarm** (in-distribution batch judged shifted → 405× interval where
+  1× was correct): design δ = 0.01 per family; measured 0.0208, 1/48 cells,
+  consistent with the design at p = 0.38.
+* **Miss** (shifted batch judged in-distribution → interval left uncorrected):
+  **0 of 24 shards on 16/16 replicates**, with 0.34–0.40 of AUC margin.
+
+Prediction 2 held, so the trade I was watching for did not materialize on this
+suite: tightening θ to control false alarms costs nothing in detection, because
+the shifts here are separated at AUC ≥ 0.94 and the null sits at ≈ 0.5. **That
+is a fact about this shift suite and not about gates in general**, and the
+crossing measurement (H32c, the finer ladder) is the only thing that would turn
+it into a statement about the method.

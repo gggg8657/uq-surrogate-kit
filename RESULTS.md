@@ -704,6 +704,109 @@ The H17 write-up originally argued the wrapper was “one extra reduction per sa
 **This does not make the clause pass and was not expected to.** A width model would still have to span 68.4× while holding ±2.2%. What H17 establishes is that a large part of that requirement was our own broken equivariance rather than a fact about uncertainty quantification — the certificate could not be fixed without fixing the model.
 
 
+### 1i. H31 — the one-sided conservative reading, and the 405× interval it costs (`runs/h31_onesided.json`)
+
+Two readings of clause 1, side by side. **R2** is the clause: coverage in [0.88, 0.92], two-sided. **R1** is what split conformal actually guarantees and what a conformal paper reports: coverage ≥ 0.90 with a *finite* interval — admissible only with the width beside it, because H13 in this repo published 100% coverage with 30/32 shards abstaining on an infinite one. R1 is never the clause verdict.
+
+
+#### equivariant prediction path (H17 wrapper)
+
+8 seeds, 24 covariate-shift shards, 45 development shards × 256 samples from seed block 40000+.
+
+| σ scale c | chosen by | R1 = cov ≥ 0.90, /24 | R2 = in band, /24 | median width × | in-dist R2 /3 |
+|---|---|---|---|---|---|
+| 1 | a fixed ladder, *not* dev-chosen | 3–4 | 0–1 | 1 | 3 |
+| 1.126 | the development suite's 50th percentile s\* | 6–8 | 2–4 | 1.121 | 0 |
+| 2.013 | the development suite's 75th percentile s\* | 15–18 | 0–3 | 1.965 | 0 |
+| 6.544 | the development suite's 90th percentile s\* | 22–23 | 0–1 | 6.284 | 0 |
+| 20.2 | the development suite's 95th percentile s\* | 23 | 0 | 19.29 | 0 |
+| 334.6 | the development suite's 99th percentile s\* | 24 | 0 | 319 | 0 |
+| **425.4** | the development suite's 100th percentile s\* | **24** | 0 | **405.6** | 0 |
+| 2 | a fixed ladder, *not* dev-chosen | 15–18 | 0–2 | 1.953 | 0 |
+| 5 | a fixed ladder, *not* dev-chosen | 21 | 0–2 | 4.812 | 0 |
+| 10 | a fixed ladder, *not* dev-chosen | 23 | 0 | 9.578 | 0 |
+| 100 | a fixed ladder, *not* dev-chosen | 24 | 0 | 95.35 | 0 |
+
+The dev-chosen constant is the p100 row: **R1 = 24/24 on 8 of 8 seeds, at 405.6× the ungated interval width.** No evaluation shard contributes to it — `tests/test_onesided.py` re-derives every `c_dev_p*` from that file's own development s\* values and fails if it was fitted on anything else.
+
+Two columns keep that from being read as a clause pass. **Under shift R2 never exceeds 4/24** anywhere on the ladder (its best is at c = 1.126; it is 0/24 at the dev-chosen constant), because a scalar that lifts a shard from 0.00 to 0.90 carries the easy shards past 0.92 on the way. And **in distribution the same constant destroys the result**: 3/3 families in band at c = 1, 0/3 at c = 425.4 — and the smallest inflation on this ladder that already leaves the band is **c = 1.126**, 12.6% wider, because in-distribution s* is 0.991–1.013 and the in-band window on the scale is a ratio of 1.05.
+
+The price is a tail estimate and it is unstable. The dev suite's largest s\* is 170.1–1600 over the 8 seeds (argmax one of `dev_darcy_amp2p6`, `dev_darcy_amp3p4`), against an oracle constant of 51.67–85.89 that the evaluation shards actually need — an overpayment of **2.75× to 25.2×** depending on the seed. A deployment quoting one width should quote the range.
+
+
+#### base prediction path
+
+8 seeds, 24 covariate-shift shards, 45 development shards × 256 samples from seed block 40000+.
+
+| σ scale c | chosen by | R1 = cov ≥ 0.90, /24 | R2 = in band, /24 | median width × | in-dist R2 /3 |
+|---|---|---|---|---|---|
+| 1 | a fixed ladder, *not* dev-chosen | 3 | 0 | 1 | 3 |
+| 1.537 | the development suite's 50th percentile s\* | 10–11 | 0–2 | 1.512 | 0 |
+| 11.63 | the development suite's 75th percentile s\* | 21 | 0 | 11.13 | 0 |
+| 121.4 | the development suite's 90th percentile s\* | 24 | 0 | 115.7 | 0 |
+| 216.5 | the development suite's 95th percentile s\* | 24 | 0 | 206.4 | 0 |
+| 483.1 | the development suite's 99th percentile s\* | 24 | 0 | 460.2 | 0 |
+| **624.9** | the development suite's 100th percentile s\* | **24** | 0 | **595.2** | 0 |
+| 2 | a fixed ladder, *not* dev-chosen | 13–16 | 0–2 | 1.953 | 0 |
+| 5 | a fixed ladder, *not* dev-chosen | 19 | 0–2 | 4.812 | 0 |
+| 10 | a fixed ladder, *not* dev-chosen | 21 | 0 | 9.578 | 0 |
+| 100 | a fixed ladder, *not* dev-chosen | 24 | 0 | 95.35 | 0 |
+
+The dev-chosen constant is the p100 row: **R1 = 24/24 on 8 of 8 seeds, at 595.2× the ungated interval width.** No evaluation shard contributes to it — `tests/test_onesided.py` re-derives every `c_dev_p*` from that file's own development s\* values and fails if it was fitted on anything else.
+
+Two columns keep that from being read as a clause pass. **Under shift R2 never exceeds 2/24** anywhere on the ladder (its best is at c = 1.537; it is 0/24 at the dev-chosen constant), because a scalar that lifts a shard from 0.00 to 0.90 carries the easy shards past 0.92 on the way. And **in distribution the same constant destroys the result**: 3/3 families in band at c = 1, 0/3 at c = 624.9 — and the smallest inflation on this ladder that already leaves the band is **c = 1.537**, 53.7% wider, because in-distribution s* is 0.991–1.013 and the in-band window on the scale is a ratio of 1.05.
+
+The price is a tail estimate and it is unstable. The dev suite's largest s\* is 225.4–9917 over the 8 seeds (argmax one of `dev_darcy_amp3p4`, `dev_helmholtz_amp3p4`), against an oracle constant of 68.47–89.54 that the evaluation shards actually need — an overpayment of **2.53× to 122×** depending on the seed. A deployment quoting one width should quote the range.
+
+
+Paired across the two prediction paths at matched fixed c, the H17 equivariance wrapper is worth **+2 shards of R1** at `c_fixed_10`, identical on every seed, exact two-sided sign-flip **p = 0.0078** — the smallest attainable at 8 seeds. It also compresses the constant: the dev maximum spans 170.1–1600 on the equivariant path against 225.4–9917 on the base path.
+
+
+### 1j. H32 — a regime gate: two-sided in distribution *and* one-sided under shift (`runs/h32_gate.json`)
+
+H31 showed a single scalar cannot pass both readings, and the reason is arithmetic rather than statistical: the in-distribution band tolerates about ±2.5% on the σ scale while the shifted shards need 1.06× to 67×. So the method is given a regime decision. c = 1 when the shift gate is quiet, c = c_dev_p100 when it fires. The gate is a two-sample LikelihoodRatioProbe on spectral input features, thresholded at the maximum held-out AUC over in-distribution null probes built from disjoint halves of the CALIBRATION split. No evaluation shard contributes to the threshold or to the constant.
+
+
+#### equivariant prediction path
+
+8 seeds, threshold θ = 0.5511 from in-distribution null probes at batch 512 (null median AUC 0.4973), constant c = 170.1–1600.
+
+| regime | gate | reading | result | median width × |
+|---|---|---|---|---|
+| in distribution, 3 families | false alarms 0/3 | **R2, two-sided — the clause** | **3/3** | 1 |
+| under shift, 24 shards | fired 24/24 | **R1, one-sided ≥ 0.90** | **24/24** | 405.6 |
+| under shift, 24 shards | (same run) | R2, two-sided — the clause | 0/24 | 405.6 |
+
+The gate's margin is the reason this works at all: the *lowest* probe AUC over all 24 shifted shards is 0.9830 against a threshold of 0.5511 set on in-distribution data alone, while the in-distribution test split — held out from the null that set θ — scores darcy 0.4787, helmholtz 0.5280, poisson 0.4820. No shard was missed on any seed.
+
+
+**The gate has no model seed, so the row above is one input realization.** Every probe AUC in `runs/gt*_u*_het.json` is identical across the 8 model seeds to four decimals: the gate compares *input* spectra against the calibration inputs and never sees the surrogate. `scripts/eval_gate_only.py` therefore replicates over what actually varies — the calibration batch and the judged batch — and needs no checkpoint and no GPU.
+
+| threshold rule | θ | in-dist false-alarm rate | shards firing on every replicate | lowest shard AUC |
+|---|---|---|---|---|
+| sample maximum of the nulls (the first rule) | 0.5723 | **0.0417** (1/24 replicate-family cells) | 24/24 | 0.9555 |
+| per-family 99th percentile of 200 nulls (delta = 0.01) | 0.6288 | **0.0208** (1/48 replicate-family cells) | 24/24 | 0.9423 |
+
+The first rule's false-alarm rate is **0.0417**, not the 0/3 the model-seeded run reports, and the direction is the one a single realization can only get wrong in: it understated it. A false alarm applies the conservative constant to an in-distribution batch, so that rate is the fraction of in-distribution deployments handed a useless interval. The defect is the *rule*: θ as the maximum of 24 null draws is an extreme order statistic, and a fresh draw exceeds it with probability about 1/25. Replacing it with a per-family quantile at a stated δ = 0.01 over 200 nulls per family takes the measured rate to **0.0208** with 24/24 shards still firing on every replicate, so the error rate becomes a design point rather than an accident.
+
+**What this does and does not say.** In distribution the clause reading is met and the interval is unchanged (1×). Under shift only the *one-sided* reading is met, on an interval 405.6× wider than the one the surrogate was sold on, and the two-sided clause is still 0/24. The gate chooses between two scalars; it cannot hit a ±2% band on shards whose required scales span 63×. It is also a **batch-level** decision needing ~512 unlabelled inputs from the regime — no labels and no solve, but not one sample.
+
+
+#### base prediction path
+
+8 seeds, threshold θ = 0.5511 from in-distribution null probes at batch 512 (null median AUC 0.4973), constant c = 225.4–9917.
+
+| regime | gate | reading | result | median width × |
+|---|---|---|---|---|
+| in distribution, 3 families | false alarms 0/3 | **R2, two-sided — the clause** | **3/3** | 1 |
+| under shift, 24 shards | fired 24/24 | **R1, one-sided ≥ 0.90** | **24/24** | 595.2 |
+| under shift, 24 shards | (same run) | R2, two-sided — the clause | 0/24 | 595.2 |
+
+The gate's margin is the reason this works at all: the *lowest* probe AUC over all 24 shifted shards is 0.9830 against a threshold of 0.5511 set on in-distribution data alone, while the in-distribution test split — held out from the null that set θ — scores darcy 0.4787, helmholtz 0.5280, poisson 0.4820. No shard was missed on any seed.
+
+**What this does and does not say.** In distribution the clause reading is met and the interval is unchanged (1×). Under shift only the *one-sided* reading is met, on an interval 595.2× wider than the one the surrogate was sold on, and the two-sided clause is still 0/24. The gate chooses between two scalars; it cannot hit a ±2% band on shards whose required scales span 63×. It is also a **batch-level** decision needing ~512 unlabelled inputs from the regime — no labels and no solve, but not one sample.
+
+
 ### 3d. Solver-consistency detection, and the two deployments (`runs/consistency_uq.json`)
 
 An operator shift is observable only if the request *names* the operator. **(A)** scores the residual under `PARENT[task]`, the operator the surrogate is configured for — the process moved and nobody reconfigured the model. Under (A) every unsupervised detector is a function of (input, configured operator), neither of which changed, so it is at chance **by construction**; that is the strict reading and it stands. **(B)** scores it under the operator the request names. Of the 49 shards, exactly **6 change the operator** (`tests/test_sims.py::test_operator_key_partitions_the_ood_suite` pins the partition); on the rest (B) is byte-identical to (A), which is the control.
