@@ -288,6 +288,16 @@ def main():
                          "question is whether H15's Darcy-ladder gain "
                          "survives a fit that never sees another family's "
                          "amplitude rows.")
+    ap.add_argument("--h22-glob", default="runs/scalerf_u*_het.json",
+                    help="H22: two residual features added to z. Forces a "
+                         "restriction to families with a cheap operator "
+                         "apply, so it is compared BOTH against the deployed "
+                         "arm restricted to the same shards and against a "
+                         "fit-restricted control.")
+    ap.add_argument("--h22ctl-glob", default="runs/scalerc_u*_het.json",
+                    help="H22 control: same families, same fitting set, "
+                         "WITHOUT the residual features. H22 minus this is "
+                         "exactly the two residual columns.")
     ap.add_argument("--out", default="runs/scale.json")
     args = ap.parse_args()
 
@@ -397,6 +407,83 @@ def main():
         for k, v in cmp.items():
             print(f"[H20] vs {k.upper()} {v['other_per_seed']}: diff "
                   f"{v['diff_per_seed']}, p={v['exact_sign_flip_p']:.4f}")
+    h22 = _load(args.h22_glob)
+    if h22:
+        res["h22"] = agg_h15(h22)
+        names = sorted(h22[0]["leave_one_mechanism_out"]["shards"])
+        a = res["h22"]["lomo"]["in_band_per_seed"]
+        cmp = {}
+
+        def _restricted(runs_, label):
+            """In-band count per seed over ONLY the shards H22 could evaluate.
+
+            Taken from the H22 runs themselves rather than hardcoded, so the
+            subset cannot drift away from what the residual arm actually ran
+            on. A 24-shard arm and a 32-shard arm are not comparable, and this
+            is the only place that restriction is applied.
+            """
+            out_ = []
+            for r in runs_:
+                sh = r["leave_one_mechanism_out"]["shards"]
+                if not set(names) <= set(sh):
+                    return None
+                out_.append(sum(1 for n in names
+                                if BAND[0] <= sh[n]["scaled"]["coverage"]
+                                <= BAND[1]))
+            return out_
+
+        for label, runs_ in (("h15_eval_restricted", h15),
+                             ("h22_control_fit_restricted",
+                              _load(args.h22ctl_glob))):
+            if not runs_ or len(runs_) != len(h22):
+                continue
+            b = _restricted(runs_, label)
+            if b is None:
+                continue
+            d = [x - y for x, y in zip(a, b)]
+            cmp[label] = {"other_per_seed": b, "diff_per_seed": d,
+                          "exact_sign_flip_p": (sign_flip(d) if any(d)
+                                                else 1.0)}
+        # the ungated arm on the same 24 shards, from the H22 runs themselves
+        ung24 = [sum(1 for n in names
+                     if BAND[0] <= r["leave_one_mechanism_out"]["shards"][n]
+                     ["ungated"]["coverage"] <= BAND[1]) for r in h22]
+        coef = {}
+        for r in h22:
+            for c in r["folds"]["all"]["coef_top"]:
+                coef.setdefault(c["feature"], []).append(c["coef"])
+        res["h22"]["vs"] = {
+            "h22_per_seed": a,
+            "n_shards_evaluated": len(names),
+            "families": h22[0].get("families"),
+            "ungated_on_same_shards_per_seed": ung24,
+            "comparisons": cmp,
+            "residual_coef_median": {
+                k: st.median(v) for k, v in coef.items()
+                if k in ("log_resid", "log_consist")},
+            "residual_coef_seeds_in_top12": {
+                k: len(v) for k, v in coef.items()
+                if k in ("log_resid", "log_consist")},
+            "largest_coef": max(
+                ((k, st.median(v)) for k, v in coef.items()),
+                key=lambda kv: abs(kv[1]), default=(None, None)),
+            "note": ("H22 adds two residual features AND is forced onto the "
+                     "families with a cheap apply. `h15_eval_restricted` is "
+                     "the deployed arm scored on the same shards; "
+                     "`h22_control_fit_restricted` holds the fitting set "
+                     "fixed and removes only the two columns, so it is the "
+                     "one that attributes a gain."),
+        }
+        print(f"[H22] LOMO {a} over {len(names)} shards "
+              f"({res['h22']['vs']['families']}); ungated on the same shards "
+              f"{ung24}")
+        for k, v in cmp.items():
+            print(f"[H22] vs {k} {v['other_per_seed']}: diff "
+                  f"{v['diff_per_seed']}, p={v['exact_sign_flip_p']:.4f}")
+        rc = res["h22"]["vs"]["residual_coef_median"]
+        if rc:
+            print(f"[H22] residual coefs {({k: round(v, 4) for k, v in rc.items()})}"
+                  f" vs largest {res['h22']['vs']['largest_coef']}")
     base, eq = _load(args.wtol_base_glob), _load(args.wtol_eq_glob)
     w = agg_wtol(base, eq)
     if w:

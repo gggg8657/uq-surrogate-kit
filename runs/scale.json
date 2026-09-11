@@ -3063,6 +3063,677 @@
       "note": "H20 tests whether H15's Darcy gain was a Darcy difficulty model or spillover from the loss mass of other families' amplitude rows. A per-family fit cannot see another family, so if the ladder holds it was the former."
     }
   },
+  "h22": {
+    "n_seeds": 8,
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "leak_fold": "insample_leak",
+    "leak_note": "h fitted ON the evaluation shards: an in-sample ceiling for this feature set and model class, never a result",
+    "dev": {
+      "n_shards": 75,
+      "n_per_shard": 256,
+      "seed_base": 40000,
+      "by_mechanism": {
+        "alpha": {
+          "n_rows": 5376,
+          "n_shards": 21
+        },
+        "tau": {
+          "n_rows": 3072,
+          "n_shards": 12
+        },
+        "amp": {
+          "n_rows": 3072,
+          "n_shards": 12
+        }
+      },
+      "disjoint_checked": true
+    },
+    "band": [
+      0.88,
+      0.92
+    ],
+    "width_flag": 3.0,
+    "n_cal_fit": 1536,
+    "n_cal_q": 1536,
+    "by_fold": {
+      "all": {
+        "leak": false,
+        "held_out_mechanism": null,
+        "in_band_per_seed": [
+          3,
+          1,
+          2,
+          4,
+          3,
+          1,
+          3,
+          1
+        ],
+        "in_band_deployable_per_seed": [
+          3,
+          1,
+          2,
+          4,
+          2,
+          1,
+          2,
+          1
+        ],
+        "in_band_median": 2.5,
+        "in_dist_coverage_median": {
+          "poisson": 0.90234375,
+          "helmholtz": 0.90234375,
+          "darcy": 0.90234375
+        },
+        "in_dist_coverage_pooled_q_median": {
+          "poisson": 0.9990234375,
+          "helmholtz": 0.99609375,
+          "darcy": 0.70703125
+        },
+        "top_features": [
+          "a_spec9",
+          "mu_spec4",
+          "mu_spec2",
+          "log_sigrel",
+          "log_resid",
+          "log_mumax"
+        ]
+      },
+      "alpha": {
+        "leak": false,
+        "held_out_mechanism": "alpha",
+        "in_band_per_seed": [
+          0,
+          1,
+          1,
+          2,
+          1,
+          1,
+          1,
+          3
+        ],
+        "in_band_deployable_per_seed": [
+          0,
+          1,
+          1,
+          2,
+          1,
+          1,
+          1,
+          3
+        ],
+        "in_band_median": 1.0,
+        "in_dist_coverage_median": {
+          "poisson": 0.90234375,
+          "helmholtz": 0.90234375,
+          "darcy": 0.90234375
+        },
+        "in_dist_coverage_pooled_q_median": {
+          "poisson": 1.0,
+          "helmholtz": 0.998046875,
+          "darcy": 0.705078125
+        },
+        "top_features": [
+          "a_spec9",
+          "log_consist",
+          "mu_spec4",
+          "mu_spec2",
+          "mu_spec1",
+          "log_sigmed"
+        ]
+      },
+      "amp": {
+        "leak": false,
+        "held_out_mechanism": "amp",
+        "in_band_per_seed": [
+          4,
+          3,
+          3,
+          8,
+          7,
+          4,
+          8,
+          2
+        ],
+        "in_band_deployable_per_seed": [
+          4,
+          3,
+          3,
+          8,
+          7,
+          4,
+          8,
+          2
+        ],
+        "in_band_median": 4.0,
+        "in_dist_coverage_median": {
+          "poisson": 0.90234375,
+          "helmholtz": 0.90234375,
+          "darcy": 0.90234375
+        },
+        "in_dist_coverage_pooled_q_median": {
+          "poisson": 0.908203125,
+          "helmholtz": 0.9296875,
+          "darcy": 0.8720703125
+        },
+        "top_features": [
+          "log_consist",
+          "mu_spec4",
+          "mu_spec10",
+          "mu_spec1",
+          "log_mumax",
+          "log_sigmed"
+        ]
+      },
+      "insample_leak": {
+        "leak": true,
+        "held_out_mechanism": null,
+        "in_band_per_seed": [
+          4,
+          1,
+          4,
+          2,
+          3,
+          1,
+          0,
+          3
+        ],
+        "in_band_deployable_per_seed": [
+          4,
+          1,
+          4,
+          2,
+          3,
+          1,
+          0,
+          2
+        ],
+        "in_band_median": 2.5,
+        "in_dist_coverage_median": {
+          "poisson": 0.90234375,
+          "helmholtz": 0.90234375,
+          "darcy": 0.90234375
+        },
+        "in_dist_coverage_pooled_q_median": {
+          "poisson": 0.98828125,
+          "helmholtz": 0.984375,
+          "darcy": 0.7421875
+        },
+        "top_features": [
+          "a_spec9",
+          "mu_spec4",
+          "log_resid",
+          "log_mumax",
+          "log_sigrel",
+          "mu_spec3"
+        ]
+      },
+      "tau": {
+        "leak": false,
+        "held_out_mechanism": "tau",
+        "in_band_per_seed": [
+          3,
+          4,
+          3,
+          4,
+          5,
+          1,
+          4,
+          7
+        ],
+        "in_band_deployable_per_seed": [
+          3,
+          4,
+          3,
+          3,
+          4,
+          1,
+          4,
+          7
+        ],
+        "in_band_median": 4.0,
+        "in_dist_coverage_median": {
+          "poisson": 0.90234375,
+          "helmholtz": 0.90234375,
+          "darcy": 0.90234375
+        },
+        "in_dist_coverage_pooled_q_median": {
+          "poisson": 1.0,
+          "helmholtz": 0.998046875,
+          "darcy": 0.705078125
+        },
+        "top_features": [
+          "a_spec9",
+          "mu_spec4",
+          "mu_spec2",
+          "log_sigrel",
+          "mu_spec10",
+          "log_mumax"
+        ]
+      }
+    },
+    "lomo": {
+      "note": "each shard scored only by the fold that never saw its shift mechanism; the insample_leak fold is excluded by construction",
+      "n_shards": 24,
+      "in_band_per_seed": [
+        0,
+        1,
+        1,
+        2,
+        1,
+        0,
+        1,
+        3
+      ],
+      "in_band_deployable_per_seed": [
+        0,
+        1,
+        1,
+        2,
+        1,
+        0,
+        1,
+        3
+      ],
+      "in_band_median": 1.0,
+      "in_band_range": [
+        0,
+        3
+      ],
+      "ungated_baseline_per_seed": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "vs_ungated": {
+        "diff_per_seed": [
+          0,
+          0,
+          1,
+          2,
+          1,
+          0,
+          1,
+          3
+        ],
+        "exact_sign_flip_p": 0.0625
+      },
+      "vs_insample_ceiling": {
+        "leak_per_seed": [
+          4,
+          1,
+          4,
+          2,
+          3,
+          1,
+          0,
+          3
+        ],
+        "diff_per_seed": [
+          -4,
+          0,
+          -3,
+          0,
+          -2,
+          -1,
+          1,
+          0
+        ],
+        "exact_sign_flip_p": 0.1875
+      },
+      "underprediction_factor__uses_truth": {
+        "min": 0.5016022541880393,
+        "max": 68.93785676087116,
+        "median": 1.2667186800227783
+      },
+      "shards": {
+        "input_shift/poisson_rough/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.026030229404568672,
+          "scaled_median": 0.0,
+          "ungated_median": 0.0,
+          "width_ratio_median": 1.8105614643725398,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/poisson_smooth/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.0024303686805069447,
+          "scaled_median": 0.423828125,
+          "ungated_median": 1.0,
+          "width_ratio_median": 0.6959250148602203,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/poisson_tau/N64": {
+          "mechanism": "tau",
+          "parent": "poisson",
+          "rel_l2_mean": 0.008523562457412481,
+          "scaled_median": 0.08984375,
+          "ungated_median": 0.0,
+          "width_ratio_median": 1.2103013176865889,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/poisson_amp2/N64": {
+          "mechanism": "amp",
+          "parent": "poisson",
+          "rel_l2_mean": 0.4085468053817749,
+          "scaled_median": 0.0,
+          "ungated_median": 0.0,
+          "width_ratio_median": 1.3432895818094899,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/helmholtz_rough/N64": {
+          "mechanism": "alpha",
+          "parent": "helmholtz",
+          "rel_l2_mean": 0.00996660627424717,
+          "scaled_median": 0.001953125,
+          "ungated_median": 0.0,
+          "width_ratio_median": 1.1456312698940216,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/helmholtz_smooth/N64": {
+          "mechanism": "alpha",
+          "parent": "helmholtz",
+          "rel_l2_mean": 0.0045486930757761,
+          "scaled_median": 0.0478515625,
+          "ungated_median": 0.99609375,
+          "width_ratio_median": 0.6164738096913576,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/helmholtz_tau/N64": {
+          "mechanism": "tau",
+          "parent": "helmholtz",
+          "rel_l2_mean": 0.00910638552159071,
+          "scaled_median": 0.029296875,
+          "ungated_median": 0.029296875,
+          "width_ratio_median": 0.9212285617841157,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/helmholtz_amp2/N64": {
+          "mechanism": "amp",
+          "parent": "helmholtz",
+          "rel_l2_mean": 0.3110511004924774,
+          "scaled_median": 0.0,
+          "ungated_median": 0.0,
+          "width_ratio_median": 1.5854460390484086,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/darcy_rough/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.07747649773955345,
+          "scaled_median": 0.982421875,
+          "ungated_median": 0.56640625,
+          "width_ratio_median": 1.9510030582220268,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/darcy_smooth/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.029740012250840664,
+          "scaled_median": 0.841796875,
+          "ungated_median": 0.9970703125,
+          "width_ratio_median": 0.606185479555926,
+          "in_band_seeds": 1,
+          "in_band_deployable_seeds": 1,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/darcy_tau/N64": {
+          "mechanism": "tau",
+          "parent": "darcy",
+          "rel_l2_mean": 0.10546933487057686,
+          "scaled_median": 0.63671875,
+          "ungated_median": 0.2587890625,
+          "width_ratio_median": 1.305464097923355,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "input_shift/darcy_amp2/N64": {
+          "mechanism": "amp",
+          "parent": "darcy",
+          "rel_l2_mean": 0.7611617743968964,
+          "scaled_median": 0.0,
+          "ungated_median": 0.0,
+          "width_ratio_median": 3.009359097458595,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 4
+        },
+        "graded_rough/poisson_dam0p1/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.003245489322580397,
+          "scaled_median": 0.8828125,
+          "ungated_median": 0.8349609375,
+          "width_ratio_median": 1.1648047093731648,
+          "in_band_seeds": 5,
+          "in_band_deployable_seeds": 5,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/poisson_dam0p2/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.0035523518454283476,
+          "scaled_median": 0.826171875,
+          "ungated_median": 0.595703125,
+          "width_ratio_median": 1.2265724775092481,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/poisson_dam0p3/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.003976825391873717,
+          "scaled_median": 0.72265625,
+          "ungated_median": 0.3134765625,
+          "width_ratio_median": 1.294017270340572,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/poisson_dam0p5/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.005763811990618706,
+          "scaled_median": 0.3681640625,
+          "ungated_median": 0.0009765625,
+          "width_ratio_median": 1.4512000126547098,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/poisson_dam0p7/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.009976272005587816,
+          "scaled_median": 0.0625,
+          "ungated_median": 0.0,
+          "width_ratio_median": 1.596082720438449,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/poisson_dam1/N64": {
+          "mechanism": "alpha",
+          "parent": "poisson",
+          "rel_l2_mean": 0.026561281643807888,
+          "scaled_median": 0.0,
+          "ungated_median": 0.0,
+          "width_ratio_median": 1.8152447625754602,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/darcy_dam0p1/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.05416183918714523,
+          "scaled_median": 0.9267578125,
+          "ungated_median": 0.85546875,
+          "width_ratio_median": 1.1833916144046646,
+          "in_band_seeds": 3,
+          "in_band_deployable_seeds": 3,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/darcy_dam0p2/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.05793433636426926,
+          "scaled_median": 0.9501953125,
+          "ungated_median": 0.8408203125,
+          "width_ratio_median": 1.328354264634442,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/darcy_dam0p3/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.06534836441278458,
+          "scaled_median": 0.962890625,
+          "ungated_median": 0.7412109375,
+          "width_ratio_median": 1.5157948196446478,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/darcy_dam0p5/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.07701588794589043,
+          "scaled_median": 0.982421875,
+          "ungated_median": 0.58984375,
+          "width_ratio_median": 1.9791318800812547,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/darcy_dam0p7/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.1016911081969738,
+          "scaled_median": 0.9912109375,
+          "ungated_median": 0.2177734375,
+          "width_ratio_median": 2.465572087501596,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 0
+        },
+        "graded_rough/darcy_dam1/N64": {
+          "mechanism": "alpha",
+          "parent": "darcy",
+          "rel_l2_mean": 0.169746994972229,
+          "scaled_median": 0.9658203125,
+          "ungated_median": 0.0,
+          "width_ratio_median": 2.7142916220210447,
+          "in_band_seeds": 0,
+          "in_band_deployable_seeds": 0,
+          "width_inflated_seeds": 3
+        }
+      }
+    },
+    "vs": {
+      "h22_per_seed": [
+        0,
+        1,
+        1,
+        2,
+        1,
+        0,
+        1,
+        3
+      ],
+      "n_shards_evaluated": 24,
+      "families": [
+        "poisson",
+        "helmholtz",
+        "darcy"
+      ],
+      "ungated_on_same_shards_per_seed": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "comparisons": {
+        "h15_eval_restricted": {
+          "other_per_seed": [
+            2,
+            2,
+            5,
+            4,
+            4,
+            2,
+            8,
+            6
+          ],
+          "diff_per_seed": [
+            -2,
+            -1,
+            -4,
+            -2,
+            -3,
+            -2,
+            -7,
+            -3
+          ],
+          "exact_sign_flip_p": 0.0078125
+        }
+      },
+      "residual_coef_median": {
+        "log_resid": -0.4086779412952728,
+        "log_consist": -0.34659461858864854
+      },
+      "residual_coef_seeds_in_top12": {
+        "log_resid": 8,
+        "log_consist": 7
+      },
+      "largest_coef": [
+        "a_spec9",
+        2.5669023819466315
+      ],
+      "note": "H22 adds two residual features AND is forced onto the families with a cheap apply. `h15_eval_restricted` is the deployed arm scored on the same shards; `h22_control_fit_restricted` holds the fitting set fixed and removes only the two columns, so it is the one that attributes a gain."
+    }
+  },
   "wtol": {
     "n_seeds": 8,
     "seeds": [

@@ -3739,3 +3739,66 @@ fire. But log input amplitude is still **+2.5629**, 6.9× the larger of the two,
 so even with an equation-violation signal available the fit is still mostly an
 amplitude model. In-band is 0,1,1,2,1,0,1. Whether that beats either control is
 not yet measurable and no comparison is claimed until both arms have 8 seeds.
+
+## H22 result — the residual features are real and the arm is worse, and my registration had a confound in it
+
+`runs/scalerf_u0..u7_het.json`, 8 seeds, families `['poisson', 'helmholtz',
+'darcy']`, **24** covariate shards (the restriction forced by
+`PDE2DSimulator.residual` being `None` for the two time-stepped families).
+
+| arm, all on the **same 24 shards** | LOMO in band, per seed | median |
+|---|---|---|
+| ungated baseline | 0,0,0,0,0,0,0,0 | 0 |
+| H15 width model, re-read on these 24 | 2,2,5,4,4,2,8,6 | **4** |
+| **H22 = H15 + two residual features** | **0,1,1,2,1,0,1,3** | **1** |
+
+Paired diffs **−2,−1,−4,−2,−3,−2,−7,−3** — negative on 8 of 8 seeds, exact
+two-sided sign-flip **p = 0.0078**. **Prediction 2 is falsified with the sign
+reversed**: I predicted the residual features would beat the baseline on this
+subset, and they lose to it on every seed.
+
+**Prediction 1 held.** Both features enter the fit well above the falsification
+threshold of 0.2 I registered: `log_resid` at **−0.4087** (top-12 on 8/8 seeds)
+and `log_consist` at **−0.3466** (7/8). They carry information. Amplitude still
+dominates them by 6.3× (`a_spec9`, **+2.5669**), as in every other arm.
+
+The sign is worth naming: both coefficients are **negative**, i.e. the fit
+*narrows* the interval on samples whose prediction violates its own equation
+more. That is backwards from the physical reading — a larger residual should
+mean a less trustworthy prediction and a wider band — and it is the signature of
+a feature being used to fit something other than what it measures. I do not
+have an explanation and am not inventing one.
+
+### The confound, which is mine
+
+**The arm changes two things at once, and I registered it as one.** My
+registration said "the baseline is re-read on the same 24 shards", which fixes
+the *evaluation* denominator. It does not fix the *fitting* set: excluding
+diffusion and advection-diffusion also removes them from the calibration half
+and from the development suite, so H22's h is fitted on three families where
+H15's was fitted on five. The 4 → 1 loss is therefore attributable to the
+residual features **or** to the narrower fitting set, and this run cannot tell
+them apart.
+
+That is the "one hypothesis, one change" rule broken by a constraint I did not
+notice I was accepting — the family restriction is forced by the physics, but
+its effect on the *fit* was mine to control and I did not. The control that
+separates them is `--restrict-families poisson,helmholtz,darcy` **without**
+residual features (`runs/scalerc_u*_het.json`), which is running now. Until it
+lands:
+
+* **the honest reading is that H22 is worse than H15 on this subset,
+  p = 0.0078, cause not yet isolated**;
+* no attribution of that loss to the residual features appears in any document.
+
+If the control also lands near 1/32, the residual features are neutral and the
+loss is the narrower fitting set — which would itself be worth knowing, because
+it would mean h needs *more* families than the ones it is scored on. If the
+control lands near 4/32, the residual features actively hurt, and the negative
+coefficients above become the thing to explain.
+
+**What is already safe to say.** The residual is the one deployment-observable
+signal that is exactly invariant to rescaling the linear channel, so it was the
+only candidate whose gain could not have been the amplitude effect. It did not
+produce a gain. That closes the last route this project had for clause 1 under
+covariate shift that was not already known to be an amplitude correction.
