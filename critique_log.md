@@ -4268,7 +4268,9 @@ if anything this strengthens them, because it explains why the amplitude axis
 was so learnable. What it costs is the strength of the control argument, which I
 had repeated in the board entry, `WEEKEND.md` and the paper draft.
 
-### H23 — registered now: the two controls this audit says are missing
+### H24 — registered now: the three controls this audit says are missing
+
+*(Labelled H24, not H23: an H23 on a different question — whether the Darcy over-response is extrapolation in the residual feature — was registered concurrently, and two hypotheses under one label is how a cross-reference stops meaning anything.)*
 
 Codex's recommended measurement is right and it is the one I am taking:
 
