@@ -4457,3 +4457,55 @@ H23's measured sign rather than by anything I would like the number to do.
    physically-signed, amplitude-blind width signal, used correctly, that still
    cannot hit a ±2pp window — which is a fact about the requirement rather than
    about the signal.
+
+## The H17 cost guard — written before the arms land, because the arithmetic is what went wrong last time
+
+The clause-2 cost of the equivariance wrapper is `[not measured]`, and the two
+arms that will fix that are running now. The reason it is `[not measured]` is
+worth restating, because it was an arithmetic error and not a missing run: the
+withdrawn version measured the wrapper's overhead on the **eager** path and
+divided the clause-2 figure — measured under **CUDA-graph replay** — by
+(1 + overhead). Two protocols, one division, a confident number that meant
+nothing.
+
+So `scripts/agg_h17_cost.py` exists before the numbers do, and it is mostly a
+refusal. It emits a delta only when the arms are the same measurement in every
+respect except the wrapper, and names the mismatch otherwise:
+
+* **same device** — a ratio across two GPUs is not a ratio;
+* **same protocol fields** — task, head, trials, tolerance, seed, batch list;
+* **same fair denominator** — if the arms took their ratios against different
+  solver settings, the difference between the ratios is not the wrapper's cost.
+  The per-path overhead is still reported (it is the wrapper's), the ratio
+  delta is withheld with its reason attached;
+* **same accuracy**, within 1%. A speedup at a different error is not the same
+  speedup, which is the brief's own rule about quoting the error a speedup was
+  achieved at. The wrapper is near-identity on in-distribution inputs, so this
+  is tight on purpose.
+
+The overhead is reported **per execution path** — `eager` and `graph` are
+different protocols — and each arm's clause-2 ratio is recomputed against *its
+own* denominator. `quotable_against_published` is `false` unconditionally,
+carrying the reason: the published figure came from a different run on a
+different device, so what this pair supports is eq-vs-base within itself.
+
+`tests/test_h17_cost.py` pins each refusal, because a guard whose value is
+declining to emit a number is worthless if it quietly stops declining. Each
+test corresponds to a mistake this repository has actually made: different
+device, different denominator, different accuracy, different protocol fields.
+Exercised against two real runs on disk (`bench_fair.json` vs
+`bench_fair_h12.json`, which are the same measurement apart from the
+packed-weight change) it correctly reports per-path overheads and correctly
+withholds the batch-1 ratio delta, because those two chose different solver
+settings.
+
+### A process note on the queue, which was a near miss
+
+The H23 chain was gated on **GPU utilisation** falling below 10% for three
+consecutive samples. That is unsafe next to a timing benchmark: `bench_fair`
+alternates solver work with idle gaps between fields, so three quiet samples
+can land *inside* a run that is still timing. Starting there would not have
+slowed the benchmark, it would have corrupted the number the benchmark exists
+to produce — and the corruption would have been invisible in the output. Now
+gated on the benchmark **process**, which is exact. Caught by watching the
+utilisation trace flicker 31 → 0 → 0 while the run was plainly still going.

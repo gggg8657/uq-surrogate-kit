@@ -1,0 +1,298 @@
+{
+  "detector": "combo",
+  "thresholds": [
+    1.06,
+    1.1
+  ],
+  "published_single_checkpoint": {
+    "source": "runs/consistency_uq.json",
+    "note": "47/49 strict and 33/33 conditional, one checkpoint"
+  },
+  "base": {
+    "n_seeds": 8,
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "detector": "combo",
+    "equivariant": false,
+    "strict": {
+      "n_ge_0p9_per_seed": [
+        47,
+        47,
+        47,
+        47,
+        47,
+        47,
+        47,
+        47
+      ],
+      "n_total_shards": 49,
+      "median": 47.0,
+      "range": [
+        47,
+        47
+      ],
+      "identical_on_every_seed": true,
+      "min_auroc_per_seed": [
+        0.8411102294921875,
+        0.8409366607666016,
+        0.8422069549560547,
+        0.8377628326416016,
+        0.8393917083740234,
+        0.8419685363769531,
+        0.8380680084228516,
+        0.8414993286132812
+      ],
+      "min_auroc_range": [
+        0.8377628326416016,
+        0.8422069549560547
+      ]
+    },
+    "conditional": {
+      "1.06": {
+        "pairs_per_seed": [
+          [
+            33,
+            33
+          ],
+          [
+            33,
+            34
+          ],
+          [
+            33,
+            35
+          ],
+          [
+            33,
+            33
+          ],
+          [
+            34,
+            36
+          ],
+          [
+            33,
+            34
+          ],
+          [
+            34,
+            36
+          ],
+          [
+            33,
+            35
+          ]
+        ],
+        "denominator_range": [
+          33,
+          36
+        ],
+        "denominator_is_stable": false,
+        "seeds_with_a_failure_inside": 6,
+        "clean_on_every_seed": false,
+        "shards_failing_inside": {
+          "graded_rough/poisson_dam0p1/N64": {
+            "n_seeds_inside": 6,
+            "degradation_range": [
+              1.061761188876535,
+              1.0840862579489865
+            ],
+            "auroc_range": [
+              0.8799915313720703,
+              0.8899803161621094
+            ]
+          },
+          "graded_rough/darcy_dam0p1/N64": {
+            "n_seeds_inside": 4,
+            "degradation_range": [
+              1.0628767664463787,
+              1.0769760169574925
+            ],
+            "auroc_range": [
+              0.8380680084228516,
+              0.8422069549560547
+            ]
+          }
+        }
+      },
+      "1.1": {
+        "pairs_per_seed": [
+          [
+            33,
+            33
+          ],
+          [
+            33,
+            33
+          ],
+          [
+            33,
+            33
+          ],
+          [
+            33,
+            33
+          ],
+          [
+            33,
+            33
+          ],
+          [
+            33,
+            33
+          ],
+          [
+            33,
+            33
+          ],
+          [
+            33,
+            33
+          ]
+        ],
+        "denominator_range": [
+          33,
+          33
+        ],
+        "denominator_is_stable": true,
+        "seeds_with_a_failure_inside": 0,
+        "clean_on_every_seed": true,
+        "shards_failing_inside": {}
+      }
+    },
+    "unstable_shards": {
+      "graded_rough/poisson_dam0p1/N64": {
+        "n_seeds_below_0p9": 8,
+        "auroc_range": [
+          0.8791847229003906,
+          0.8899803161621094
+        ]
+      },
+      "graded_rough/darcy_dam0p1/N64": {
+        "n_seeds_below_0p9": 8,
+        "auroc_range": [
+          0.8377628326416016,
+          0.8422069549560547
+        ]
+      }
+    },
+    "boundary_shards": {
+      "graded_rough/poisson_dam0p1/N64": {
+        "degradation_range": [
+          1.0580738986083147,
+          1.0840862579489865
+        ],
+        "crosses_per_threshold": {
+          "1.06": 6,
+          "1.1": 0
+        }
+      },
+      "graded_rough/darcy_dam0p1/N64": {
+        "degradation_range": [
+          1.0488747467613548,
+          1.0769760169574925
+        ],
+        "crosses_per_threshold": {
+          "1.06": 4,
+          "1.1": 0
+        }
+      },
+      "resolution_128/darcy/N128": {
+        "degradation_range": [
+          1.0341341610288841,
+          1.0736006916070249
+        ],
+        "crosses_per_threshold": {
+          "1.06": 2,
+          "1.1": 0
+        }
+      }
+    }
+  },
+  "equivariant": {
+    "n_seeds": 1,
+    "seeds": [
+      0
+    ],
+    "detector": "combo",
+    "equivariant": true,
+    "strict": {
+      "n_ge_0p9_per_seed": [
+        47
+      ],
+      "n_total_shards": 49,
+      "median": 47,
+      "range": [
+        47,
+        47
+      ],
+      "identical_on_every_seed": true,
+      "min_auroc_per_seed": [
+        0.8411045074462891
+      ],
+      "min_auroc_range": [
+        0.8411045074462891,
+        0.8411045074462891
+      ]
+    },
+    "conditional": {
+      "1.06": {
+        "pairs_per_seed": [
+          [
+            29,
+            29
+          ]
+        ],
+        "denominator_range": [
+          29,
+          29
+        ],
+        "denominator_is_stable": true,
+        "seeds_with_a_failure_inside": 0,
+        "clean_on_every_seed": true,
+        "shards_failing_inside": {}
+      },
+      "1.1": {
+        "pairs_per_seed": [
+          [
+            29,
+            29
+          ]
+        ],
+        "denominator_range": [
+          29,
+          29
+        ],
+        "denominator_is_stable": true,
+        "seeds_with_a_failure_inside": 0,
+        "clean_on_every_seed": true,
+        "shards_failing_inside": {}
+      }
+    },
+    "unstable_shards": {
+      "graded_rough/poisson_dam0p1/N64": {
+        "n_seeds_below_0p9": 1,
+        "auroc_range": [
+          0.87896728515625,
+          0.87896728515625
+        ]
+      },
+      "graded_rough/darcy_dam0p1/N64": {
+        "n_seeds_below_0p9": 1,
+        "auroc_range": [
+          0.8411045074462891,
+          0.8411045074462891
+        ]
+      }
+    },
+    "boundary_shards": {}
+  }
+}
