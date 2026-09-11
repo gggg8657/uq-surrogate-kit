@@ -6112,3 +6112,165 @@ the same non-overlapping support that made weighted conformal abstain makes the
 *gate* trivial. That would give the in-distribution two-sided pass and the
 shifted one-sided pass from one method with zero labels. It is a separate
 hypothesis and it runs separately.
+
+## H31 measured: the one-sided clause is reachable, the price is 405× width, and a single constant is now *arithmetically* excluded from passing both readings
+
+`runs/oseq_u*_het.json`, 8 seeds, equivariant path, 24 covariate-shift shards,
+45 development shards per seed at 256 samples each, aggregated by
+`scripts/agg_h31.py`. The base (non-equivariant) arm is still running and is
+reported when it lands. All five registered predictions hold.
+
+| c (equivariant path) | source | R1 = cov ≥ 0.90, /24, per-seed range | R2 = cov ∈ band, /24 | median width × | in-dist coverage (poisson / helmholtz / darcy) | in-dist R2 /3 |
+|---|---|---|---|---|---|---|
+| 1.000 | none (control) | **3–4** | 0–1 | 1.00 | 0.9053 / 0.8989 / 0.8960 | **3** |
+| 1.126 | dev p50 | 6–8 | 2–4 | 1.12 | 0.9717 / 0.9668 / 0.9351 | 0 |
+| 2.013 | dev p75 | 15–18 | 0–3 | 1.97 | 1.0000 / 0.9985 / 0.9927 | 0 |
+| 6.544 | dev p90 | 22–23 | 0–1 | 6.28 | 1.0000 / 1.0000 / 1.0000 | 0 |
+| 20.20 | dev p95 | 23 | 0 | 19.29 | 1.0000 / 1.0000 / 1.0000 | 0 |
+| **425.4** | **dev p100** | **24 on 8/8 seeds** | 0 | **405.6** | 1.0000 / 1.0000 / 1.0000 | 0 |
+
+### The result, stated so it cannot be misread
+
+**R1 — coverage ≥ 0.90 with a finite, quoted interval — is met on 24 of 24
+shifted shards on all 8 seeds, by a constant chosen on the development suite
+alone. The median interval is 405.6× wider than the ungated one, and the
+in-distribution two-sided result is destroyed: 3/3 families in band at c = 1
+becomes 0/3 at every c > 1.**
+
+This is not the clause. The clause is R2 and R2 is 0/24 at every c on the
+ladder, which is what the monotonicity of coverage in the scale already
+guaranteed: a scalar that lifts a shard from 0.00 to 0.90 carries the easy
+shards past 0.92 on the way. R1 is the reading a conformal paper would report
+and it is now in the table with its width beside it, which is the only form in
+which it is admissible — H13 published 100% coverage with 30/32 shards
+abstaining on an infinite interval, and the difference between that and this is
+exactly that 405.6 is a number.
+
+### What is worth more than the pass: a single scalar is now excluded by arithmetic
+
+Two measurements from this run, side by side:
+
+* in-distribution, s* is **0.991–1.013** and the in-band window on the scale is
+  a ratio of **1.05** — so the σ scale has to be right to about **±2.5%** or the
+  in-distribution result leaves the band. Measured: **c = 1.126, a 12.6%
+  inflation, already takes all three families out** (0.935–0.972).
+* under shift, the required scale spans **1.06× (graded_rough/poisson_dam0p1)
+  to 67.08× (input_shift/darcy_amp2)**.
+
+A single constant has to sit inside a ±2.5% window and simultaneously exceed
+67×. **There is no such number.** Every route H25–H30 bounded was a route that
+*estimated* one scale; this says the failure is not estimation at all, it is
+that the method has one parameter where the problem has two regimes. That is a
+statement about my design decision, not about the shifts, and it is the first
+one in this thread that names something I can change.
+
+### Prediction-by-prediction, including where I was too generous to myself
+
+1. **dev max s\* > 67.1 — CONFIRMED**, 170.1–1599.9 over the 8 seeds, argmax
+   always `dev_darcy_amp2p6` or `dev_darcy_amp3p4`. The dev suite brackets the
+   hardest eval shard on every seed, so 24/24 is honestly reachable from it.
+2. **A1(100) reaches 24/24 on ≥ 7/8 — CONFIRMED**, 8/8.
+3. **A1(90) ∈ [21, 24) — CONFIRMED**, 22–23.
+4. **in-dist coverage ≥ 0.99 at c ≥ 10 — CONFIRMED**, and sharper than I
+   predicted: it is 1.0000 already at c = 6.54, and the band is lost at 1.126.
+5. **width at A1(100) ≥ 50× — CONFIRMED**, 405.6×.
+
+### The caveat that has to travel with the 24/24: the constant is a tail estimate and it moves by 9×
+
+`dev_s_star_max` per seed: **976.8, 585.5, 235.8, 1599.9, 1473.9, 265.2, 170.1,
+201.4**. The oracle constant the eval shards actually need is **51.67–85.89**.
+So the overpayment `c_dev_p100 / max_eval_s*` is **2.75× to 25.19×** depending
+on the seed — the pass is stable, the price is not, because p100 of 45 dev
+shards is one shard's s* and that shard is `darcy_amp2p6/3p4`, whose bisection
+runs out past 100 where coverage is nearly flat in the scale. Any deployment
+quoting 405× should quote 170–1600.
+
+### Which part is the binding constraint, and what would distinguish that from the obvious alternative
+
+The obvious alternative explanation is the one this repo has been telling
+itself since H25: *the required scale is not predictable from unlabelled data*
+(ceiling 2/24, Spearman +0.821 but LOSO in-band 2/24). H31 does not contradict
+that, but it shows it is not the binding constraint for R1, because **R1 does
+not need the scale predicted, only bounded**, and a bound chosen with zero test
+information already gives 24/24.
+
+The separating evidence between "unpredictable" and "one parameter, two
+regimes" is the in-distribution row. If the problem were estimation, a better
+estimator would improve both columns. Instead the in-distribution column is
+*destroyed by the smallest inflation on the ladder* while the shifted column
+needs a large one — a single-parameter family cannot trade along that axis at
+all, however good its estimate. The test is therefore whether a **regime
+decision** recovers the in-distribution column while keeping the shifted one,
+which is H32, below.
+
+### What is still not honest enough, and is flagged rather than fixed
+
+A 405× interval is useless in a plant. `width_mult_median` is in every cell and
+the paper draft must say, in the same sentence as the 24/24, that the interval
+is two and a half orders of magnitude wider than the one the surrogate was sold
+on. A reader who takes the R1 row as the product has been misled, and no
+wording in a footnote fixes that — it belongs in the row.
+
+## H32 — written before the run: the problem has two regimes, so give the method a regime decision
+
+H31's in-distribution row is the argument for this and it is arithmetic, not
+intuition: the in-distribution band tolerates **±2.5%** on the σ scale
+(measured: in-dist s* 0.991–1.013, in-band scale window ratio 1.05, and c =
+1.126 already takes all three families out), while the shifted shards need
+**1.06× to 67.08×**. One scalar cannot be in both sets. Two can.
+
+**Hypothesis: a shift gate, thresholded on in-distribution data alone, recovers
+the in-distribution two-sided result while keeping H31's one-sided pass under
+shift — from one forward pass and zero labels.**
+
+### The method, fully specified before it runs
+
+`c = 1` when the gate is quiet, `c = c_dev_p100` (H31's dev-chosen constant)
+when it fires. Nothing else changes: the score, the per-family calibration
+quantile and the σ floor are all frozen at their calibration values.
+
+The gate is the repo's existing `LikelihoodRatioProbe` used as a two-sample
+test rather than as a source of weights:
+
+* fit it on (calibration inputs, the unlabelled test batch's inputs) using
+  `spectral_features`, and read its **held-out AUC**;
+* **θ is fixed from in-distribution data only**: 8 repeats × 3 families of
+  in-distribution-vs-in-distribution probes on disjoint halves of the
+  *calibration* split, at the same batch size as the thing being gated, and
+  θ = the maximum of those 24 null AUCs. No evaluation shard and no dev shard
+  contributes to θ;
+* the false-alarm test is then the in-distribution **test** split, which is
+  held out from the null.
+
+This is a **batch-level** decision and that is the honest price: it needs ~512
+unlabelled inputs from the regime, though no labels and no solve. A per-sample
+version (a fixed cal-vs-dev classifier, scored on one input) is H33 and is only
+worth building if the principle holds here.
+
+### Registered predictions
+
+1. **Null AUC ≈ 0.5**; θ < 0.70.
+2. **The gate does not fire on the in-distribution test split** of any family on
+   any of the 8 seeds, so in-distribution coverage stays 0.8960–0.9053 and
+   in-dist R2 stays **3/3**.
+3. **The gate fires on ≥ 22 of 24 eval shards.** The two it might miss are the
+   weakest graded rungs, `graded_rough/*_dam0p1`, whose input change is the
+   smallest on the ladder — and those need only c ≈ 1.07, so a miss there costs
+   coverage 0.82–0.86, i.e. an R1 failure, not a rounding error.
+4. **Combined: in-dist R2 = 3/3 AND shifted R1 ≥ 22/24 on 8/8 seeds.** If
+   prediction 3 comes in at 24/24, this is two-sided in distribution and
+   one-sided under every shift, from one method, one forward pass and zero
+   labels.
+5. **Shifted R2 stays ≈ 0/24.** The gate picks between two scalars; it cannot
+   hit a ±2% band on 24 shards that need scales spanning 63×. Saying so now
+   means the run cannot be read as a claim on the clause itself.
+
+### The failure mode I am watching for, stated so the result cannot be spun
+
+If the gate false-alarms in distribution, the method inflates the
+in-distribution interval by ~425× — **worse than doing nothing**, on the case a
+plant is in almost all of the time. The false-alarm rate is measured on held-out
+in-distribution data and goes in the table whatever it says. A gate that is
+right 23/24 times under shift and wrong once in distribution is not a better
+method than H31's constant; it is a different trade, and the honest way to
+report it is both error rates, not the favourable one.

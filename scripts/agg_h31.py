@@ -204,9 +204,9 @@ def main():
               f"{'w_med':>9s} {'w_max':>9s} {'in-dist R2/3':>13s}")
         for cn, r in A["c"].items():
             print(f"  {cn:14s} {r['c']['median']:9.4g} "
-                  f"{r['R1_one_sided_ge_0p90']['min']:3d}/"
+                  f"{int(r['R1_one_sided_ge_0p90']['min']):3d}/"
                   f"{int(r['R1_one_sided_ge_0p90']['median']):<2d}/"
-                  f"{r['R1_one_sided_ge_0p90']['max']:<3d} "
+                  f"{int(r['R1_one_sided_ge_0p90']['max']):<3d} "
                   f"{int(r['R2_two_sided_in_band']['median']):8d} "
                   f"{r['width_mult_median_over_shards']['median']:9.4g} "
                   f"{r['width_mult_max_over_shards']['median']:9.4g} "
