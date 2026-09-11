@@ -4572,3 +4572,65 @@ surfaced here on a clause that **passes**. Auditing only the failing clauses
 would have left it in place, which is the mirror image of the lesson from
 clause 2, where auditing only the side whose improvement hurt the claim hid a
 1.246× defect on our own side for three rounds.
+
+## Clause 3's conditional pass was a seed-0 result, and its threshold was fitted to the failures
+
+`runs/clause3.json`, base arm, 8 checkpoints. I recomputed this from the raw
+`runs/cons3_base_u*_het.json` independently of the aggregate before writing it
+down; the two agree cell for cell.
+
+| reading | per seed | stable? |
+|---|---|---|
+| strict, all 49 shards | **47/49 on 8 of 8 seeds**, identical | ✅ stable, and it **fails** the clause |
+| conditional at the published **>1.06×** cut | (33,33) (33,34) (33,35) (33,33) (34,36) (33,34) (34,36) (33,35) | ❌ denominator **33–36**, a sub-0.9 shard admitted on **6 of 8** seeds |
+| conditional at **>1.10×** | 33/33 on all 8 | ✅ stable |
+| conditional at **>1.20×** | 31/31 on 7 seeds, 32/32 on one | ✅ stable |
+
+**Two things were wrong with the published row, and they compound.**
+
+*First, it is one checkpoint.* `runs/consistency_uq.json` is a single
+`runs/u0/best.pt` run, and the KPI table carried its 33/33 as the ✅ for
+clause 3. At 8 seeds that exact reading holds on **2 of 8**.
+
+*Second, and worse, the cut was placed where the failures were.* The threshold
+was not chosen in advance: it is `max(degradation among the shards that
+failed)`, computed after seeing which failed. The two misses sit at **1.055×**
+and **1.058×** — they *straddle* the published 1.06× cut, which is why the
+denominator moves at all. A criterion defined as "just above whatever failed"
+cannot fail by construction on the run that defined it, and it did not; it
+failed on the six later runs that had no say in where it went.
+
+**The claim I have to withdraw is my own.** `WEEKEND.md` said the full
+degradation-vs-AUROC table meant "the ordering does the work and no threshold
+is load-bearing". The 8-seed run falsifies that sentence directly: the
+threshold is the entire load. Withdrawn, and the decision rewritten to
+recommend the strict reading — 47/49, stable on every seed, and a **fail**.
+
+**Why I am not simply moving the cut to 1.10×.** It is 33/33 on 8 of 8 seeds
+and it is tempting. But choosing it *after* watching 1.06× fail is threshold
+selection on the evaluation set, which is the move this project has already
+caught itself making twice, and it would be the same error one notch out. It is
+reported in `RESULTS.md` §3f beside this objection rather than hidden, and it
+does not carry the verdict. If someone can justify a degradation threshold from
+the physics or from a deployment requirement, independently of these AUROCs,
+then it becomes a criterion; until then it is a number.
+
+**The verdict row now regenerates from `runs/clause3.json`**, not from prose:
+`_cond_seed_caveat` in `scripts/report.py` reads the seed count, the
+denominator range and the failure count out of the aggregate, so if the cut
+ever becomes stable the caveat stops asserting that it is not. Matching the
+row's unrounded cut (1.0581×) to the aggregate's rounded key needed a direction
+rule, and it is the conservative one: a cut at least as **strict** may lend its
+instability to a looser row, because it scores a subset; a looser cut may not
+lend its stability to a stricter one.
+
+**This is the second clause whose apparent pass rested on something other than
+the detector** — clause 1's every gain traced to our own frozen-statistics
+preprocessing bug, and clause 3's conditional pass traces to a threshold placed
+just above the two shards that failed, on one checkpoint. That pattern, rather
+than any single number, is the most transferable thing here.
+
+**What this does not touch.** The strict reading is unchanged and stable:
+**47/49 identical on 8 of 8 seeds**, minimum AUROC 0.8411–0.8409 across seeds.
+The equivariant arm — whether any of this rested on the *preprocessing* bug as
+well — is still running, 9 of 16 cells.
