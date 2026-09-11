@@ -74,6 +74,46 @@ def claims():
             out.append(("WEEKEND.md", f"+{_st.median(co):.3f}",
                         "H15 amplitude coefficient (a_spec9), median over seeds"))
 
+    # Section 5 of paper_draft.md is the newest hand-written prose in the repo,
+    # so its load-bearing numbers are pinned against the runs that produced
+    # them. Each of these is a claim a reader would act on.
+    if selj:
+        sig = selj["by_gate"]["sigma"]["by_score"][selj["headline_score"]]
+        orc = selj["by_gate"]["oracle_err"]["by_score"][selj["headline_score"]]
+        out.append(("paper_draft.md",
+                    f"{sig['spearman_gate_vs_score_median_over_shards']:+.3f}",
+                    "rho(gate score, conformity score), shipped gate"))
+        out.append(("paper_draft.md",
+                    f"{orc['spearman_gate_vs_score_median_over_shards']:+.3f}",
+                    "rho(gate score, conformity score), oracle gate"))
+        out.append(("paper_draft.md",
+                    f"median abstention of {sig['abstention_median_over_shards']:.3f}",
+                    "selective median abstention, shipped gate"))
+        out.append(("paper_draft.md",
+                    f"abstention {orc['abstention_median_over_shards']:.3f}",
+                    "selective median abstention, oracle gate"))
+
+    if scj and scj.get("wtol"):
+        w = scj["wtol"]["by_score"]
+        out.append(("paper_draft.md",
+                    f"**{100*w['field_max']['tol_rel_median_over_shards']:.2f}%**",
+                    "width tolerance, field_max, median over shards"))
+        out.append(("paper_draft.md",
+                    f"{100*w['norm_ratio']['tol_rel_median_over_shards']:.2f}%",
+                    "width tolerance, norm_ratio (the tighter aggregate score)"))
+
+    if scj and scj.get("h15"):
+        L = scj["h15"]["lomo"]
+        out.append(("paper_draft.md",
+                    f"**{L['in_band_median']:g} of 32**",
+                    "H15 leave-one-mechanism-out median in-band count"))
+        out.append(("paper_draft.md",
+                    f"p = {L['vs_ungated']['exact_sign_flip_p']:.4f}",
+                    "H15 vs ungated paired exact sign-flip p"))
+        out.append(("paper_draft.md",
+                    f"p = {L['vs_insample_ceiling']['exact_sign_flip_p']:.4f}",
+                    "H15 leave-one-mechanism-out vs its own in-sample ceiling"))
+
     if b:
         gpu = [r for r in b["rows"] if r["device"] == "cuda" and r["trained"]]
         sp = [r["surrogate"]["ensemble"]["speedup"] for r in gpu]

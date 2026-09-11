@@ -1,5 +1,5 @@
-# When a surrogate cannot know it is wrong: three walls, and which two we built
-ourselves
+# When a surrogate cannot know it is wrong: four walls, and which three we
+built ourselves
 
 *Working draft. Every number is produced by a run in this repository and
 regenerated into `RESULTS.md` by `scripts/report.py`; nothing here is typed by
@@ -62,7 +62,35 @@ function of the input and the *configured* operator, and such a shift changes
 neither. We show the hole is closed by one labelled probe: a conformal p-value
 on k solver evaluations reaches 95% power at a measured 5% false-alarm rate with
 **k = 1** on exactly those cases, while correctly declining to alarm on shifts
-that do not degrade the surrogate.
+that do not degrade the surrogate. **(iv)** Coverage under *covariate*
+shift is the clause that survives longest, and it too is partly self-inflicted.
+Deliberate abstention — certify where competent, refuse elsewhere — gives **0 of
+32** shards in band on 8 of 8 seeds, at every abstention rate we swept up to
+0.95, and **also 0 of 32 when the gate is an oracle on the true error**: the
+conformity score is a ratio, a gate selects on its own score, and the two
+correlate at only +0.256 (+0.697 for the oracle). Selection acts on the
+population; the failure is in the scale. Restating the clause without any
+uncertainty method in it — the widths giving coverage in [0.88, 0.92] are
+exactly [Q₀.₈₈(S), Q₀.₉₂(S)] — turns it into a requirement to predict interval
+width to **4.47%** at the median across a **107.6×** range, and that reframing
+exposed the bug: four of five families are linear in the shifted channel, so
+`u(c·f) = c·u(f)`, but inputs are standardized with frozen calibration
+statistics and a 2× input extrapolates instead of scaling. A test-time
+equivariance wrapper, exact for any predictor and requiring no retraining,
+takes relative error on those shards from 0.3111–0.4711 to
+**0.981–0.997× the in-distribution error of the same checkpoints**, with a
+registered control (Darcy, whose shifted channel enters the operator
+nonlinearly) unchanged at ratio 1.0000. A *learned* width model reaches 4 of 32
+— and its dominant coefficient is the log input amplitude, 5.78× the next, with
+0 of 32 on 8 of 8 seeds once that feature pair is deleted, so the learned and
+the closed-form corrections are the same correction and composing them is
+significantly worse than either. After the repair the residual requirement is
+±4% width accuracy over 68.4×, and nothing we tried reaches it, including a
+model fitted on the evaluation shards. We therefore report **three** clauses
+whose apparent walls were our own construction and one that is not, and we
+regard the recurrence — the same class of defect found four separate times,
+three of them only after the number had been published — as the transferable
+result.
 
 ## 1. Setup
 
@@ -257,7 +285,96 @@ And where the surrogate is *not* degraded — all ten resolution shards, where
 to alarm. Distribution-shift detection and error detection are different
 questions; a detector can be perfect at one and worse than useless at the other.
 
-## 5. A note on the residual as a trust signal
+## 5. Coverage under shift: what three attacks and one bug taught us
+
+In distribution the interval clause is met (0.9026, 8/8 seeds, one forward
+pass). Under covariate shift, on 32 shards that leave the governing operator
+alone, the shipped single-network model puts **0 of 32** shards inside the
+90±2% band under the same per-family calibrator the in-distribution headline
+uses. Covariate-shift-weighted conformal, on an honest held-out choice of its
+density-ratio clip, reaches **1.94 of 32**. We attacked the gap three ways.
+
+**(a) Deliberate abstention does not work, and an oracle does not rescue it.**
+The natural product answer is to certify where the model is competent and
+refuse elsewhere, reporting the abstention rate rather than hiding it. We gated
+the certificate on the model's own relative predicted spread at a
+pre-registered 5% in-distribution false-alarm rate, calibrating the conformal
+quantile on the accepted calibration points so the certified and calibrated
+populations coincide. Result: **0 of 32 shards in band on 8 of 8 seeds**, at a
+median abstention of 0.390. Sweeping the abstention rate to **0.95** does not
+help — only 2 of 32 shards enter the band at *any* rate, and they are the
+mildest rung of the graded ladder and an over-covering shard that reaches 0.90
+from above by discarding most of itself. Replacing the gate with an **oracle on
+the true relative error** — not shippable, reported as a ceiling — also gives
+**0 of 32**, at abstention 0.858.
+
+The mechanism is measurable and it generalizes past our gate. Coverage fails on
+the conformity score max|μ−u|/σ̃, a *ratio*; a gate selects on its own score.
+The median within-shard rank correlation between the two is **+0.256**, and
+**+0.697** even for the oracle, which knows only the numerator. Under shift σ̃
+under-predicts the error at fixed error magnitude, so the ratio is inflated
+across the whole shard rather than in a selectable tail. **Selection acts on
+the population; the failure is in the scale.** No gate is the right shape of
+tool, and the gate we built is not the reason.
+
+The gate is nonetheless an excellent *shift detector* — Spearman correlation
+between its abstention rate and shard error is 1.000 and 0.971 on the two
+graded ladders — and it costs only its calibrated 5% in distribution. "The
+surrogate says when not to trust it" is true; "and then its interval is 90%
+correct where it does trust itself" is false, and these are different claims.
+
+**(b) The clause, restated without any uncertainty method in it.** For a
+per-sample score S the width achieving coverage exactly *p* **is** the *p*-th
+quantile of S, so the widths keeping coverage inside [0.88, 0.92] span exactly
+[Q₀.₈₈(S), Q₀.₉₂(S)]. The relative tolerance is therefore
+(Q₀.₉₂ − Q₀.₈₈)/Q₀.₉₀ — three order statistics, no calibrator, no detector.
+Measured over the 32 shards it is **4.47%** at the median (0.40–19.75%), and
+changing the score does not escape it: `norm_ratio`, an aggregate rather than a
+maximum over 4,096 pixels, is *tighter* at 4.22%. So the clause is arithmetically
+a requirement to **predict the interval width to about ±4%** across a required
+dynamic range that we measure at **107.6×**. Stating it this way is what made
+the next result findable.
+
+**(c) Most of that dynamic range was a bug of ours, not a property of the
+physics.** The range is concentrated in the four amplitude-shifted shards.
+Four of the five families are *linear* in the shifted channel, so
+`u(c·f) = c·u(f)` exactly — but the surrogate standardizes its inputs with
+frozen calibration statistics, so a 2× input extrapolates instead of scaling. A
+test-time wrapper `F_eq(a) = s(a)·F(a/s(a))` with `s(c·a) = c·s(a)` restores the
+equivariance for *any* F, with no retraining. On the four linear amplitude
+shards relative error falls from **0.3111–0.4711** to **0.00257–0.00338**, i.e.
+to **0.981–0.997×** the in-distribution error of the same checkpoints: the
+shift is not improved, it is *neutralised*. The registered control is Darcy,
+whose shifted channel is log-permeability and enters the operator nonlinearly,
+so the algebra must not apply — its ratio is **1.0000**, unchanged. Every
+non-amplitude shard moves by at most 2.4e-05.
+
+**(d) And the learned alternative turns out to be the same correction.** Fitting
+a difficulty model h(z) to the conditional 90th percentile of S and
+conformalizing S/h(z) — a linear pinball-quantile regression on
+deployment-observable features, fitted on a disjoint development shift suite
+and evaluated leave-one-mechanism-out — moves the clause from 0 to a median of
+**4 of 32** (per seed 2–8, exact sign-flip p = 0.0078) with in-distribution
+coverage unchanged. But its largest coefficient is the log input amplitude at
+**+2.8946**, 5.78× the next term on 8 of 8 seeds, and **deleting that one
+feature pair returns it to 0 of 32 on 8 of 8 seeds**. Composing the learned
+model with the closed-form repair is significantly *worse* than either alone
+(1 of 32, paired p = 0.0234), which is what double-counting one correction
+looks like. Fitting h per family instead of pooled is a null (4 vs 4,
+p = 0.8438) whose in-sample ceiling nonetheless rises from 4 to 6 — capacity
+that does not transfer. The learned width model's held-out result already
+equals its own in-sample ceiling (p = 0.5156).
+
+**What survives.** Every intervention that has ever moved this clause moved it
+by correcting the input amplitude, and that correction is available exactly and
+for free. Once it is applied the residual requirement is to predict width to
+±4% over a **68.4×** range, and nothing here reaches it — not selection at any
+abstention rate, not an oracle on the error, not a learned width model even
+when fitted on the evaluation shards themselves. We report this as the wall,
+stated in units that do not mention uncertainty quantification, rather than as
+a property of conformal prediction.
+
+## 6. A note on the residual as a trust signal
 
 Applying `L` to a surrogate's output amplifies the round-off already in it by
 the operator's symbol, so the residual of the *exact* solution is not zero and
@@ -267,7 +384,7 @@ on it would report a magnificent AUROC driven entirely by numerical noise. The
 floor is measured (`runs/residual_floor.json`) and pinned in both directions by
 tests.
 
-## 6. Limitations
+## 7. Limitations
 
 Five checkpoints, so the ensemble-size trend is a screen, not a verdict; the
 C(5,M) subset spread is reported per row. One resolution (64²), one geometry
@@ -278,7 +395,7 @@ guarantee assumes `p(y|x)` is unchanged, which the operator-shift shards violate
 outright; those rows are marked and excluded from the clause. Timing ratios
 should not be read to better than ±15% between scripts.
 
-## 7. What this says about the pitch
+## 8. What this says about the pitch
 
 "A surrogate that also says when not to trust it" survives contact with the
 first two of three questions and fails the third in a way that is worth knowing:
