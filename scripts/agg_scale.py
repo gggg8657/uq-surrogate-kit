@@ -298,6 +298,16 @@ def main():
                     help="H22 control: same families, same fitting set, "
                          "WITHOUT the residual features. H22 minus this is "
                          "exactly the two residual columns.")
+    ap.add_argument("--h22-res-glob", default="runs/scalerf_u*_het.json",
+                    help="H22: the width model with two PDE-residual features "
+                         "added. Restricted to the three families with a cheap "
+                         "operator apply -- 24 of the 32 covariate shards.")
+    ap.add_argument("--h22-ctl-glob", default="runs/h22_ctl_u*_het.json",
+                    help="H22 CONTROL: the same 3-family restriction WITHOUT "
+                         "the residual features. The residual arm must be "
+                         "compared against this and not against the 5-family "
+                         "H15 arm, or the features and the fitting set change "
+                         "together.")
     ap.add_argument("--out", default="runs/scale.json")
     args = ap.parse_args()
 
@@ -484,6 +494,52 @@ def main():
         if rc:
             print(f"[H22] residual coefs {({k: round(v, 4) for k, v in rc.items()})}"
                   f" vs largest {res['h22']['vs']['largest_coef']}")
+    res22, ctl22 = _load(args.h22_res_glob), _load(args.h22_ctl_glob)
+    if res22 and ctl22 and len(res22) == len(ctl22):
+        R, C = agg_h15(res22), agg_h15(ctl22)
+        a = R["lomo"]["in_band_per_seed"]
+        b = C["lomo"]["in_band_per_seed"]
+        d = [x - y for x, y in zip(a, b)]
+        # prediction 1: does either residual feature reach the top coefficients?
+        coefs = [c for r in res22 for c in r["folds"]["all"]["coef_top"]]
+        rank = {}
+        for r in res22:
+            for i, c in enumerate(r["folds"]["all"]["coef_top"]):
+                if c["feature"] in ("log_consist", "log_resid"):
+                    rank.setdefault(c["feature"], []).append(
+                        {"rank": i + 1, "coef": c["coef"]})
+        # prediction 3 leak test: are the gains only on the amplitude shards?
+        per_shard = {}
+        for n, v in R["lomo"]["shards"].items():
+            cv = C["lomo"]["shards"].get(n)
+            if cv is None:
+                continue
+            per_shard[n] = {"mechanism": v["mechanism"], "parent": v["parent"],
+                            "ungated": v["ungated_median"],
+                            "ctl": cv["scaled_median"],
+                            "res": v["scaled_median"],
+                            "delta": v["scaled_median"] - cv["scaled_median"]}
+        res["h22"] = {
+            "residual_arm": R, "control_arm": C,
+            "n_shards": R["lomo"]["n_shards"],
+            "families": res22[0].get("families"),
+            "note": ("both arms are restricted to the families with a cheap "
+                     "operator apply, so they differ in exactly the two "
+                     "residual columns. Compared against the 5-family H15 arm "
+                     "instead, the features and the fitting set would change "
+                     "together."),
+            "vs_control": {
+                "residual_per_seed": a, "control_per_seed": b,
+                "diff_per_seed": d,
+                "exact_sign_flip_p": (sign_flip(d) if any(d) else 1.0)},
+            "residual_feature_rank": rank,
+            "per_shard": per_shard,
+        }
+        print(f"[H22] residual {a} vs control {b} (both /{R['lomo']['n_shards']}"
+              f", 3 families), diff {d}, "
+              f"p={res['h22']['vs_control']['exact_sign_flip_p']:.4f}")
+        print(f"[H22] residual features in top-12 coefficients: "
+              f"{ {k: len(v) for k, v in rank.items()} } of {len(res22)} seeds")
     base, eq = _load(args.wtol_base_glob), _load(args.wtol_eq_glob)
     w = agg_wtol(base, eq)
     if w:
