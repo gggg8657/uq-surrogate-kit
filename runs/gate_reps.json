@@ -1,0 +1,749 @@
+{
+  "hypothesis": "H32",
+  "reading": "gate error rates, replicated over inputs rather than over model seeds",
+  "probe_n": 256,
+  "reps": 8,
+  "families": [
+    "poisson",
+    "helmholtz",
+    "darcy"
+  ],
+  "theta": 0.5722789115646258,
+  "null_aucs": [
+    0.49220867208672087,
+    0.5014345991561181,
+    0.44213900134952766,
+    0.48055315471045806,
+    0.4870184965212965,
+    0.4324829931972789,
+    0.50829945799458,
+    0.4818197192626416,
+    0.5006775067750677,
+    0.5227004219409283,
+    0.5541497975708503,
+    0.554019014693172,
+    0.5411505175632106,
+    0.4748299319727891,
+    0.5254065040650406,
+    0.517334686284458,
+    0.5167682926829268,
+    0.5257383966244725,
+    0.5146761133603239,
+    0.5175453759723423,
+    0.49363651790259633,
+    0.5722789115646258,
+    0.5204945799457995,
+    0.5672247590055809
+  ],
+  "null_auc_median": 0.5157222030216253,
+  "model_free": true,
+  "note": "the gate is a function of the inputs alone, so it has no model seed. These replicates resample the calibration batch and the judged batch; the in-run gate in runs/gt*_u*_het.json is ONE realization of this.",
+  "in_dist": {
+    "poisson": {
+      "n_test": 1024,
+      "aucs": [
+        0.522823689122688,
+        0.48949864498644985,
+        0.5265569319531648,
+        0.5370464135021097,
+        0.4772535092169795,
+        0.46331590487434643,
+        0.4713343480466768,
+        0.4463768115942029
+      ],
+      "auc_median": 0.4833760771017147,
+      "fired": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "false_alarm_rate": 0.0
+    },
+    "helmholtz": {
+      "n_test": 1024,
+      "aucs": [
+        0.5212964534193111,
+        0.516260162601626,
+        0.46563719667402004,
+        0.4221097046413502,
+        0.52190089633012,
+        0.47191769269691347,
+        0.49365804160324706,
+        0.5994884910485934
+      ],
+      "auc_median": 0.5049591021024366,
+      "fired": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "false_alarm_rate": 0.125
+    },
+    "darcy": {
+      "n_test": 1024,
+      "aucs": [
+        0.5299507890717801,
+        0.4649390243902439,
+        0.5540471746139487,
+        0.549367088607595,
+        0.5418569254185692,
+        0.5250463821892394,
+        0.5164890918315576,
+        0.39522591645353794
+      ],
+      "auc_median": 0.5274985856305097,
+      "fired": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "false_alarm_rate": 0.0
+    }
+  },
+  "shards": {
+    "input_shift/poisson_rough/N64": {
+      "parent": "poisson",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "input_shift/poisson_smooth/N64": {
+      "parent": "poisson",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "input_shift/poisson_tau/N64": {
+      "parent": "poisson",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "input_shift/poisson_amp2/N64": {
+      "parent": "poisson",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "input_shift/helmholtz_rough/N64": {
+      "parent": "helmholtz",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "input_shift/helmholtz_smooth/N64": {
+      "parent": "helmholtz",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "input_shift/helmholtz_tau/N64": {
+      "parent": "helmholtz",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "input_shift/helmholtz_amp2/N64": {
+      "parent": "helmholtz",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "input_shift/darcy_rough/N64": {
+      "parent": "darcy",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "input_shift/darcy_smooth/N64": {
+      "parent": "darcy",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "input_shift/darcy_tau/N64": {
+      "parent": "darcy",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "input_shift/darcy_amp2/N64": {
+      "parent": "darcy",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "graded_rough/poisson_dam0p1/N64": {
+      "parent": "poisson",
+      "n_ood": 512,
+      "aucs": [
+        0.9877551020408163,
+        0.9794197031039136,
+        0.9687763713080169,
+        0.9930555555555556,
+        0.9806005398110661,
+        0.972730352303523,
+        0.9759590792838875,
+        0.9905548996458088
+      ],
+      "auc_median": 0.9800101214574899,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "graded_rough/poisson_dam0p2/N64": {
+      "parent": "poisson",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        0.9920715249662618,
+        0.9974683544303797,
+        0.9996612466124661,
+        1.0,
+        0.9993224932249323,
+        0.9962489343563512,
+        0.9979760499241018
+      ],
+      "auc_median": 0.998649271574517,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "graded_rough/poisson_dam0p3/N64": {
+      "parent": "poisson",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        0.9979757085020243,
+        0.999831223628692,
+        0.9996612466124661,
+        1.0,
+        1.0,
+        0.9994884910485934,
+        1.0
+      ],
+      "auc_median": 0.999915611814346,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "graded_rough/poisson_dam0p5/N64": {
+      "parent": "poisson",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "graded_rough/poisson_dam0p7/N64": {
+      "parent": "poisson",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "graded_rough/poisson_dam1/N64": {
+      "parent": "poisson",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "graded_rough/darcy_dam0p1/N64": {
+      "parent": "darcy",
+      "n_ood": 512,
+      "aucs": [
+        0.9671768707482993,
+        0.9819500674763832,
+        0.9819409282700422,
+        0.9769647696476965,
+        0.9687921727395412,
+        0.9554539295392954,
+        0.9791986359761295,
+        0.9757125990892225
+      ],
+      "auc_median": 0.9763386843684595,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "graded_rough/darcy_dam0p2/N64": {
+      "parent": "darcy",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        0.9998313090418354,
+        0.9910548523206751,
+        1.0,
+        1.0,
+        0.9993224932249323,
+        1.0,
+        0.9939281497723056
+      ],
+      "auc_median": 0.9999156545209177,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "graded_rough/darcy_dam0p3/N64": {
+      "parent": "darcy",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        0.9991565452091767,
+        0.999493670886076,
+        0.9996612466124661,
+        0.9991565452091767,
+        0.9988143631436315,
+        1.0,
+        1.0
+      ],
+      "auc_median": 0.9995774587492711,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "graded_rough/darcy_dam0p5/N64": {
+      "parent": "darcy",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "graded_rough/darcy_dam0p7/N64": {
+      "parent": "darcy",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    },
+    "graded_rough/darcy_dam1/N64": {
+      "parent": "darcy",
+      "n_ood": 512,
+      "aucs": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc_median": 1.0,
+      "fired": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fire_rate": 1.0
+    }
+  },
+  "n_shards": 24,
+  "shards_fired_every_rep": 24,
+  "shards_fired_no_rep": 0,
+  "in_dist_false_alarm_rate_pooled": 0.041666666666666664,
+  "min_shard_auc_median": 0.9763386843684595
+}
