@@ -276,6 +276,40 @@ The alternative explanation — an under-powered ensemble — is ruled out by th
 same detectors reaching 1.000 on `darcy_c3` (rel-L2 0.77) and `navier_stokes`
 (0.89), shifts of comparable severity whose inputs *do* move.
 
+**There is a second deployment, and in it the identity does not bind.** The
+argument above fixes `L̂`, the operator the surrogate is *configured* for. That
+models the failure where the process changed and nobody reconfigured the model.
+If instead the request names the operator, the observable at test time is
+`(f, L_requested)` rather than `(f, L̂)`, the configured operator is genuinely
+different information, and applying the *requested* operator to the surrogate's
+own output gives a residual that is large precisely because the output does not
+solve the requested equation. Measured on the same shards, the dimensionless
+consistency score goes from chance to saturation:
+
+| shard | rel-L2 | residual under `L̂` (A) | residual under `L_requested` (B) | truth's own residual |
+|---|---:|---:|---:|---:|
+| `biharmonic` | 41.26 | 0.5147 | **1.0000** | 0.0216 |
+| `frac_s0p25` | 0.95 | 0.4967 | **1.0000** | 2.1e-07 |
+| `frac_s0p5` | 0.86 | 0.4997 | **1.0000** | 9.1e-07 |
+| `frac_s3` | 1702.61 | 0.5047 | **1.0000** | **0.9809** |
+
+**Two things disqualify most of that as a result, and both are measured rather
+than argued.** First, the last column is the same score computed on the shard's
+*ground truth*, which the detector never sees. For `frac_s3` it is 0.9809: the
+sixth-order apply is round-off dominated, so the exact solution violates its own
+equation almost as much as the surrogate does, and that row's 1.000 is an
+operator-identity signal rather than detection. Second, and worse for the
+residual, a **dict lookup on the requested operator** — `1 if the task is not one
+we trained on else 0` — scores 1.000 on all six operator-shift shards at zero
+cost. Under (B) the operator's identity is in the request, so the trivial
+baseline is perfect and the residual earns nothing over it. The honest reading
+is that (B) is not a harder detection problem that the residual solves; it is a
+problem that stops being a detection problem at all.
+
+So the identity stands where it was claimed — for a detector that is a function
+of the input and the *configured* operator — and the price below is the price
+under (A), which is the deployment the pitch is actually about.
+
 **The price of closing it.** k labelled probes, scored by a conformal p-value
 against the calibration error distribution and combined with Fisher's method.
 False-alarm rate verified on held-out in-distribution data (0.046–0.059 at k=1).

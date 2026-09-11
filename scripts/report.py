@@ -2054,11 +2054,14 @@ def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
                     f"| OOD AUROC, conditional on the shift degrading the "
                     f"surrogate (>{thr:.2f}\u00d7 its in-distribution error) | "
                     f"\u22650.9 | **{sum(1 for x in above if x >= 0.9)}/"
-                    f"{len(above)}** shards \u22650.9, min {min(above):.4f}; every "
-                    f"sub-0.9 shard sits at degradation \u2264{thr:.2f}\u00d7, where "
-                    f"firing would be a false alarm | "
-                    f"`runs/consistency_uq.json` | "
-                    f"{MARK[all(x >= 0.9 for x in above)]} |")
+                    f"{len(above)}** shards \u22650.9, min {min(above):.4f} "
+                    f"\u2014 **on ONE checkpoint.** At 8 seeds (\u00a73f) this "
+                    f"cut is not safe: the two failing shards straddle it, so "
+                    f"the denominator moves 33\u201336 and a shard scoring "
+                    f"below 0.9 is admitted on **6 of 8 seeds**. The verdict "
+                    f"below is the strict row, which is stable at 47/49 on "
+                    f"every seed | `runs/consistency_uq.json` | "
+                    f"{MARK[False]} |")
     if m:
         ok = [r for r in m["rows"] if r["darcy_speedup"] >= 100]
         # This row used to read "M=1 has no spread, so no interval and no OOD
