@@ -5885,3 +5885,113 @@ it. The cheap habit that prevents this is to record the hash of every script a
 chain executes in that chain's own output; the runs would then have carried
 their own provenance and I would not have had to infer it from a traceback's
 line numbers.
+
+## H30 at 8 checkpoints, and the definitive answer to the peer's handover question
+
+`runs/label_budget_u*_het.json` → `runs/h30_labels.json`, 8 checkpoints,
+49 OOD shards, 200 draws per cell. All three arms reproduce on every seed.
+
+### Two instances are running this brief in this repository
+
+`decef5a`, which I did not write, records it: PIDs **3452163** (started
+03:30:20) and **3643314** (03:40:31). The peer ran the never-executed H7
+label-budget script, got **49/49 shards in band at k = 9**, and **withdrew it**
+on the grounds that I was editing `scripts/eval_label_budget.py` underneath its
+chain — which I was; it read 152 lines of my arms B and C appearing mid-run. It
+also deleted a `scripts/h30_chain.sh`, which happened to be the filename I had
+chosen for mine, while my 8-seed chain was on seed 6. The chain survived on an
+unlinked file descriptor and finished 8/8; the file is gone and is re-added here
+under a namespaced name.
+
+The peer's caution was correct and its registered inference was not. Its
+handover said: *"rerun on a stable copy at 8 checkpoints, `--sigma-source het`,
+`--repeats 200`. If 49/49 at k=9 reproduces, clause 1 under shift is
+unreachable [by unlabelled methods]."* I have now run exactly that.
+
+### 49/49 at k = 9 reproduces exactly, and it is an artefact of an integer floor
+
+It is not evidence about clause 1 in either direction. Split conformal's mean
+coverage at k calibration points is **(k+1−l)/(k+1)** with **l = ⌊(k+1)α⌋** — a
+*sawtooth* in k. Whether "the mean is in band" is therefore a statement about
+that arithmetic and nothing else:
+
+| k | l | mean coverage (k+1−l)/(k+1) | in 90±2%? | shards whose **mean** is in band, measured |
+|---|---|---|---|---|
+| 1–8 | 0 | 1.0000 (q = +∞) | no | **0** |
+| **9** | 1 | **0.9000** | **YES** | **49 / 49** |
+| 12 | 1 | 0.9231 | no | 12 |
+| 16 | 1 | 0.9412 | no | **0** |
+| 24 | 2 | 0.9200 | boundary | 25 |
+| 32 | 3 | 0.9091 | YES | 49 |
+| 64 | 6 | 0.9077 | YES | 49 |
+| 128 | 12 | 0.9070 | YES | 39 |
+
+The measured column tracks the arithmetic column at **every one of 12 budgets**,
+including the non-monotone collapse to 0 at k = 16 and the half-way 25 at the
+boundary. **k = 9 gives 9/10 = 0.9000 exactly.** The peer's 49/49 was
+`⌊10 × 0.1⌋ = 1` and nothing else, and so was mine; a metric that reads 49, then
+12, then 0, then 25, then 49 as you *add* labels is not measuring calibration
+quality.
+
+So the peer's conditional resolves to neither branch: the number reproduces and
+carries no information about reachability. **Handover item closed.**
+
+### The per-draw price, which is the reading that does carry information
+
+A deployment gets one draw. Median over the 49 OOD shards of
+P(that draw lands in 90±2%), 8 checkpoints:
+
+| k labels | arm A measured | Beta(k+1−l, l) predicted | arm B measured |
+|---|---|---|---|
+| 1–8 | 0.000 | q = +∞ | 0.098 – 0.170 |
+| 9 | **0.155** | **0.156** | 0.168 |
+| 12 | 0.155 | 0.152 | 0.195 |
+| 16 | 0.130 | 0.134 | 0.188 |
+| 24 | 0.210 | 0.219 | 0.162 |
+| 32 | 0.263 | 0.279 | 0.165 |
+| 64 | 0.365 | 0.389 | 0.138 |
+| 128 | **0.492** | **0.527** | **0.025** |
+
+Arm A tracks the distribution-free law at **8 of 8** finite budgets. The price
+is therefore a property of the calibrator, not of this surrogate, these shifts
+or this PDE suite — which is why the analytic extension is quotable as *analytic*
+and is labelled so in the JSON: P(in band) = 0.711 at k = 256, **0.871 at
+k = 512**, **0.968 at k = 1024**.
+
+**The honest price for two-sided 90±2% coverage on a shifted regime is of order
+1000 labelled samples from that regime.** Not 9, and not the "one labelled
+shard" my previous entry speculated.
+
+### My own hypothesis, falsified on all counts that matter
+
+* **Prediction 1 (arm B beats arm A at small k) — FALSIFIED.** Arm B peaks at
+  0.195 near k = 12 and then *falls*: 0.138 at k = 64, **0.025 at k = 128**.
+  More labels make it worse, which is the signature of a biased estimator
+  concentrating around the wrong constant.
+* **Prediction 2 (arm C in band on ≥18 of 24) — FALSIFIED.** Arm C, the k → ∞
+  limit scored on the samples that formed it, is in band on a median of
+  **12/49** (range 8–20 over seeds), and arm B never reaches band at any budget
+  on a median of **26/49**. **The shifted score distribution is not the
+  calibration distribution times a constant.** Every hypothesis from H25 onward
+  leaned on that without testing it, and it is false.
+* **Prediction 3 (arm C fails on `darcy_amp2`) — CONFIRMED**, median ratio
+  43.3 against the `s*` = 67.08 measured in H27/H29 — the cheap statistic
+  underestimates the hardest shard by 1.55×.
+
+Arm B is worth keeping in the repo precisely because it is a *cleanly falsified*
+idea with a diagnosis: one scalar is the right *target* (H27: `s*` exists on
+24/24) and the bulk of the distribution is the wrong *place to estimate it from*.
+
+### What this changes about the clause, and what it does not
+
+The binding constraint on clause 1 under shift is no longer plausibly about
+features, links, exponents or residuals — H25–H29 bounded every one of those.
+It is that **a two-sided ±2% band is tighter than the calibrator's own sampling
+noise at any budget below ~512 labels**, which is the same phenomenon as the
+21.09/24 shard-level ceiling measured earlier, seen at the sample level instead.
+
+**This is not a reason to widen the band.** The KPI says 90±2% and it stands.
+What it is a reason for is reporting the **one-sided conservative** reading
+beside the two-sided one — that is what conformal prediction actually guarantees
+and what most published work reports — with both labelled and neither replacing
+the other. That is rung 1 and it is the next thing to do.

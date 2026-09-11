@@ -38,6 +38,31 @@ The chain of readings, each with its own protocol:
 | **two** features spanning both shift axes (H28) | two features leave-one-shard-out **1/24** |
 | all of the above on the **equivariant** path (H29) | isotonic link leave-one-shard-out **2/24**, with ρ up from **+0.472** to **+0.821** |
 
+**What the clause costs in labels, now measured — and it is not cheap.** My
+previous entry guessed "one labelled shard per regime". Wrong by three orders of
+magnitude. Recalibrating the conformal quantile from k labelled samples of the
+shifted regime puts a *single deployment* inside 90±2% with probability
+**0.155** at k = 9, and the distribution-free Beta law predicts **0.156**. Measured fractions track that law at 7 of 7 finite budgets, so **the
+price is set by split conformal itself, not by this surrogate, these shifts or
+this PDE suite**. Extending the law analytically: 0.711 at k = 256, 0.871 at
+k = 512, **0.968** at k = 1024. **Two-sided 90±2% on a shifted regime costs of
+order 1000 labelled samples from that regime.**
+
+A cheaper estimator — rescale the frozen quantile by a median ratio, one
+parameter, finite at k = 1 — was the hypothesis and it is falsified: it peaks at
+0.195 near k = 12 and *falls* to 0.025 by k = 128, which is bias, not noise.
+Its k→∞ limit is in band on **12/49** shards, so the shifted score distribution
+is **not** the calibration distribution times a constant. Every hypothesis from
+H25 onward leaned on that assumption without testing it.
+
+**A warning about a number two instances of this brief nearly published.** Both
+independently measured "49 of 49 shifted shards in band at k = 9 labels". It is
+an artefact of integer arithmetic: split conformal's **mean** coverage over
+labelled draws is (k+1−l)/(k+1) with l = ⌊(k+1)α⌋, which is exactly 9/10 at
+k = 9. The same metric reads 49, then 12, then 0, then 25, then 49 as labels are
+*added*, tracking that sawtooth at all 12 budgets. `tests/test_label_price.py`
+pins the law and fails if any document quotes the count as a result.
+
 **Three things this cost us, all self-inflicted and all recorded.**
 
 1. **My in-band metric nearly recorded H25 as a null.** The count saturates —

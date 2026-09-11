@@ -527,6 +527,39 @@ def claims():
                     f"{b[shard] / a[shard]:.4f}x. The wrapper is doing "
                     f"something other than restoring a symmetry that exists.")
 
+    lb = _load_run("h30_labels.json")
+    if lb:
+        by = lb["by_k"]
+        for f in ("README.md", "WEEKEND.md"):
+            k9 = by.get("k9")
+            if k9:
+                out.append((f, f"**{k9['armA_frac_draws_in_band_median']:.3f}**",
+                            "H30 P(one 9-label draw in band), median over "
+                            "shards"))
+                out.append((f, f"Beta law predicts "
+                               f"**{k9['armA_beta_prediction']:.3f}**",
+                            "H30 the distribution-free prediction at k=9"))
+            out.append((f, f"**{lb['arm_c']['in_band_median']:.0f}/"
+                           f"{lb['n_ood_shards']}**",
+                        "H30 arm C shape-preservation count"))
+            pr = lb["price_extrapolated_analytic"]
+            out.append((f, f"**{pr['k1024']:.3f}**",
+                        "H30 analytic P(in band) at k=1024"))
+        if lb.get("clause_eligible") is not False:
+            raise SystemExit("h30_labels.json must carry clause_eligible: "
+                             "false -- every row consumes labels from the "
+                             "shard it certifies")
+        # The vacuous reading must never be the one a document quotes. If the
+        # mean-in-band count is ever rendered as a headline this fires.
+        for fn_ in ("README.md", "WEEKEND.md"):
+            txt = (ROOT / fn_).read_text()
+            if "49/49" in txt and "mean" not in txt.split("49/49")[0][-400:]:
+                raise SystemExit(
+                    f"{fn_} quotes 49/49 without the word 'mean' nearby. That "
+                    f"count is split conformal's (k+1-l)/(k+1) = 9/10 at k=9, "
+                    f"not a measurement of calibration quality. Quote "
+                    f"frac_draws_in_band instead.")
+
     t28 = _load_run("h28_twofeat.json")
     if t28:
         for f in ("README.md", "WEEKEND.md"):

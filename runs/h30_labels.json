@@ -1,0 +1,644 @@
+{
+  "n_seeds": 8,
+  "seeds": [
+    "runs/u0/best.pt",
+    "runs/u1/best.pt",
+    "runs/u2/best.pt",
+    "runs/u3/best.pt",
+    "runs/u4/best.pt",
+    "runs/u5/best.pt",
+    "runs/u6/best.pt",
+    "runs/u7/best.pt"
+  ],
+  "alpha": 0.1,
+  "band": [
+    0.88,
+    0.92
+  ],
+  "ks": [
+    1,
+    2,
+    3,
+    5,
+    8,
+    9,
+    12,
+    16,
+    24,
+    32,
+    64,
+    128,
+    256
+  ],
+  "repeats": 200,
+  "clause_eligible": false,
+  "reading_warning": "`coverage` and `in_band` are averages over `repeats` independent labelled draws. Split conformal is exactly valid marginally, so the AVERAGE sits at 1-alpha whenever the quantile is finite and `in_band` on the mean is nearly vacuous. A deployment gets ONE draw: read `frac_draws_in_band`, whose distribution-free prediction is Beta(k+1-l, l), l = floor((k+1)*alpha) -- 0.156 at k=9.",
+  "oracle_warning": "Every number in this file consumes labels from the shard it certifies. It is an upper bound on what a calibrator could do on this data and a price list in labels -- NOT a deployable method, and not evidence for the unlabelled KPI clause.",
+  "by_k": {
+    "k1": {
+      "k": 1,
+      "armA_frac_draws_in_band_median": 0.0,
+      "armA_frac_draws_in_band_per_seed": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "armA_beta_prediction": null,
+      "armB_frac_draws_in_band_median": 0.0975,
+      "armB_frac_draws_in_band_per_seed": [
+        0.095,
+        0.095,
+        0.1,
+        0.1,
+        0.1,
+        0.09,
+        0.085,
+        0.105
+      ],
+      "armA_shards_whose_MEAN_is_in_band_median": 0.0
+    },
+    "k2": {
+      "k": 2,
+      "armA_frac_draws_in_band_median": 0.0,
+      "armA_frac_draws_in_band_per_seed": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "armA_beta_prediction": null,
+      "armB_frac_draws_in_band_median": 0.125,
+      "armB_frac_draws_in_band_per_seed": [
+        0.125,
+        0.125,
+        0.125,
+        0.13,
+        0.12,
+        0.125,
+        0.115,
+        0.125
+      ],
+      "armA_shards_whose_MEAN_is_in_band_median": 0.0
+    },
+    "k3": {
+      "k": 3,
+      "armA_frac_draws_in_band_median": 0.0,
+      "armA_frac_draws_in_band_per_seed": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "armA_beta_prediction": null,
+      "armB_frac_draws_in_band_median": 0.1275,
+      "armB_frac_draws_in_band_per_seed": [
+        0.125,
+        0.135,
+        0.12,
+        0.13,
+        0.11,
+        0.13,
+        0.115,
+        0.135
+      ],
+      "armA_shards_whose_MEAN_is_in_band_median": 0.0
+    },
+    "k5": {
+      "k": 5,
+      "armA_frac_draws_in_band_median": 0.0,
+      "armA_frac_draws_in_band_per_seed": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "armA_beta_prediction": null,
+      "armB_frac_draws_in_band_median": 0.1375,
+      "armB_frac_draws_in_band_per_seed": [
+        0.135,
+        0.13,
+        0.135,
+        0.14,
+        0.135,
+        0.15,
+        0.14,
+        0.16
+      ],
+      "armA_shards_whose_MEAN_is_in_band_median": 0.0
+    },
+    "k8": {
+      "k": 8,
+      "armA_frac_draws_in_band_median": 0.0,
+      "armA_frac_draws_in_band_per_seed": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "armA_beta_prediction": null,
+      "armB_frac_draws_in_band_median": 0.16999999999999998,
+      "armB_frac_draws_in_band_per_seed": [
+        0.15,
+        0.165,
+        0.155,
+        0.185,
+        0.18,
+        0.175,
+        0.18,
+        0.155
+      ],
+      "armA_shards_whose_MEAN_is_in_band_median": 0.0
+    },
+    "k9": {
+      "k": 9,
+      "armA_frac_draws_in_band_median": 0.155,
+      "armA_frac_draws_in_band_per_seed": [
+        0.155,
+        0.16,
+        0.155,
+        0.155,
+        0.15,
+        0.145,
+        0.16,
+        0.15
+      ],
+      "armA_beta_prediction": 0.15568298145769083,
+      "armB_frac_draws_in_band_median": 0.1675,
+      "armB_frac_draws_in_band_per_seed": [
+        0.135,
+        0.16,
+        0.17,
+        0.165,
+        0.17,
+        0.17,
+        0.165,
+        0.17
+      ],
+      "armA_shards_whose_MEAN_is_in_band_median": 49.0
+    },
+    "k12": {
+      "k": 12,
+      "armA_frac_draws_in_band_median": 0.155,
+      "armA_frac_draws_in_band_per_seed": [
+        0.16,
+        0.16,
+        0.155,
+        0.15,
+        0.15,
+        0.155,
+        0.15,
+        0.155
+      ],
+      "armA_beta_prediction": 0.15199523183320138,
+      "armB_frac_draws_in_band_median": 0.195,
+      "armB_frac_draws_in_band_per_seed": [
+        0.155,
+        0.165,
+        0.19,
+        0.2,
+        0.215,
+        0.205,
+        0.205,
+        0.19
+      ],
+      "armA_shards_whose_MEAN_is_in_band_median": 11.5
+    },
+    "k16": {
+      "k": 16,
+      "armA_frac_draws_in_band_median": 0.13,
+      "armA_frac_draws_in_band_per_seed": [
+        0.125,
+        0.13,
+        0.13,
+        0.13,
+        0.125,
+        0.13,
+        0.13,
+        0.13
+      ],
+      "armA_beta_prediction": 0.13405662031248963,
+      "armB_frac_draws_in_band_median": 0.1875,
+      "armB_frac_draws_in_band_per_seed": [
+        0.155,
+        0.195,
+        0.175,
+        0.2,
+        0.19,
+        0.17,
+        0.225,
+        0.185
+      ],
+      "armA_shards_whose_MEAN_is_in_band_median": 0.0
+    },
+    "k24": {
+      "k": 24,
+      "armA_frac_draws_in_band_median": 0.21,
+      "armA_frac_draws_in_band_per_seed": [
+        0.21,
+        0.21,
+        0.21,
+        0.21,
+        0.215,
+        0.215,
+        0.195,
+        0.21
+      ],
+      "armA_beta_prediction": 0.21854853720217182,
+      "armB_frac_draws_in_band_median": 0.16249999999999998,
+      "armB_frac_draws_in_band_per_seed": [
+        0.12,
+        0.15,
+        0.145,
+        0.205,
+        0.175,
+        0.185,
+        0.235,
+        0.15
+      ],
+      "armA_shards_whose_MEAN_is_in_band_median": 25.0
+    },
+    "k32": {
+      "k": 32,
+      "armA_frac_draws_in_band_median": 0.2625,
+      "armA_frac_draws_in_band_per_seed": [
+        0.26,
+        0.26,
+        0.27,
+        0.265,
+        0.265,
+        0.265,
+        0.255,
+        0.255
+      ],
+      "armA_beta_prediction": 0.278608074112186,
+      "armB_frac_draws_in_band_median": 0.165,
+      "armB_frac_draws_in_band_per_seed": [
+        0.09,
+        0.115,
+        0.125,
+        0.22,
+        0.17,
+        0.215,
+        0.265,
+        0.16
+      ],
+      "armA_shards_whose_MEAN_is_in_band_median": 49.0
+    },
+    "k64": {
+      "k": 64,
+      "armA_frac_draws_in_band_median": 0.365,
+      "armA_frac_draws_in_band_per_seed": [
+        0.365,
+        0.36,
+        0.365,
+        0.365,
+        0.37,
+        0.365,
+        0.36,
+        0.37
+      ],
+      "armA_beta_prediction": 0.3892666690044332,
+      "armB_frac_draws_in_band_median": 0.1375,
+      "armB_frac_draws_in_band_per_seed": [
+        0.065,
+        0.085,
+        0.07,
+        0.14,
+        0.14,
+        0.16,
+        0.215,
+        0.135
+      ],
+      "armA_shards_whose_MEAN_is_in_band_median": 49.0
+    },
+    "k128": {
+      "k": 128,
+      "armA_frac_draws_in_band_median": 0.4925,
+      "armA_frac_draws_in_band_per_seed": [
+        0.505,
+        0.485,
+        0.49,
+        0.49,
+        0.495,
+        0.495,
+        0.495,
+        0.475
+      ],
+      "armA_beta_prediction": 0.52745833226459,
+      "armB_frac_draws_in_band_median": 0.025,
+      "armB_frac_draws_in_band_per_seed": [
+        0.0,
+        0.02,
+        0.005,
+        0.035,
+        0.03,
+        0.065,
+        0.01,
+        0.04
+      ],
+      "armA_shards_whose_MEAN_is_in_band_median": 39.0
+    }
+  },
+  "arm_c": {
+    "in_band_per_seed": [
+      12,
+      15,
+      9,
+      12,
+      13,
+      8,
+      20,
+      13
+    ],
+    "in_band_median": 12.5,
+    "armB_never_in_band_per_seed": [
+      26,
+      29,
+      24,
+      26,
+      23,
+      28,
+      24,
+      25
+    ],
+    "armB_never_in_band_median": 25.5,
+    "per_shard": {
+      "graded_rough/darcy_dam0p1/N64": {
+        "arm_c_coverage_median": 0.8876953125,
+        "median_ratio_median": 1.0686656533189698,
+        "arm_c_in_band_on_n_seeds": 6
+      },
+      "graded_rough/darcy_dam0p2/N64": {
+        "arm_c_coverage_median": 0.8896484375,
+        "median_ratio_median": 1.1380683953957629,
+        "arm_c_in_band_on_n_seeds": 7
+      },
+      "graded_rough/darcy_dam0p3/N64": {
+        "arm_c_coverage_median": 0.908203125,
+        "median_ratio_median": 1.2876370893082933,
+        "arm_c_in_band_on_n_seeds": 5
+      },
+      "graded_rough/darcy_dam0p5/N64": {
+        "arm_c_coverage_median": 0.9365234375,
+        "median_ratio_median": 1.472482057106362,
+        "arm_c_in_band_on_n_seeds": 1
+      },
+      "graded_rough/darcy_dam0p7/N64": {
+        "arm_c_coverage_median": 0.96484375,
+        "median_ratio_median": 1.8951605036814332,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "graded_rough/darcy_dam1/N64": {
+        "arm_c_coverage_median": 0.9775390625,
+        "median_ratio_median": 2.702462823812557,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "graded_rough/poisson_dam0p1/N64": {
+        "arm_c_coverage_median": 0.890625,
+        "median_ratio_median": 1.049317672156751,
+        "arm_c_in_band_on_n_seeds": 7
+      },
+      "graded_rough/poisson_dam0p2/N64": {
+        "arm_c_coverage_median": 0.8740234375,
+        "median_ratio_median": 1.1390392153598539,
+        "arm_c_in_band_on_n_seeds": 1
+      },
+      "graded_rough/poisson_dam0p3/N64": {
+        "arm_c_coverage_median": 0.822265625,
+        "median_ratio_median": 1.2655813669183018,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "graded_rough/poisson_dam0p5/N64": {
+        "arm_c_coverage_median": 0.798828125,
+        "median_ratio_median": 1.745040876862698,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "graded_rough/poisson_dam0p7/N64": {
+        "arm_c_coverage_median": 0.853515625,
+        "median_ratio_median": 2.684150193807426,
+        "arm_c_in_band_on_n_seeds": 1
+      },
+      "graded_rough/poisson_dam1/N64": {
+        "arm_c_coverage_median": 0.8818359375,
+        "median_ratio_median": 5.167650722785707,
+        "arm_c_in_band_on_n_seeds": 5
+      },
+      "input_shift/advdiff_amp2/N64": {
+        "arm_c_coverage_median": 1.0,
+        "median_ratio_median": 129.76204653326863,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "input_shift/advdiff_rough/N64": {
+        "arm_c_coverage_median": 0.8818359375,
+        "median_ratio_median": 10.989538876963673,
+        "arm_c_in_band_on_n_seeds": 3
+      },
+      "input_shift/advdiff_smooth/N64": {
+        "arm_c_coverage_median": 0.990234375,
+        "median_ratio_median": 0.9224230214645075,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "input_shift/advdiff_tau/N64": {
+        "arm_c_coverage_median": 0.806640625,
+        "median_ratio_median": 4.1250239367295745,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "input_shift/darcy_amp2/N64": {
+        "arm_c_coverage_median": 0.8388671875,
+        "median_ratio_median": 55.57200704020936,
+        "arm_c_in_band_on_n_seeds": 1
+      },
+      "input_shift/darcy_rough/N64": {
+        "arm_c_coverage_median": 0.9248046875,
+        "median_ratio_median": 1.4997920301571117,
+        "arm_c_in_band_on_n_seeds": 3
+      },
+      "input_shift/darcy_smooth/N64": {
+        "arm_c_coverage_median": 0.9365234375,
+        "median_ratio_median": 0.6316338044560781,
+        "arm_c_in_band_on_n_seeds": 2
+      },
+      "input_shift/darcy_tau/N64": {
+        "arm_c_coverage_median": 0.9091796875,
+        "median_ratio_median": 1.8772744515065547,
+        "arm_c_in_band_on_n_seeds": 7
+      },
+      "input_shift/diffusion_amp2/N64": {
+        "arm_c_coverage_median": 1.0,
+        "median_ratio_median": 102.39635194716652,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "input_shift/diffusion_rough/N64": {
+        "arm_c_coverage_median": 0.93359375,
+        "median_ratio_median": 17.24988878005002,
+        "arm_c_in_band_on_n_seeds": 3
+      },
+      "input_shift/diffusion_smooth/N64": {
+        "arm_c_coverage_median": 0.9853515625,
+        "median_ratio_median": 0.9134973024152097,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "input_shift/diffusion_tau/N64": {
+        "arm_c_coverage_median": 0.8193359375,
+        "median_ratio_median": 3.8337253782482255,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "input_shift/helmholtz_amp2/N64": {
+        "arm_c_coverage_median": 0.9931640625,
+        "median_ratio_median": 62.274169567928766,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "input_shift/helmholtz_rough/N64": {
+        "arm_c_coverage_median": 0.8818359375,
+        "median_ratio_median": 2.645434167088538,
+        "arm_c_in_band_on_n_seeds": 5
+      },
+      "input_shift/helmholtz_smooth/N64": {
+        "arm_c_coverage_median": 0.9619140625,
+        "median_ratio_median": 0.8076573300314354,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "input_shift/helmholtz_tau/N64": {
+        "arm_c_coverage_median": 0.7705078125,
+        "median_ratio_median": 1.8678965719832743,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "input_shift/poisson_amp2/N64": {
+        "arm_c_coverage_median": 1.0,
+        "median_ratio_median": 94.96861456808341,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "input_shift/poisson_rough/N64": {
+        "arm_c_coverage_median": 0.890625,
+        "median_ratio_median": 5.18472804978895,
+        "arm_c_in_band_on_n_seeds": 4
+      },
+      "input_shift/poisson_smooth/N64": {
+        "arm_c_coverage_median": 0.958984375,
+        "median_ratio_median": 0.9291606454212764,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "input_shift/poisson_tau/N64": {
+        "arm_c_coverage_median": 0.833984375,
+        "median_ratio_median": 1.8793660499265474,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "param_oor/darcy_c3/N64": {
+        "arm_c_coverage_median": 0.82421875,
+        "median_ratio_median": 60.240399454152836,
+        "arm_c_in_band_on_n_seeds": 1
+      },
+      "param_oor/frac_s0p25/N64": {
+        "arm_c_coverage_median": 1.0,
+        "median_ratio_median": 2846.655550422108,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "param_oor/frac_s0p5/N64": {
+        "arm_c_coverage_median": 1.0,
+        "median_ratio_median": 874.5741071120391,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "param_oor/frac_s3/N64": {
+        "arm_c_coverage_median": 1.0,
+        "median_ratio_median": 144.22055747205206,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "resolution_128/advdiff/N128": {
+        "arm_c_coverage_median": 0.90234375,
+        "median_ratio_median": 1.0824036214065011,
+        "arm_c_in_band_on_n_seeds": 7
+      },
+      "resolution_128/darcy/N128": {
+        "arm_c_coverage_median": 0.853515625,
+        "median_ratio_median": 1.044701687331631,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "resolution_128/diffusion/N128": {
+        "arm_c_coverage_median": 0.9296875,
+        "median_ratio_median": 1.105738987514463,
+        "arm_c_in_band_on_n_seeds": 2
+      },
+      "resolution_128/helmholtz/N128": {
+        "arm_c_coverage_median": 0.9140625,
+        "median_ratio_median": 1.0684617996464847,
+        "arm_c_in_band_on_n_seeds": 5
+      },
+      "resolution_128/poisson/N128": {
+        "arm_c_coverage_median": 0.904296875,
+        "median_ratio_median": 1.1114920515804951,
+        "arm_c_in_band_on_n_seeds": 6
+      },
+      "resolution_256/advdiff/N256": {
+        "arm_c_coverage_median": 0.908203125,
+        "median_ratio_median": 1.166322561031317,
+        "arm_c_in_band_on_n_seeds": 8
+      },
+      "resolution_256/darcy/N256": {
+        "arm_c_coverage_median": 0.890625,
+        "median_ratio_median": 1.1309791993085194,
+        "arm_c_in_band_on_n_seeds": 5
+      },
+      "resolution_256/diffusion/N256": {
+        "arm_c_coverage_median": 0.923828125,
+        "median_ratio_median": 1.1885411893321918,
+        "arm_c_in_band_on_n_seeds": 3
+      },
+      "resolution_256/helmholtz/N256": {
+        "arm_c_coverage_median": 0.92578125,
+        "median_ratio_median": 1.1270704380322227,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "resolution_256/poisson/N256": {
+        "arm_c_coverage_median": 0.916015625,
+        "median_ratio_median": 1.174262952524524,
+        "arm_c_in_band_on_n_seeds": 4
+      },
+      "unseen_operator/biharmonic/N64": {
+        "arm_c_coverage_median": 1.0,
+        "median_ratio_median": 141.07852365432046,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "unseen_operator/navier_stokes/N64": {
+        "arm_c_coverage_median": 0.7578125,
+        "median_ratio_median": 634.1048677517279,
+        "arm_c_in_band_on_n_seeds": 0
+      },
+      "unseen_operator/ns_T0p25/N64": {
+        "arm_c_coverage_median": 0.7373046875,
+        "median_ratio_median": 624.6487074582897,
+        "arm_c_in_band_on_n_seeds": 0
+      }
+    },
+    "note": "arm C is arm B's k->infinity limit, scored on the samples that formed it. Out of band here means the shifted score distribution is NOT the calibration one times a constant, so no label budget reaches the band by a median-ratio scale."
+  },
+  "n_ood_shards": 49,
+  "price_extrapolated_analytic": {
+    "k128": 0.52745833226459,
+    "k256": 0.7109379660463111,
+    "k512": 0.8711036147703304,
+    "k1024": 0.9680608807806698,
+    "k2048": 0.9975034017806866
+  },
+  "price_note": "beta_pred is the distribution-free law for split conformal, NOT a measurement on this repo's data. It is quoted because the measured armA fractions track it; the measured grid stops at the largest k each shard can afford."
+}
