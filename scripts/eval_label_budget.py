@@ -30,7 +30,24 @@ cost". This measures that, in labels:
   score distribution itself is pathological under shift and no reweighting can
   fix it.
 
-**Both are oracles. Neither is a deployable method** -- they consume labels
+**H30 adds a second, cheaper estimator on the same draws.** H27/H29 measured
+that the correction the coverage clause needs is ONE SCALAR -- `s*` exists on
+24/24 shards, is 1.00 in distribution, and hitting it to +/-2.52% suffices.
+Estimating one scale is a cheaper statistical problem than estimating a 90th
+percentile, and the estimator can be a MEDIAN, which is finite at k = 1:
+
+    arm A (H7)   q_hat = conformal_quantile(S_k, alpha)             k >= 9 only
+    arm B (H30)  q_hat = q_cal[family] * median(S_k)/median_cal(S)  finite at k=1
+    arm C (H30)  the same ratio computed on ALL the shard's samples
+
+Arm C is arm B's k -> infinity limit and is the diagnostic that decides whether
+the route has a ceiling: it tests SHAPE PRESERVATION. If the shifted score
+distribution is the calibration distribution times a constant, the median ratio
+and the 0.90-quantile ratio are the same number and arm C lands in band. If it
+is not, arm B converges to the wrong constant and plateaus outside the band at
+every k -- a cap no label budget can buy past.
+
+**All three are oracles. None is a deployable method** -- they consume labels
 from the shard they certify, which is exactly what a surrogate exists to avoid.
 They are reported as an upper bound on what any calibrator could achieve on
 this data, and as a price list. Every table this writes says so in its own row.
@@ -104,6 +121,18 @@ def main():
     MED = float(torch.cat([cal[t]["sigma"].flatten() for t in in_tasks]).median())
     FRAC = 0.05
 
+    # Arm B rescales the FROZEN per-family calibration quantile by a median
+    # ratio, so both constants come from the calibration split and neither ever
+    # sees a shifted sample. This is the same quantile eval_conformal.py ships.
+    CAL_S = {t: fn(cal[t]["mean"], cal[t]["sigma"], cal[t]["truth"],
+                   med=MED).cpu().numpy() for t in in_tasks}
+    Q_CAL = {t: float(conformal_quantile(CAL_S[t], args.alpha))
+             for t in in_tasks}
+    MED_CAL = {t: float(np.median(CAL_S[t])) for t in in_tasks}
+    if not all(np.isfinite(v) for v in Q_CAL.values()):
+        raise SystemExit(f"a frozen calibration quantile is not finite: "
+                         f"{Q_CAL}; arm B would be vacuous")
+
     ood_specs = []
     for kind, tasks in man["ood_suite"].items():
         ood_specs += [(kind, t, 64) for t in tasks]
@@ -119,6 +148,25 @@ def main():
            "sigma_floor_frac": FRAC,
            "sigma_source": args.sigma_source or "ensemble_spread",
            "k_min_finite": int(np.ceil((1 - args.alpha) / args.alpha)),
+           "q_cal_frozen": Q_CAL, "median_cal_score": MED_CAL,
+           "arms": {
+               "A": "conformal_quantile(S_k, alpha) -- recalibrates the "
+                    "quantile from k labels; infinite for every k < "
+                    "k_min_finite by arithmetic",
+               "B": "q_cal[family] * median(S_k)/median_cal(S) -- rescales the "
+                    "frozen quantile by a median ratio; ONE parameter, finite "
+                    "at k=1. Reported as scale_* keys.",
+               "C": "arm B's k->infinity limit, computed on all samples and "
+                    "scored on them. Tests shape preservation. Key "
+                    "scale_limit."},
+           "reading_warning":
+               "`coverage` and `in_band` are averages over `repeats` "
+               "independent labelled draws. Split conformal is exactly valid "
+               "marginally, so the AVERAGE sits at 1-alpha whenever the "
+               "quantile is finite and `in_band` on the mean is nearly "
+               "vacuous. A deployment gets ONE draw: read "
+               "`frac_draws_in_band`, whose distribution-free prediction is "
+               "Beta(k+1-l, l), l = floor((k+1)*alpha) -- 0.156 at k=9.",
            "oracle_warning":
                "Every number in this file consumes labels from the shard it "
                "certifies. It is an upper bound on what a calibrator could do "
@@ -126,8 +174,12 @@ def main():
                "method, and not evidence for the unlabelled KPI clause.",
            "shards": {}}
 
-    def curve(s, half_width):
-        """Coverage and width vs k, averaged over independent labelled draws."""
+    def curve(s, half_width, q_cal, med_cal):
+        """Coverage and width vs k, averaged over independent labelled draws.
+
+        Both arms see THE SAME draw at every repeat, so the comparison between
+        them is paired and the difference is the estimator, not the sample.
+        """
         s = np.asarray(s, dtype=np.float64)
         hw = np.asarray(half_width, dtype=np.float64)
         n = len(s)
@@ -136,21 +188,44 @@ def main():
             if k >= n:
                 continue
             covs, qs, n_inf = [], [], 0
+            covs_b, qs_b = [], []
             for _ in range(args.repeats):
                 idx = rng.permutation(n)
-                q = conformal_quantile(s[idx[:k]], args.alpha)
-                rest = idx[k:]
+                drawn, rest = idx[:k], idx[k:]
+                # --- arm A: recalibrate the quantile from k labels -----------
+                q = conformal_quantile(s[drawn], args.alpha)
                 if not np.isfinite(q):
                     n_inf += 1
                     covs.append(1.0)          # an infinite interval covers all
-                    continue
-                qs.append(float(q))
-                covs.append(float((s[rest] <= q).mean()))
+                else:
+                    qs.append(float(q))
+                    covs.append(float((s[rest] <= q).mean()))
+                # --- arm B: rescale the FROZEN quantile by a median ratio ----
+                # One parameter, estimated by a median, so it is finite at k=1.
+                qb = q_cal * float(np.median(s[drawn])) / med_cal
+                qs_b.append(qb)
+                covs_b.append(float((s[rest] <= qb).mean()))
             key = "oracle_half" if k == n // 2 else f"k{k}"
             mean_cov = float(np.mean(covs))
+            mean_cov_b = float(np.mean(covs_b))
             lo, hi = binom_ci(int(round(mean_cov * (n - k))), n - k)
+            lob, hib = binom_ci(int(round(mean_cov_b * (n - k))), n - k)
+            # THE NUMBER THAT MATTERS, and the one an earlier version of this
+            # file did not report. Split conformal is exactly valid MARGINALLY,
+            # so the mean over many labelled draws sits at 1-alpha by
+            # construction and "the mean is in band" is close to a tautology.
+            # A deployment gets ONE draw. At k calibration points the coverage
+            # of a single draw is Beta(k+1-l, l) with l = floor((k+1)*alpha) --
+            # sd 0.0905 at k=9 -- so the fraction of INDIVIDUAL draws landing
+            # in band is the real price, and it is 0.156 at k=9, not 1.0.
+            frac_a = float(np.mean([BAND[0] <= c <= BAND[1] for c in covs]))
+            frac_b = float(np.mean([BAND[0] <= c <= BAND[1] for c in covs_b]))
             out[key] = {
                 "k": int(k), "coverage": mean_cov,
+                "frac_draws_in_band": frac_a,
+                "scale_frac_draws_in_band": frac_b,
+                "coverage_sd_over_draws": float(np.std(covs)),
+                "scale_coverage_sd_over_draws": float(np.std(covs_b)),
                 "coverage_ci95": [lo, hi],
                 "frac_draws_infinite": n_inf / args.repeats,
                 "q_median": float(np.median(qs)) if qs else None,
@@ -158,7 +233,29 @@ def main():
                 # coverage row that is infinitely wide cannot read as a pass
                 "mean_half_width": (float(np.median(qs) * hw.mean())
                                     if qs else float("inf")),
-                "in_band": bool(BAND[0] <= mean_cov <= BAND[1])}
+                "in_band_of_mean": bool(BAND[0] <= mean_cov <= BAND[1]),
+                "in_band": bool(BAND[0] <= mean_cov <= BAND[1]),
+                # arm B, on the same draws
+                "scale_coverage": mean_cov_b,
+                "scale_coverage_ci95": [lob, hib],
+                "scale_q_median": float(np.median(qs_b)),
+                "scale_mean_half_width": float(np.median(qs_b) * hw.mean()),
+                "scale_in_band": bool(BAND[0] <= mean_cov_b <= BAND[1])}
+        # --- arm C: arm B's k -> infinity limit, the shape-preservation test --
+        # Uses every sample on the shard to form the ratio, then scores the same
+        # samples: it is the most generous possible reading of arm B and it
+        # cannot be improved by more labels.
+        qc = q_cal * float(np.median(s)) / med_cal
+        cov_c = float((s <= qc).mean())
+        loc, hic = binom_ci(int(round(cov_c * n)), n)
+        out["scale_limit"] = {
+            "k": int(n), "coverage": cov_c, "coverage_ci95": [loc, hic],
+            "q": qc, "median_ratio": float(np.median(s)) / med_cal,
+            "in_band": bool(BAND[0] <= cov_c <= BAND[1]),
+            "note": "arm C: the median-ratio scale computed on ALL samples and "
+                    "scored on the same samples. Arm B's ceiling. If this is "
+                    "out of band the shift is not shape-preserving and no "
+                    "label budget reaches the band by this estimator."}
         return out
 
     def half_width_unit(d):
@@ -170,20 +267,33 @@ def main():
     for kind, task, parent, N in todo:
         d = gather(task, "test" if kind == "in_dist" else "ood", N)
         s = fn(d["mean"], d["sigma"], d["truth"], med=MED).cpu().numpy()
-        c = curve(s, half_width_unit(d))
+        c = curve(s, half_width_unit(d), Q_CAL[parent], MED_CAL[parent])
         res["shards"][f"{kind}/{task}/N{N}"] = {
             "kind": kind, "parent": parent, "N": N, "n": int(len(s)),
             "curve": c,
             "k_min_in_band": next((c[f"k{k}"]["k"] for k in KS
                                    if f"k{k}" in c and c[f"k{k}"]["in_band"]),
-                                  None)}
+                                  None),
+            "scale_k_min_in_band": next((c[f"k{k}"]["k"] for k in KS
+                                         if f"k{k}" in c
+                                         and c[f"k{k}"]["scale_in_band"]),
+                                        None),
+            "scale_limit_in_band": bool(c["scale_limit"]["in_band"]),
+            "scale_limit_coverage": c["scale_limit"]["coverage"],
+            "scale_median_ratio": c["scale_limit"]["median_ratio"]}
         o = c.get("oracle_half", {})
         k9 = c.get("k9", {})
+        rr = res["shards"][f"{kind}/{task}/N{N}"]
         print(f"{kind[:14]:14s} {task:16s} N{N:<4d} n={len(s):4d}  "
-              f"k=9 cov {k9.get('coverage', float('nan')):.3f}  "
-              f"oracle(k={o.get('k', 0)}) cov {o.get('coverage', float('nan')):.3f} "
-              f"{'IN BAND' if o.get('in_band') else '       '}  "
-              f"k_min_in_band={res['shards'][f'{kind}/{task}/N{N}']['k_min_in_band']}",
+              f"A: k9 {k9.get('coverage', float('nan')):.3f} "
+              f"oracle {o.get('coverage', float('nan')):.3f} "
+              f"kmin {str(rr['k_min_in_band']):>4s}  |  "
+              f"B: k1 {c.get('k1', {}).get('scale_coverage', float('nan')):.3f} "
+              f"k8 {c.get('k8', {}).get('scale_coverage', float('nan')):.3f} "
+              f"kmin {str(rr['scale_k_min_in_band']):>4s}  |  "
+              f"C: {c['scale_limit']['coverage']:.3f} "
+              f"x{c['scale_limit']['median_ratio']:.3g} "
+              f"{'IN BAND' if c['scale_limit']['in_band'] else '       '}",
               flush=True)
         del d
         torch.cuda.empty_cache()
@@ -198,7 +308,33 @@ def main():
         "median_k_min_in_band": float(np.median(
             [v["k_min_in_band"] for v in ood if v["k_min_in_band"] is not None]))
         if any(v["k_min_in_band"] is not None for v in ood) else None,
-        "n_never_in_band": sum(1 for v in ood if v["k_min_in_band"] is None)}
+        "n_never_in_band": sum(1 for v in ood if v["k_min_in_band"] is None),
+        # arm B and its ceiling
+        "scale_limit_in_band": sum(1 for v in ood if v["scale_limit_in_band"]),
+        "scale_k9_in_band": sum(1 for v in ood
+                                if v["curve"].get("k9", {})
+                                .get("scale_in_band")),
+        "scale_k1_in_band": sum(1 for v in ood
+                                if v["curve"].get("k1", {})
+                                .get("scale_in_band")),
+        "scale_median_k_min_in_band": float(np.median(
+            [v["scale_k_min_in_band"] for v in ood
+             if v["scale_k_min_in_band"] is not None]))
+        if any(v["scale_k_min_in_band"] is not None for v in ood) else None,
+        "scale_n_never_in_band": sum(1 for v in ood
+                                     if v["scale_k_min_in_band"] is None),
+        # the per-draw reading: what one deployment with k labels actually gets
+        "frac_draws_in_band_by_k": {
+            f"k{k}": float(np.median([v["curve"][f"k{k}"]["frac_draws_in_band"]
+                                      for v in ood if f"k{k}" in v["curve"]]))
+            for k in KS
+            if any(f"k{k}" in v["curve"] for v in ood)},
+        "scale_frac_draws_in_band_by_k": {
+            f"k{k}": float(np.median(
+                [v["curve"][f"k{k}"]["scale_frac_draws_in_band"]
+                 for v in ood if f"k{k}" in v["curve"]]))
+            for k in KS
+            if any(f"k{k}" in v["curve"] for v in ood)}}
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(res, indent=2))
     print(json.dumps(res["summary"], indent=2))
