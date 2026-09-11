@@ -60,7 +60,9 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from uqkit import devshift as D  # noqa: E402
-from uqkit.conformal import GroupConformal, get_score  # noqa: E402
+from uqkit.conformal import (GroupConformal,  # noqa: E402
+                             LikelihoodRatioProbe, get_score)
+from uqkit.features import spectral_features  # noqa: E402
 from uqkit.equivar import predict_equivariant, reference_scale  # noqa: E402
 from uqkit.metrics import binom_ci, rel_l2  # noqa: E402
 from uqkit.sims.pde2d import PARENT  # noqa: E402
@@ -100,6 +102,20 @@ def main():
                          "family. The dev suite is disjoint from the "
                          "evaluation shards by construction, so c is chosen "
                          "without them.")
+    ap.add_argument("--gate", action="store_true",
+                    help="H32: add a shift gate. The LikelihoodRatioProbe is "
+                         "used as a two-sample test between the calibration "
+                         "inputs and the batch being scored; its threshold is "
+                         "the MAXIMUM held-out AUC over in-distribution "
+                         "null probes on disjoint halves of the CALIBRATION "
+                         "split, so no evaluation shard and no dev shard "
+                         "contributes to it. Records the AUC and the fire/"
+                         "quiet decision for every shard and for the "
+                         "in-distribution test split, whose false-alarm rate "
+                         "is the number that decides whether the gate is "
+                         "usable. Requires --onesided.")
+    ap.add_argument("--gate-reps", type=int, default=8,
+                    help="in-distribution null probes per family")
     ap.add_argument("--dev-n", type=int, default=256,
                     help="samples per development shard (--onesided only)")
     ap.add_argument("--c-pct", default="50,75,90,100",
@@ -294,6 +310,50 @@ def main():
                     "c": c, "width_mult_median": width_ratio(d, c)}
                 for name, c in C_LADDER.items()}
 
+    # ---- H32: the shift gate, thresholded on in-distribution data alone ----
+    GATE = {"enabled": bool(args.gate)}
+    if args.gate:
+        if not args.onesided:
+            raise SystemExit("--gate needs --onesided: the gate chooses "
+                             "between c=1 and the dev-chosen constant, and "
+                             "without --onesided there is no constant")
+        CALF = {t: spectral_features(cal[t]["a"]).cpu().numpy()
+                for t in in_tasks}
+        # the batch size the gate will be asked to judge. Matching it matters:
+        # a two-sample AUC is a function of both sample sizes, so a null
+        # computed on 1024 points does not threshold a decision made on 512.
+        probe_n = min(min(len(F) for F in CALF.values()) // 2, 512)
+        rng = np.random.default_rng(0)
+        nulls = []
+        for t in in_tasks:
+            F = CALF[t]
+            for rep in range(args.gate_reps):
+                idx = rng.permutation(len(F))
+                h = len(F) // 2
+                ia, ib = idx[:probe_n], idx[h:h + probe_n]
+                nulls.append(float(LikelihoodRatioProbe(seed=rep)
+                                   .fit(F[ia], F[ib]).auc))
+        theta = float(max(nulls))
+        GATE.update({"probe_n": probe_n, "reps_per_family": args.gate_reps,
+                     "null_aucs": nulls, "null_auc_max": theta,
+                     "null_auc_median": float(np.median(nulls)),
+                     "theta": theta,
+                     "note": ("theta is the MAXIMUM held-out AUC over "
+                              "in-distribution null probes built from "
+                              "disjoint halves of the CALIBRATION split at "
+                              "the same batch size. The in-distribution TEST "
+                              "split is held out from the null, so its "
+                              "fire rate is an honest false-alarm rate.")})
+        print(f"gate: probe_n={probe_n}, {len(nulls)} null AUCs, "
+              f"median {np.median(nulls):.4f}, theta {theta:.4f}", flush=True)
+
+        def gate_decide(d):
+            f = spectral_features(d["a"]).cpu().numpy()
+            auc = float(LikelihoodRatioProbe(seed=0)
+                        .fit(CALF[d["parent"]], f).auc)
+            return {"probe_auc": auc, "fired": bool(auc > theta),
+                    "n": int(len(f))}
+
     # ---- H31: the development suite, and the constants it chooses -----------
     C_LADDER, DEV = {}, {}
     if args.onesided:
@@ -362,6 +422,7 @@ def main():
            "sigma_floor_median": MED, "floor_abs": FLOOR,
            "relresid_median_cal": RR_MED,
            "q_cal": {k: float(v) for k, v in conf.q.items()},
+           "gate": GATE,
            "onesided": {
                "enabled": bool(args.onesided),
                "dev_n_per_shard": args.dev_n,
@@ -392,6 +453,10 @@ def main():
         if args.onesided:
             res["in_dist"][t]["onesided"] = onesided_row(
                 d, np.array([t] * len(d["rr"])))
+        if args.gate:
+            res["in_dist"][t]["gate"] = gate_decide(d)
+            print(f"    gate: auc {res['in_dist'][t]['gate']['probe_auc']:.4f} "
+                  f"fired={res['in_dist'][t]['gate']['fired']}", flush=True)
         print(f"  in-dist {t:10s} base "
               f"{res['in_dist'][t]['base']['coverage']:.4f}  s* "
               f"{res['in_dist'][t]['s_star']}", flush=True)
@@ -416,6 +481,8 @@ def main():
             if args.onesided:
                 rec["onesided"] = onesided_row(
                     d, np.array([parent] * len(d["rr"])))
+            if args.gate:
+                rec["gate"] = gate_decide(d)
             res["shards"][f"{kind}/{task}/N64"] = rec
             ss = rec["s_star"]
             print(f"  {kind}/{task:22s} base {base['coverage']:.4f}  s* "

@@ -2136,6 +2136,204 @@ def verdict(c, b, o, out, i=None, m=None, cs=None, u=None, fa=None,
     return lines
 
 
+
+def _rng(sp, fmt="{:.0f}"):
+    """min-max over seeds, collapsed when they agree."""
+    if sp is None:
+        return NM
+    lo, hi = fmt.format(sp["min"]), fmt.format(sp["max"])
+    return lo if lo == hi else f"{lo}\u2013{hi}"
+
+
+def sec_h31(h, out):
+    """H31: the one-sided conservative reading and the width it costs."""
+    out.append("\n### 1i. H31 \u2014 the one-sided conservative reading, and "
+               "the 405\u00d7 interval it costs (`runs/h31_onesided.json`)\n")
+    if not h or not h.get("arms"):
+        out.append(f"{NM} \u2014 `runs/h31_onesided.json` absent.\n")
+        return
+    out.append(
+        "Two readings of clause 1, side by side. **R2** is the clause: "
+        "coverage in [0.88, 0.92], two-sided. **R1** is what split conformal "
+        "actually guarantees and what a conformal paper reports: coverage "
+        "\u2265 0.90 with a *finite* interval \u2014 admissible only with the "
+        "width beside it, because H13 in this repo published 100% coverage "
+        "with 30/32 shards abstaining on an infinite one. R1 is never the "
+        "clause verdict.\n")
+    for name, A in h["arms"].items():
+        if "c" not in A:
+            out.append(f"\n**{name} path** \u2014 {A['status']}.\n")
+            continue
+        dv, orc = A["dev"], A["oracle_max_eval_s_star"]
+        ov = A["overpayment_dev_p100_over_oracle"]
+        lab = ("equivariant prediction path (H17 wrapper)" if name == "eq"
+               else "base prediction path")
+        out.append(f"\n**{lab}** \u2014 {A['n_seeds']} seeds, "
+                   f"{A['n_shards']} covariate-shift shards, "
+                   f"{dv['dev_n_shards']['median']:.0f} development shards "
+                   f"\u00d7 {dv['dev_n_per_shard']} samples from seed block "
+                   f"{dv['dev_seed_base']}+.\n")
+        out.append(f"| \u03c3 scale c | chosen by | R1 = cov \u2265 0.90, "
+                   f"/{A['n_shards']} | R2 = in band, /{A['n_shards']} | "
+                   f"median width \u00d7 | in-dist R2 /3 |")
+        out.append("|---|---|---|---|---|---|")
+        order = ["c_fixed_1", "c_dev_p50", "c_dev_p75", "c_dev_p90",
+                 "c_dev_p95", "c_dev_p99", "c_dev_p100", "c_fixed_2",
+                 "c_fixed_5", "c_fixed_10", "c_fixed_100"]
+        for cn in [k for k in order if k in A["c"]]:
+            r = A["c"][cn]
+            src = ("the development suite's "
+                   f"{cn[len('c_dev_p'):]}th percentile s\\*"
+                   if r["dev_chosen"] else "a fixed ladder, *not* dev-chosen")
+            bold = "**" if cn == "c_dev_p100" else ""
+            out.append(
+                f"| {bold}{r['c']['median']:.4g}{bold} | {src} | "
+                f"{bold}{_rng(r['R1_one_sided_ge_0p90'])}{bold} | "
+                f"{_rng(r['R2_two_sided_in_band'])} | "
+                f"{bold}{r['width_mult_median_over_shards']['median']:.4g}"
+                f"{bold} | {_rng(r['in_dist_R2_in_band_of_3'])} |")
+        out.append(
+            f"\nThe dev-chosen constant is the p100 row: **R1 = "
+            f"{_rng(A['c']['c_dev_p100']['R1_one_sided_ge_0p90'])}"
+            f"/{A['n_shards']} on {A['n_seeds']} of {A['n_seeds']} seeds, at "
+            f"{A['c']['c_dev_p100']['width_mult_median_over_shards']['median']:.4g}"
+            f"\u00d7 the ungated interval width.** No evaluation shard "
+            f"contributes to it \u2014 `tests/test_onesided.py` re-derives "
+            f"every `c_dev_p*` from that file's own development s\* values "
+            f"and fails if it was fitted on anything else.\n")
+        r2_best = max(r["R2_two_sided_in_band"]["max"]
+                      for r in A["c"].values())
+        r2_best_c = min(r["c"]["median"] for r in A["c"].values()
+                        if r["R2_two_sided_in_band"]["max"] == r2_best)
+        # the smallest inflation on the ladder that already leaves the
+        # in-distribution band
+        lost = sorted(r["c"]["median"] for r in A["c"].values()
+                      if r["c"]["median"] > 1.0
+                      and r["in_dist_R2_in_band_of_3"]["max"] < 3)
+        out.append(
+            f"Two columns keep that from being read as a clause pass. **Under "
+            f"shift R2 never exceeds {r2_best:.0f}/{A['n_shards']}** anywhere "
+            f"on the ladder (its best is at c = {r2_best_c:.4g}; it is "
+            f"{_rng(A['c']['c_dev_p100']['R2_two_sided_in_band'])}"
+            f"/{A['n_shards']} at the dev-chosen constant), because a scalar "
+            f"that lifts a shard from 0.00 to 0.90 carries the easy shards "
+            f"past 0.92 on the way. And **in distribution the same constant "
+            f"destroys the result**: 3/3 families in band at c = 1, "
+            f"{_rng(A['c']['c_dev_p100']['in_dist_R2_in_band_of_3'])}/3 at "
+            f"c = {A['c']['c_dev_p100']['c']['median']:.4g}"
+            + (f" \u2014 and the smallest inflation on this ladder that "
+               f"already leaves the band is **c = {lost[0]:.4g}**, "
+               f"{100 * (lost[0] - 1):.1f}% wider, because in-distribution "
+               f"s* is 0.991\u20131.013 and the in-band window on the scale "
+               f"is a ratio of 1.05." if lost else ".") + "\n")
+        out.append(
+            f"The price is a tail estimate and it is unstable. The dev suite's "
+            f"largest s\* is {_rng(dv['dev_s_star_max'], '{:.4g}')} over the "
+            f"{A['n_seeds']} seeds (argmax "
+            + ("always " if len(set(dv["dev_argmax_shard"])) == 1
+               else "one of ")
+            + ", ".join(f"`{x}`" for x in
+                        sorted(set(dv["dev_argmax_shard"])))
+            + f"), against an oracle "
+            f"constant of {_rng(orc, '{:.4g}')} that the evaluation shards "
+            f"actually need \u2014 an overpayment of "
+            f"**{ov['min']:.3g}\u00d7 to {ov['max']:.3g}\u00d7** depending on "
+            f"the seed. A deployment quoting one width should quote the range.\n")
+    ev = h.get("eq_vs_base") or {}
+    sig = {k: v for k, v in ev.items()
+           if v.get("sign_flip_p_two_sided") is not None
+           and v["sign_flip_p_two_sided"] < 0.05}
+    if sig:
+        k = sorted(sig, key=lambda x: -abs(sig[x]["mean_R1_diff_eq_minus_base"]))[0]
+        v = sig[k]
+        out.append(
+            f"\nPaired across the two prediction paths at matched fixed c, the "
+            f"H17 equivariance wrapper is worth **+"
+            f"{v['mean_R1_diff_eq_minus_base']:.3g} shards of R1** at "
+            f"`{k}`, identical on every seed, exact two-sided sign-flip "
+            f"**p = {v['sign_flip_p_two_sided']:.4f}** \u2014 the smallest "
+            f"attainable at 8 seeds. It also compresses the constant: the dev "
+            f"maximum spans "
+            f"{_rng(h['arms']['eq']['dev']['dev_s_star_max'], '{:.4g}')} on "
+            f"the equivariant path against "
+            f"{_rng(h['arms']['base']['dev']['dev_s_star_max'], '{:.4g}')} on "
+            f"the base path.\n")
+
+
+def sec_h32(g, out):
+    """H32: the regime gate, and both of its error rates."""
+    out.append("\n### 1j. H32 \u2014 a regime gate: two-sided in "
+               "distribution *and* one-sided under shift "
+               "(`runs/h32_gate.json`)\n")
+    if not g or not g.get("arms"):
+        out.append(f"{NM} \u2014 `runs/h32_gate.json` absent.\n")
+        return
+    out.append(
+        "H31 showed a single scalar cannot pass both readings, and the reason "
+        "is arithmetic rather than statistical: the in-distribution band "
+        "tolerates about \u00b12.5% on the \u03c3 scale while the shifted "
+        "shards need 1.06\u00d7 to 67\u00d7. So the method is given a regime "
+        "decision. " + g["method"] + "\n")
+    for name, A in g["arms"].items():
+        if "shift" not in A:
+            out.append(f"\n**{name} path** \u2014 {A['status']}.\n")
+            continue
+        idd, sh = A["in_dist"], A["shift"]
+        lab = ("equivariant prediction path" if name == "eq"
+               else "base prediction path")
+        out.append(f"\n**{lab}** \u2014 {A['n_seeds']} seeds, threshold "
+                   f"\u03b8 = {_rng(A['theta'], '{:.4f}')} from "
+                   f"in-distribution null probes at batch {A['probe_n']} "
+                   f"(null median AUC "
+                   f"{_rng(A['null_auc_median'], '{:.4f}')}), constant "
+                   f"c = {_rng(A['c'], '{:.4g}')}.\n")
+        out.append("| regime | gate | reading | result | median width \u00d7 |")
+        out.append("|---|---|---|---|---|")
+        out.append(
+            f"| in distribution, {idd['n_families']} families | false alarms "
+            f"{_rng(idd['false_alarms_of_3'])}/{idd['n_families']} | **R2, "
+            f"two-sided \u2014 the clause** | "
+            f"**{_rng(idd['gated_R2_in_band_of_3'])}/{idd['n_families']}** | "
+            f"{idd['gated_width_mult_median']['median']:.4g} |")
+        out.append(
+            f"| under shift, {A['n_shards']} shards | fired "
+            f"{_rng(sh['gate_fired_of_24'])}/{A['n_shards']} | **R1, "
+            f"one-sided \u2265 0.90** | "
+            f"**{_rng(sh['gated_R1_one_sided_ge_0p90'])}/{A['n_shards']}** | "
+            f"{sh['gated_width_mult_median']['median']:.4g} |")
+        out.append(
+            f"| under shift, {A['n_shards']} shards | (same run) | R2, "
+            f"two-sided \u2014 the clause | "
+            f"{_rng(sh['gated_R2_two_sided_in_band'])}/{A['n_shards']} | "
+            f"{sh['gated_width_mult_median']['median']:.4g} |")
+        miss = sh["missed_shards"]
+        out.append(
+            f"\nThe gate's margin is the reason this works at all: the "
+            f"*lowest* probe AUC over all {A['n_shards']} shifted shards is "
+            f"{_rng(sh['min_probe_auc_over_shards'], '{:.4f}')} against a "
+            f"threshold of {A['theta']['median']:.4f} set on in-distribution "
+            f"data alone, while the in-distribution test split \u2014 held out "
+            f"from the null that set \u03b8 \u2014 scores "
+            + ", ".join(f"{t} {v['median']:.4f}"
+                        for t, v in idd["probe_auc"].items())
+            + ". "
+            + (f"Shards the gate missed: {', '.join('`'+m+'`' for m in miss)}."
+               if miss else "No shard was missed on any seed.") + "\n")
+        out.append(
+            f"**What this does and does not say.** In distribution the clause "
+            f"reading is met and the interval is unchanged "
+            f"({idd['gated_width_mult_median']['median']:.4g}\u00d7). Under "
+            f"shift only the *one-sided* reading is met, on an interval "
+            f"{sh['gated_width_mult_median']['median']:.4g}\u00d7 wider than "
+            f"the one the surrogate was sold on, and the two-sided clause is "
+            f"still {_rng(sh['gated_R2_two_sided_in_band'])}/{A['n_shards']}. "
+            f"The gate chooses between two scalars; it cannot hit a "
+            f"\u00b12% band on shards whose required scales span 63\u00d7. "
+            f"It is also a **batch-level** decision needing ~{A['probe_n']} "
+            f"unlabelled inputs from the regime \u2014 no labels and no solve, "
+            f"but not one sample.\n")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="RESULTS.md")
@@ -2167,6 +2365,8 @@ def main():
     sec_h14(load('selective.json'), body)
     sec_h15(load('scale.json'), body)
     sec_h16(load('scale.json'), body)
+    sec_h31(load('h31_onesided.json'), body)
+    sec_h32(load('h32_gate.json'), body)
     sec_consistency(csu, body, 'uq')
     sec_degradation(csu, body)
     sec_clause3_seeds(load('clause3.json'), body)

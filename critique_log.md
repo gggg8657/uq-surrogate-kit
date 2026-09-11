@@ -6274,3 +6274,73 @@ in-distribution data and goes in the table whatever it says. A gate that is
 right 23/24 times under shift and wrong once in distribution is not a better
 method than H31's constant; it is a different trade, and the honest way to
 report it is both error rates, not the favourable one.
+
+## H32 measured: both readings pass at once — and my gate's error rates are one input realization, not eight
+
+`runs/gteq_u*_het.json`, 8 seeds, equivariant path, aggregated by
+`scripts/agg_h32.py`. The base arm is still running.
+
+| regime | gate | reading | result | median width × |
+|---|---|---|---|---|
+| in distribution, 3 families | 0/3 false alarms | **R2, two-sided — the clause** | **3/3 in band on 8/8 seeds** | **1.00** |
+| under shift, 24 shards | fired 24/24 | **R1, one-sided ≥ 0.90** | **24/24 on 8/8 seeds** | 405.6 |
+| under shift, 24 shards | (same run) | R2, two-sided — the clause | **0/24** | 405.6 |
+
+θ = 0.5511 from 24 in-distribution null probes (median null AUC 0.4973) at
+batch 512. In-distribution test split, held out from the null: AUC 0.482
+(poisson), 0.528 (helmholtz), 0.479 (darcy) — quiet, and coverage stays
+0.9053 / 0.8989 / 0.8960. The *lowest* probe AUC over all 24 shifted shards is
+0.9830 (`graded_rough/darcy_dam0p1`, the weakest rung on the ladder), so the
+decision margin is 0.43 in AUC.
+
+All five registered predictions hold; prediction 3 came in at 24/24 rather than
+the ≥22/24 I hedged to.
+
+### What can now be said about clause 1, in one sentence each
+
+* **In distribution: two-sided 90±2% is met on 3/3 families with the interval
+  unchanged and one forward pass.** (Not new — H31's c = 1 row — but it is now
+  the same *method* as the shifted row rather than a different one.)
+* **Under every one of 24 shifts: one-sided ≥ 0.90 is met on 8/8 seeds with
+  zero labels from the shifted regime, at 162–1525× the interval width.**
+* **Under shift the clause itself — two-sided — is still 0/24.** The gate picks
+  between two scalars, and no pair of scalars hits a ±2% band on shards whose
+  required scales span 1.06× to 67×.
+
+### The error I caught in my own result before writing it up
+
+θ and every probe AUC in the table above are **identical on all 8 seeds, to
+four decimals**. That is not stability, it is a tell: the gate is a function of
+the *inputs* only — spectral features of `a`, compared against the calibration
+inputs — so it does not depend on the surrogate at all, and my 8 seeds vary the
+model, not the gate. **The 0/3 false alarms and the 24/24 fire rate are one
+input realization each, replicated 8 times.**
+
+By this repo's own seed-count rule that is a screen, not a verdict, and I am
+labelling it so until it is fixed. The fix is to replicate over *inputs*:
+`scripts/eval_gate_only.py` (next) draws repeated disjoint subsamples of the
+calibration and test inputs at a matched batch size and reports the fire rate
+per shard over those replicates. It needs no checkpoint and no GPU, which is
+itself the cleanest demonstration that the gate is model-independent.
+
+The favourable direction of the error matters here: a single realization can
+only have understated the false-alarm rate, and 0/3 is the number that makes
+the method look good. It goes in the document as one realization until the
+replicated number exists.
+
+### The obvious alternative explanation, and how to separate it
+
+The alternative is that **the gate is trivial on this suite** — these are large
+synthetic input shifts that a spectral two-sample test separates at AUC ≈ 1, so
+of course it fires. That would make H32 a statement about the shift suite
+rather than about the method.
+
+What separates them is a crossing measurement, and the graded ladder is built
+for it. Two thresholds as a function of shift strength: the strength at which
+*coverage* at c = 1 leaves 0.90, and the strength at which the *gate* crosses
+θ. The gate is useful exactly when the second is below the first. At the
+weakest rung we have, `dam0p1`, coverage is already 0.818–0.859 (failing) while
+the AUC is 0.983 (far above θ), so on this suite the gate is early rather than
+late — but `dam0p1` is the weakest rung that exists, so the crossing is
+unmeasured, and "unmeasured" is not "absent". H32b generates a finer ladder
+below it, in memory, and reports both curves.
