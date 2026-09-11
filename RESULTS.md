@@ -819,9 +819,38 @@ Per shift family, never as one average over easy and hard shifts:
 | `graded_rough/darcy_dam0p1/N64` | `graded_rough` | 1.06× | 0.8411 ❌ |
 | `graded_rough/poisson_dam0p1/N64` | `graded_rough` | 1.06× | 0.8792 ❌ |
 
-Above that point the detector is unbroken: all **33/33** shards with degradation > 1.06× score ≥0.9, minimum **0.9964**. The ordering does the work, so this needs no fitted threshold — any cut placed anywhere above 1.06× yields 100%, and the criterion is the model's own measured error, not a choice made after seeing which shards failed.
+Above that point the detector is unbroken: all **33/33** shards with degradation > 1.06× score ≥0.9, minimum **0.9964**. The criterion is the model's own measured error, not a choice made after seeing which shards failed.
+
+**This row is ONE checkpoint, and the cut is not safe at 1.06×.** An earlier version of this sentence said “any cut placed anywhere above 1.06× yields 100%”. Section 3f measures the same quantity over 8 seeds: the two failing shards straddle that boundary, so on six of eight seeds a cut just above it admits a shard scoring below 0.9. The pass is quoted at the higher threshold in 3f, where it holds on every seed.
 
 Both readings, each with its protocol, and neither replacing the other: **strict — every shard, including those on which the surrogate is no worse than in distribution — 47/49. Conditional on the shift degrading the surrogate at all — 33/33.** Firing on a shard where the prediction is still good is a false alarm, not a detection.
+
+
+### 3f. Clause 3 across seeds, and where its conditional reading is fragile (`runs/clause3.json`)
+
+The published clause-3 numbers came from **one checkpoint**. The seed-count rule applies to a passing clause exactly as it does to a failing one, so the base arm was re-run at 8 seeds on the same 49 shards with detector `combo`.
+
+**The strict reading reproduces exactly:** [47, 47, 47, 47, 47, 47, 47, 47] of 49 — the identical count on every seed, not a median of a spread. Minimum AUROC ranges 0.8378–0.8422. This is the opposite of what happened to clause 1, whose per-seed spread swamped every effect measured on it: **clause 3's headline was not a lucky draw.**
+
+The conditional reading admits a shard when its error degrades past a threshold, so shards near the threshold move in and out per seed and the *denominator* is itself a random variable. Both thresholds this repo has quoted are shown; picking one after seeing which reads better is not available.
+
+| threshold | (n ≥ 0.9, n in population) per seed | denominator stable? | clean on every seed? |
+|---|---|---|---|
+| **> 1.06×** | (33,33) (33,34) (33,35) (33,33) (34,36) (33,34) (34,36) (33,35) | **no**, 33–36 | **no** — 6/8 seeds have a failure inside |
+| **> 1.1×** | (33,33) (33,33) (33,33) (33,33) (33,33) (33,33) (33,33) (33,33) | **yes** | **yes** |
+
+The cause, measured rather than inferred — these shards straddle a threshold, so which side they fall on is a property of the draw:
+
+| shard | degradation range over seeds | seeds above each threshold |
+|---|---|---|
+| `darcy_dam0p1` | 1.0489–1.0770 | 1.06×: 4/8, 1.1×: 0/8 |
+| `poisson_dam0p1` | 1.0581–1.0841 | 1.06×: 6/8, 1.1×: 0/8 |
+| `resolution_128/darcy` | 1.0341–1.0736 | 1.06×: 2/8, 1.1×: 0/8 |
+
+**So the conditional pass has to be quoted at > 1.1×**, where it holds on every seed, and not at the lower threshold, where the published ratio is the most favourable of 8 draws. The verdict does not change; the threshold it is safe to state does.
+
+The equivariant arm (H21) is at **1/8 seeds** and is a screen, not a verdict, until it completes; its strict count so far is [47].
+ At > 1.06× its conditional population is 29 against the base arm's 33 on the same checkpoint — which is the denominator falling because the repair removed the degradation, exactly as H21 registered, and it is one seed.
 
 
 ## What it costs to detect what nothing unsupervised can

@@ -874,6 +874,102 @@ def sec_h15(sc, out):
 
 
 
+def sec_clause3_seeds(c3, out):
+    """Clause 3 over 8 seeds: is the headline a draw, and is the cut safe?"""
+    out.append("\n### 3f. Clause 3 across seeds, and where its conditional "
+               "reading is fragile (`runs/clause3.json`)\n")
+    if not c3 or not c3.get("base"):
+        out.append(f"{NM} — `runs/clause3.json` absent.\n")
+        return
+    b = c3["base"]
+    st_ = b["strict"]
+    out.append(
+        f"The published clause-3 numbers came from **one checkpoint**. The "
+        f"seed-count rule applies to a passing clause exactly as it does to a "
+        f"failing one, so the base arm was re-run at {b['n_seeds']} seeds on "
+        f"the same {st_['n_total_shards']} shards with detector "
+        f"`{b['detector']}`.\n")
+    same = st_["identical_on_every_seed"]
+    out.append(
+        f"**The strict reading reproduces exactly:** "
+        f"{st_['n_ge_0p9_per_seed']} of {st_['n_total_shards']}"
+        + (" — the identical count on every seed, not a median of a spread. "
+           if same else " — which is NOT identical across seeds. ")
+        + f"Minimum AUROC ranges {min(st_['min_auroc_range']):.4f}–"
+        f"{max(st_['min_auroc_range']):.4f}. This is the opposite of what "
+        f"happened to clause 1, whose per-seed spread swamped every effect "
+        f"measured on it: **clause 3's headline was not a lucky draw.**\n")
+    out.append("The conditional reading admits a shard when its error "
+               "degrades past a threshold, so shards near the threshold move "
+               "in and out per seed and the *denominator* is itself a random "
+               "variable. Both thresholds this repo has quoted are shown; "
+               "picking one after seeing which reads better is not available.\n")
+    out.append("| threshold | (n ≥ 0.9, n in population) per seed | "
+               "denominator stable? | clean on every seed? |")
+    out.append("|---|---|---|---|")
+    for th, cc in b["conditional"].items():
+        pairs = " ".join(f"({a},{n})" for a, n in cc["pairs_per_seed"])
+        lo, hi = cc["denominator_range"]
+        den = "**yes**" if cc["denominator_is_stable"] else f"**no**, {lo}–{hi}"
+        if cc["clean_on_every_seed"]:
+            clean = "**yes**"
+        else:
+            clean = (f"**no** — {cc['seeds_with_a_failure_inside']}"
+                     f"/{b['n_seeds']} seeds have a failure inside")
+        out.append(f"| **> {th}×** | {pairs} | {den} | {clean} |")
+    bs = b.get("boundary_shards") or {}
+    if bs:
+        out.append("\nThe cause, measured rather than inferred — these shards "
+                   "straddle a threshold, so which side they fall on is a "
+                   "property of the draw:\n")
+        out.append("| shard | degradation range over seeds | seeds above "
+                   "each threshold |")
+        out.append("|---|---|---|")
+        for k, v in sorted(bs.items()):
+            lo, hi = v["degradation_range"]
+            cr = ", ".join(f"{t}×: {n}/{b['n_seeds']}"
+                           for t, n in v["crosses_per_threshold"].items())
+            # `kind/task/N` -- a resolution shard's task is just its family,
+            # so the bare task name collides with the in-distribution one.
+            # Keep the kind when it disambiguates.
+            parts = k.split("/")
+            label = parts[1] if parts[0] in ("input_shift", "graded_rough") \
+                else "/".join(parts[:2])
+            out.append(f"| `{label}` | {lo:.4f}–{hi:.4f} | {cr} |")
+        out.append("")
+    stable = [t for t, cc in b["conditional"].items()
+              if cc["clean_on_every_seed"]]
+    if stable:
+        out.append(
+            f"**So the conditional pass has to be quoted at > {stable[-1]}×**, "
+            f"where it holds on every seed, and not at the lower threshold, "
+            f"where the published ratio is the most favourable of "
+            f"{b['n_seeds']} draws. The verdict does not change; the "
+            f"threshold it is safe to state does.\n")
+    eq = c3.get("equivariant")
+    if eq:
+        n = eq["n_seeds"]
+        out.append(
+            f"The equivariant arm (H21) is at **{n}/{b['n_seeds']} seeds** and "
+            f"is a screen, not a verdict, until it completes"
+            + (f"; its strict count so far is "
+               f"{eq['strict']['n_ge_0p9_per_seed']}." if n else "."))
+        cond = eq.get("conditional", {})
+        base_cond = b.get("conditional", {})
+        for th in cond:
+            if th in base_cond:
+                bd = base_cond[th]["pairs_per_seed"][0]
+                ed = cond[th]["pairs_per_seed"][0]
+                out.append(
+                    f" At > {th}× its conditional population is {ed[1]} "
+                    f"against the base arm's {bd[1]} on the same checkpoint — "
+                    f"which is the denominator falling because the repair "
+                    f"removed the degradation, exactly as H21 registered, and "
+                    f"it is one seed.")
+                break
+        out.append("")
+
+
 def _mean_sharp(a):
     sh = [r["sharpness_rel"] for r in a["per_seed"]]
     return sum(sh) / len(sh)
@@ -1521,11 +1617,18 @@ def sec_degradation(cs, out):
             f"Above that point the detector is unbroken: all "
             f"**{len(ok_above)}/{len(ok_above)}** shards with degradation "
             f"> {worst_miss_deg:.2f}× score ≥0.9, minimum "
-            f"**{min(a for _, a in ok_above):.4f}**. The ordering does the "
-            f"work, so this needs no fitted threshold — any cut placed "
-            f"anywhere above {worst_miss_deg:.2f}× yields 100%, and the "
-            f"criterion is the model's own measured error, not a choice made "
-            f"after seeing which shards failed.\n")
+            f"**{min(a for _, a in ok_above):.4f}**. The criterion is the "
+            f"model's own measured error, not a choice made after seeing "
+            f"which shards failed.\n")
+        out.append(
+            f"**This row is ONE checkpoint, and the cut is not safe at "
+            f"{worst_miss_deg:.2f}×.** An earlier version of this sentence "
+            f"said \u201cany cut placed anywhere above {worst_miss_deg:.2f}× "
+            f"yields 100%\u201d. Section 3f measures the same quantity over 8 "
+            f"seeds: the two failing shards straddle that boundary, so on six "
+            f"of eight seeds a cut just above it admits a shard scoring below "
+            f"0.9. The pass is quoted at the higher threshold in 3f, where it "
+            f"holds on every seed.\n")
     out.append("Both readings, each with its protocol, and neither replacing "
                "the other: **strict — every shard, including those on which "
                "the surrogate is no worse than in distribution — "
@@ -2020,6 +2123,7 @@ def main():
     sec_h16(load('scale.json'), body)
     sec_consistency(csu, body, 'uq')
     sec_degradation(csu, body)
+    sec_clause3_seeds(load('clause3.json'), body)
     sec_probe(lp, body)
     sec_members(m, body)
     sec_floor(f, body)
